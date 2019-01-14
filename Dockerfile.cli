@@ -1,0 +1,11 @@
+FROM python:3
+MAINTAINER Jeffrey Salmond <js947@cam.ac.uk>
+
+WORKDIR /usr/src/app
+
+COPY setup.py .
+COPY abcd abcd
+
+RUN pip install --no-cache-dir .
+
+ENTRYPOINT [ "abcd" ]

@@ -1,7 +1,7 @@
 import logging
 
 from flask import Flask, url_for, render_template
-# from flask_restful import Api
+
 from app.db import db, User
 
 logger = logging.getLogger(__name__)
@@ -68,22 +68,22 @@ if __name__ == '__main__':
 
         print(User.query.all())
 
-    # app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
 
     # from ase.io import write
     # from ase.io.jsonio import read_json
     # write(atoms, '-', format='json')
-
-    traj = read('../../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None))
-    for atoms in traj:
-        # Hack to fix the representation of forces
-        atoms.calc.results['forces'] = atoms.arrays['force']
-
-    print(traj)
-
-    atoms = traj[0]
-
-    # message = json.dumps(atoms)
+    #
+    # traj = read('../../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None))
+    # for atoms in traj:
+    #     # Hack to fix the representation of forces
+    #     atoms.calc.results['forces'] = atoms.arrays['force']
+    #
+    # print(traj)
+    #
+    # atoms = traj[0]
+    #
+    # # message = json.dumps(atoms)
 
 # # Using Extensions:
 

@@ -1,15 +1,22 @@
 import hashlib
 import logging
 import json
-import base64
-import numpy as np
+import requests
 
-from ase import Atoms
+from typing import Callable, Iterable, Union, Optional, List
+
+# from ase import Atoms
+import ase
 from ase.calculators.singlepoint import SinglePointCalculator
 
-# import ase
-
 logger = logging.getLogger(__name__)
+
+
+class Atoms(ase.Atoms):
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(numbers=data['numbers'], positions=data['positions'])
 
 
 class ABCD(object):
@@ -19,7 +26,7 @@ class ABCD(object):
         #  todo: authentication(user, token), https
         self.url = url
 
-    def push(self, atoms):
+    def push(self, atoms: ase.Atoms):
         # todo: list of Atoms, metadata(user, project, tags)
         message = json.dumps(atoms)
         message_hash = hashlib.md5(message.encode('utf-8')).hexdigest()
@@ -34,27 +41,55 @@ class ABCD(object):
     def query(self, query_string):
         pass
 
+    def search(self, query_string: str) -> List[str]:
+        results = requests.get(self.url + '/calculations/').json()
+        return results
+
+    def get_atoms(self, id: str) -> Atoms:
+        data = requests.get(self.url + f'/calculation/{id}').json()
+        atoms = Atoms.from_dict(data)
+        return atoms
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
 
 if __name__ == '__main__':
+    from ase.io import iread
+
     logging.basicConfig(level=logging.INFO)
-    from ase.io import read
 
-    # from ase.io import write
-    # from ase.io.jsonio import read_json
-    # write(atoms, '-', format='json')
-
-    traj = read('../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None))
-
-    for atoms in traj:
+    for atoms in iread('../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
         # Hack to fix the representation of forces
         atoms.calc.results['forces'] = atoms.arrays['force']
 
-    print(traj)
-
-    atoms = traj[0]
     print(atoms)
 
+    # todo: query_str2_query_dict
+
+    db = ABCD(url='http://localhost:5000/api')
+
+    query = {
+        'elements': ['Cu']
+    }
+    results = db.search(query)
+
+    # Fetch all results (returns with an Atoms object
+    for id in results:
+        atoms = db.get_atoms(id)
+        print(atoms)
+
+        local_db = [db.get_atoms(id) for id in results]
     #
+    # context manager for the database
+    with ABCD(url='http://localhost:5000/api') as db:
+        results = db.search('formula=Fe3O1;elements=[Fe,*];n_atoms=10,pbc;metadata.collection=iron')
+        local_db = [db.get_atoms(id) for id in results]
+
+
     # connection = ABCD()
     # for atoms in traj:
     #     hash_value = connection.push(atoms)

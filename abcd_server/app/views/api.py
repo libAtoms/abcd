@@ -79,7 +79,7 @@ def add_calculation():
 
 # endpoint to delete user
 @bp.route("/calculation/<ObjectId:calc_id>", methods=["DELETE"])
-def calculation_delete(calc_id):
+def delete_calculation(calc_id):
     calculation = mongo.db.atoms.find_one_or_404(calc_id)
     _ = mongo.db.atoms.delete_one(calculation)
 
@@ -88,7 +88,7 @@ def calculation_delete(calc_id):
 
 
 @bp.route("/search/", methods=['GET'])
-def search():
+def search_calculation():
     data = [str(calc['_id']) for calc in mongo.db.atoms.find()]
     return jsonify(data)
 

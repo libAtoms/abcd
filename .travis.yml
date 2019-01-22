@@ -1,0 +1,26 @@
+language: python
+python:
+  - "3.6"
+script: skip
+
+jobs:
+  include:
+    - stage: genretating documentaion
+      python:
+        - "3.6"
+      branches:
+        only:
+          - master
+      install:
+        - pip install sphinx sphinx-rtd-theme
+      #  - pip install .
+      script:
+        - cd docs; make html
+      deploy:
+        provider: pages
+        local_dir: docs/_build/html
+        skip-cleanup: true
+        github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+        keep-history: true
+        on:
+          branch: master

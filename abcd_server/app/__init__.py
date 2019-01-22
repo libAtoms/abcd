@@ -2,7 +2,7 @@ import logging
 
 from flask import Flask, url_for, render_template
 
-from app.db import db, User
+from app.db import db
 
 logger = logging.getLogger(__name__)
 
@@ -14,16 +14,18 @@ def create_app():
         SECRET_KEY='dev',
         # SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.root_path, 'app.db'),
         # SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'app.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql://docker:docker@localhost/postgres',
-        SQLALCHEMY_TRACK_MODIFICATIONS=False
+        # SQLALCHEMY_DATABASE_URI='postgresql://docker:docker@localhost/postgres',
+        # SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        # MONGO_URI='mongodb://localhost:27017/atoms',
+        MONGO_URI='mongodb://fekad:qwe123@ds211613.mlab.com:11613/fekad_test'
     )
     app.config.from_pyfile('config.py', silent=True)
 
     db.init_app(app)
 
-    # # This will create the database file using SQLAlchemy
-    with app.app_context():
-        db.create_all()
+    # # # This will create the database file using SQLAlchemy
+    # with app.app_context():
+    #     db.create_all()
 
     # from app.views import auth
     # app.register_blueprint(auth.bp)
@@ -59,14 +61,14 @@ if __name__ == '__main__':
 
     app = create_app()
 
-    with app.app_context():
-        # admin = User(username='admin', email='admin@example.com')
-        # guest = User(username='guest', email='guest@example.com')
-        # db.session.add(admin)
-        # db.session.add(guest)
-        # db.session.commit()
-
-        print(User.query.all())
+    # with app.app_context():
+    #     # admin = User(username='admin', email='admin@example.com')
+    #     # guest = User(username='guest', email='guest@example.com')
+    #     # db.session.add(admin)
+    #     # db.session.add(guest)
+    #     # db.session.commit()
+    #
+    #     print(User.query.all())
 
     app.run(debug=True, host='0.0.0.0', port=5000)
 

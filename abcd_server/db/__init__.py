@@ -1,1 +1,4 @@
-# from flask_pymongo import PyMongo
+from .mongodb import MongoDatabase
+from .remote import RemoteDatabase
+
+__all__ = [MongoDatabase, RemoteDatabase]

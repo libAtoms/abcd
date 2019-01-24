@@ -2,27 +2,27 @@ import json
 import base64
 import datetime
 import numpy as np
-from pprint import pprint
+from os import linesep
 
+import ase
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from bson.objectid import ObjectId
 from pymongo import MongoClient
-
-from abcd_server.encoders.json import JSONEncoderOld, JSONDecoderOld
-
-from abcd_server.encoders import JSONEncoder, DictEncoder
 from abcd_server.db.base import Database
 
-import ase
-from os import linesep
+from abcd_server.encoders import JSONEncoder, DictEncoder
+from abcd_server.encoders.json import JSONEncoderOld, JSONDecoderOld
+
+from bson.objectid import ObjectId
 
 
 class MongoDatabase(Database):
     """Wrapper to make database operations easy"""
 
     def __init__(self, url='mongodb://localhost:27017/', db_name='abcd', collection_name='atoms'):
+        super().__init__()
+
         self.client = MongoClient(url)
         self.db = self.client[db_name]
         self.collection = self.db[collection_name]
@@ -56,7 +56,10 @@ class MongoDatabase(Database):
         raise NotImplementedError
 
     def __repr__(self):
-        return f'ABCD(type={self.__class__.__name__}, url={self.client.HOST}:{self.client.PORT}, ...)'
+        return f'{self.__class__.__name__}(' \
+            f'url={self.client.HOST}:{self.client.PORT}, ' \
+            f'db={self.db.name}, ' \
+            f'collection={self.collection.name})'
 
     def _repr_html_(self):
         """jupyter notebook representation"""
@@ -82,17 +85,11 @@ class MongoDatabase(Database):
 
 if __name__ == '__main__':
     from ase.io import iread
+    from pprint import pprint
 
-    database_name = 'fekad_test'
-    collection_name = 'atoms'
+    db = MongoDatabase('mongodb://localhost:27017/')
+    db.info()
 
-    client = MongoClient('mongodb://fekad:qwe123@ds211613.mlab.com:11613/fekad_test')
-    db = client[database_name]
-    collection = db[collection_name]
-
-    d = Database('mongodb://fekad:qwe123@ds211613.mlab.com:11613/fekad_test', db_name=database_name,
-                 collection_name=collection_name)
-    d.info()
     for at in iread('../../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
         # print(at)
         at.calc.results['forces'] = at.arrays['force']
@@ -120,4 +117,4 @@ if __name__ == '__main__':
 
     dumps(data)
 
-    collection.insert_one(data)
+    db.collection.insert_one(data)

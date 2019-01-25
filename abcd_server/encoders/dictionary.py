@@ -1,56 +1,20 @@
-from abcd_server.encoders.base import BaseEncoder
+import json
+import datetime
+from random import randint
+from ase import Atoms
+from ase.utils import basestring, formula_metal
+from ase.data import chemical_symbols, atomic_masses
+
+from ase.calculators.calculator import get_calculator
+from ase.calculators.singlepoint import SinglePointCalculator
+
 import numpy as np
 
+from abcd_server.encoders.base import BaseEncoder
 
-# from abc import ABCMeta, abstractmethod
-#
-#
-# class BaseEncoder(object, metaclass=ABCMeta):
-#     """Abstract class for the visitor pattern"""
-#     default_properties = []
-#
-#     # @abstractmethod
-#     def __init__(self):
-#         pass
-#
-#     def __enter__(self):
-#         """support with statement and error handling in python"""
-#         return self
-#
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         pass
-#
-#     def encode(self, atoms):
-#         """main function"""
-#         return self.visit_atoms(atoms)
-#
-#     @abstractmethod
-#     def visit_atoms(self, atoms):
-#         pass
-#
-#     @abstractmethod
-#     def visit_numbers(self, atoms):
-#         pass
-#
-#     @abstractmethod
-#     def visit_cell(self, atoms):
-#         pass
-#
-#     @abstractmethod
-#     def visit_pbc(self, atoms):
-#         pass
-#
-#     @abstractmethod
-#     def visit_positions(self, atoms):
-#         pass
-#
-#     @abstractmethod
-#     def visit_forces(self, atoms):
-#         pass
-#
-#     @abstractmethod
-#     def visit_energy(self, atoms):
-#         pass
+
+class PropertyNotImplementedError(NotImplementedError):
+    """Raised if a calculator does not implement the requested property."""
 
 
 class DictEncoder(BaseEncoder):
@@ -177,56 +141,8 @@ class OrderedDictEncoder(BaseEncoder):
         return data
 
 
-# from ase
-
-
-import json
-import datetime
-from random import randint
-from ase import Atoms
-from ase.utils import basestring, formula_metal
-from ase.data import chemical_symbols, atomic_masses
-
-from ase.calculators.calculator import get_calculator
-from ase.calculators.singlepoint import SinglePointCalculator
-
-import numpy as np
-
 all_properties = ['energy', 'forces', 'stress', 'stresses', 'dipole',
                   'charges', 'magmom', 'magmoms', 'free_energy']
-
-all_changes = ['positions', 'numbers', 'cell', 'pbc',
-               'initial_charges', 'initial_magmoms']
-
-# Recognized names of calculators sorted alphabetically:
-names = ['abinit', 'aims', 'amber', 'asap', 'castep', 'cp2k', 'crystal',
-         'demon', 'dftb', 'dmol', 'eam', 'elk', 'emt', 'espresso',
-         'exciting', 'fleur', 'gaussian', 'gpaw', 'gromacs', 'gulp',
-         'hotbit', 'jacapo', 'lammpsrun',
-         'lammpslib', 'lj', 'mopac', 'morse', 'nwchem', 'octopus', 'onetep',
-         'openmx', 'siesta', 'tip3p', 'turbomole', 'vasp']
-
-special = {'cp2k': 'CP2K',
-           'dmol': 'DMol3',
-           'eam': 'EAM',
-           'elk': 'ELK',
-           'emt': 'EMT',
-           'crystal': 'CRYSTAL',
-           'fleur': 'FLEUR',
-           'gulp': 'GULP',
-           'lammpsrun': 'LAMMPS',
-           'lammpslib': 'LAMMPSlib',
-           'lj': 'LennardJones',
-           'mopac': 'MOPAC',
-           'morse': 'MorsePotential',
-           'nwchem': 'NWChem',
-           'openmx': 'OpenMX',
-           'tip3p': 'TIP3P'}
-
-
-class PropertyNotImplementedError(NotImplementedError):
-    """Raised if a calculator does not implement the requested property."""
-
 
 # def get_calculator(name):
 #     """Return calculator class."""
@@ -246,7 +162,7 @@ class PropertyNotImplementedError(NotImplementedError):
 
 # TODO: OrderedDict!
 # TODO: if has that attribute the get function is completely unnecessary
-# TODO: cell and pbc is always presents
+# TODO: cell and pbc are always presents
 # TODO: has in a redundant function call
 # TODO: calculator_parameters should be an OrderedDict
 # TODO: unique id should be a hash value
@@ -254,16 +170,15 @@ class PropertyNotImplementedError(NotImplementedError):
 from collections import OrderedDict
 
 
-def to_dict(atoms: Atoms):
+def to_ordereddict(atoms: Atoms):
     dct = OrderedDict([
-        ('numbers', atoms.numbers),
-        ('positions', atoms.positions),
-        ('unique_id', '{}'.format(randint(16 ** 31, 16 ** 32 - 1)))
+        ('numbers', atoms.numbers.tolist()),
+        ('positions', atoms.positions.tolist()),
     ])
 
     if atoms.cell.any():
-        dct['pbc'] = atoms.pbc
-        dct['cell'] = atoms.cell
+        dct['pbc'] = atoms.pbc.tolist()
+        dct['cell'] = atoms.cell.tolist()
     if atoms.has('initial_magmoms'):
         dct['initial_magmoms'] = atoms.get_initial_magnetic_moments()
     if atoms.has('initial_charges'):
@@ -287,20 +202,20 @@ def to_dict(atoms: Atoms):
                     pass
                 else:
                     if x is not None:
-                        dct[prop] = x
+                        dct[prop] = x.tolist()
     return dct
 
 
-def atoms2dict(atoms):
+def to_dict(atoms):
     """ASE's original implementation"""
     dct = {
-        'numbers': atoms.numbers,
-        'positions': atoms.positions,
-        'unique_id': '{}'.format(randint(16 ** 31, 16 ** 32 - 1))
+        'numbers': atoms.numbers.tolist(),
+        'positions': atoms.positions.tolist(),
+        # 'unique_id': '{}'.format(randint(16 ** 31, 16 ** 32 - 1))
     }
     if atoms.cell.any():
-        dct['pbc'] = atoms.pbc
-        dct['cell'] = atoms.cell
+        dct['pbc'] = atoms.pbc.tolist()
+        dct['cell'] = atoms.cell.tolist()
     if atoms.has('initial_magmoms'):
         dct['initial_magmoms'] = atoms.get_initial_magnetic_moments()
     if atoms.has('initial_charges'):
@@ -324,7 +239,7 @@ def atoms2dict(atoms):
                     pass
                 else:
                     if x is not None:
-                        dct[prop] = x
+                        dct[prop] = x.tolist()
     return dct
 
 
@@ -577,6 +492,9 @@ if __name__ == '__main__':
 
     from ase.db.row import AtomsRow, atoms2dict
 
+    import bson
+    from bson.codec_options import CodecOptions
+
     direcotry = Path('../../utils/data/')
 
     file = direcotry / 'bcc_bulk_54_expanded_2_high.xyz'
@@ -584,11 +502,13 @@ if __name__ == '__main__':
     for atoms in iread(file.as_posix(), index=slice(1)):
         print(atoms)
 
-        d = atoms2dict(atoms)
+        d = to_dict(atoms)
         print(d)
         new_atoms = AtomsRow(d).toatoms()
         print(new_atoms)
         print(new_atoms == atoms)
 
+    d = to_dict(atoms)
     # d = atoms2dict(atoms)
     # AtomsRow(d).toatoms()
+    print(bson.BSON.encode(d))

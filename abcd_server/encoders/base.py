@@ -42,3 +42,52 @@ class BaseEncoder(object, metaclass=ABCMeta):
     def visit_energy(self, atoms):
         return atoms.get_potential_energy()
 
+# from abc import ABCMeta, abstractmethod
+#
+#
+# class BaseEncoder(object, metaclass=ABCMeta):
+#     """Abstract class for the visitor pattern"""
+#     default_properties = []
+#
+#     # @abstractmethod
+#     def __init__(self):
+#         pass
+#
+#     def __enter__(self):
+#         """support with statement and error handling in python"""
+#         return self
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         pass
+#
+#     def encode(self, atoms):
+#         """main function"""
+#         return self.visit_atoms(atoms)
+#
+#     @abstractmethod
+#     def visit_atoms(self, atoms):
+#         pass
+#
+#     @abstractmethod
+#     def visit_numbers(self, atoms):
+#         pass
+#
+#     @abstractmethod
+#     def visit_cell(self, atoms):
+#         pass
+#
+#     @abstractmethod
+#     def visit_pbc(self, atoms):
+#         pass
+#
+#     @abstractmethod
+#     def visit_positions(self, atoms):
+#         pass
+#
+#     @abstractmethod
+#     def visit_forces(self, atoms):
+#         pass
+#
+#     @abstractmethod
+#     def visit_energy(self, atoms):
+#         pass

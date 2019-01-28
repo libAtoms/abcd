@@ -5,6 +5,11 @@ Extended XYZ reader
 import re
 from pathlib import Path
 from typing import Union
+from ase import Atoms
+from ase.calculators.singlepoint import SinglePointCalculator
+import numpy as np
+
+import ase.io.extxyz
 
 re_key = r'(?P<key>[A-Za-z_]+[A-Za-z0-9_-]*)'
 re_values = r'(?:' \
@@ -54,7 +59,12 @@ class XYZReader(object):
         line = next(self._fp)
 
         data = {key: single_value or quoted_value for key, single_value, quoted_value in self.REGEXP.findall(line)}
-        property_types = data.pop('Properties')
+
+        property_types = data.pop('Properties', None)
+        # Default set of properties is atomic symbols and positions only
+        if property_types is None:
+            property_types = 'species:S:1:pos:R:3'
+
         frame_properties = {key: convert(value) for key, value in data.items()}
 
         return frame_properties, property_types
@@ -80,6 +90,88 @@ class XYZReader(object):
                 ind += ncols
 
         return results
+
+    def read_atoms(self, energy_label='energy', forces_label='forces'):
+        for n_atoms, frame_properties, atoms_properties in self:
+
+            cell = frame_properties.pop('Lattice', None)
+            if cell is not None:
+                cell = np.array(cell).reshape((3, 3), order='F').T
+
+            pbc = frame_properties.pop('pbc', None)
+            if cell is not None and pbc is None:
+                pbc = [True, True, True]
+
+            symbols = atoms_properties.pop('species', None)
+            numbers = atoms_properties.pop('Z', None)
+            if symbols is not None:
+                symbols = [s.capitalize() for s in symbols]
+                numbers = None
+
+            charges = atoms_properties.pop('charge', None)
+            positions = atoms_properties.pop('pos', None)
+
+            atoms = Atoms(symbols=symbols,
+                          positions=positions,
+                          numbers=numbers,
+                          charges=charges,
+                          cell=cell,
+                          pbc=pbc)
+
+            # Load results of previous calculations into SinglePointCalculator
+            results = {}
+
+            energy = frame_properties.pop(energy_label, None)
+            if energy is not None:
+                results['energy'] = energy
+
+            magmom = frame_properties.pop('magmom', None)
+            if magmom is not None:
+                results['magmom'] = magmom
+
+            free_energy = frame_properties.pop('free_energy', None)
+            if free_energy is not None:
+                results['free_energy'] = free_energy
+
+            forces = atoms_properties.pop(forces_label, None)
+            if forces is not None:
+                results['forces'] = forces
+
+            dipole = atoms_properties.pop('dipole', None)
+            # TODO: Make sure that it has the proper representation
+            if dipole is not None:
+                results['dipole'] = dipole
+
+            charges = atoms_properties.pop('charges', None)
+            # TODO: Make sure that it has the proper representation
+            if charges is not None:
+                results['charges'] = charges
+
+            magmoms = atoms_properties.pop('magmoms', None)
+            # TODO: Make sure that it has the proper representation
+            if magmoms is not None:
+                results['magmoms'] = magmoms
+
+            stress = atoms_properties.pop('stress', None)
+            if stress is not None:
+                stress = np.array(stress).reshape((3, 3), order='F')
+                stress = np.array([stress[0, 0],
+                                   stress[1, 1],
+                                   stress[2, 2],
+                                   stress[1, 2],
+                                   stress[0, 2],
+                                   stress[0, 1]])
+                results['stress'] = stress
+
+            if results:
+                calculator = SinglePointCalculator(atoms, **results)
+                atoms.set_calculator(calculator)
+
+            # Storing all the remaining properties in the info
+            atoms.info.update(frame_properties)
+            atoms.info.update(atoms_properties)
+
+            yield atoms
 
 
 def convert(text: str):
@@ -115,6 +207,11 @@ if __name__ == '__main__':
     directory = Path('data/')
     file = directory / 'bcc_bulk_54_expanded_2_high.xyz'
     # file = directory / 'GAP_6.xyz'
+
+    with XYZReader(file) as reader:
+        for atoms in reader.read_atoms(forces_label='force'):
+            print('==========================')
+            print(atoms)
 
     with XYZReader(file) as reader:
         for atoms in reader:

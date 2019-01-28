@@ -9,8 +9,6 @@ from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
 import numpy as np
 
-import ase.io.extxyz
-
 re_key = r'(?P<key>[A-Za-z_]+[A-Za-z0-9_-]*)'
 re_values = r'(?:' \
             r'(?P<single_value>[^\s"]+)' \

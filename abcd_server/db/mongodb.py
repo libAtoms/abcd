@@ -3,8 +3,10 @@ import base64
 import datetime
 import numpy as np
 from os import linesep
-
+import types
+from typing import Union, Generator
 from ase import Atoms
+import ase
 from ase.calculators.singlepoint import SinglePointCalculator
 
 from pymongo import MongoClient
@@ -15,6 +17,13 @@ from abcd_server.encoders.json import JSONEncoderOld, JSONDecoderOld
 from abcd_server.encoders.dictionary import to_dict
 from bson.objectid import ObjectId
 
+
+class PropertyNotImplementedError(NotImplementedError):
+    """Raised if a calculator does not implement the requested property."""
+
+
+# all_properties = ['energy', 'forces', 'stress', 'stresses', 'dipole',
+#                   'charges', 'magmom', 'magmoms', 'free_energy']
 
 class MongoDatabase(Database):
     """Wrapper to make database operations easy"""
@@ -38,11 +47,19 @@ class MongoDatabase(Database):
     def destroy(self):
         self.collection.remove()
 
-    def push(self, atoms: Atoms):
+    def push(self, atoms: Union[ase.Atoms, Generator, list]):
         # with DictEncoder() as encoder:
         #     data = encoder.encode(atoms)
-        data = atoms2dict(atoms)
-        self.collection.insert_one(data)
+        if isinstance(atoms, ase.Atoms):
+            data = atoms2dict(atoms)
+            self.collection.insert_one(data)
+
+        if isinstance(atoms, types.GeneratorType):
+            raise NotImplementedError('Generators')
+
+        if isinstance(atoms, list):
+            raise NotImplementedError()
+            # self.collection.insert_many()
 
     def pull(self, query=None, properties=None):
         # atoms = json.loads(message)
@@ -85,48 +102,52 @@ class MongoDatabase(Database):
         pass
 
 
-all_properties = ['energy', 'forces', 'stress', 'stresses', 'dipole',
-                  'charges', 'magmom', 'magmoms', 'free_energy']
-
-
-class PropertyNotImplementedError(NotImplementedError):
-    """Raised if a calculator does not implement the requested property."""
-
-
-def atoms2dict(atoms):
+def atoms2dict(atoms: ase.Atoms) -> dict:
     """ASE's original implementation"""
+    arrays = atoms.arrays.copy()
+
     dct = {
-        'numbers': atoms.numbers.tolist(),
-        'positions': atoms.positions.tolist(),
-        # 'unique_id': '{}'.format(randint(16 ** 31, 16 ** 32 - 1))
+        'cell': atoms.cell.tolist(),
+        'pbc': atoms.pbc.tolist(),
+        'numbers': arrays.pop('numbers').tolist(),
+        'positions': arrays.pop('positions').tolist(),
+        'arrays': {},
+        'info': {},
+        'results': {},
+        'constraints': [],
     }
-    if atoms.cell.any():
-        dct['pbc'] = atoms.pbc.tolist()
-        dct['cell'] = atoms.cell.tolist()
-    if atoms.has('initial_magmoms'):
-        dct['initial_magmoms'] = atoms.get_initial_magnetic_moments()
-    if atoms.has('initial_charges'):
-        dct['initial_charges'] = atoms.get_initial_charges()
-    if atoms.has('masses'):
-        dct['masses'] = atoms.get_masses()
-    if atoms.has('tags'):
-        dct['tags'] = atoms.get_tags()
-    if atoms.has('momenta'):
-        dct['momenta'] = atoms.get_momenta()
-    if atoms.constraints:
-        dct['constraints'] = [c.todict() for c in atoms.constraints]
+
+    for key, value in arrays.items():
+
+        if isinstance(value, np.ndarray):
+            dct['arrays'][key] = value.tolist()
+            continue
+
+        dct[key] = value
+
+    for key, value in atoms.info.items():
+
+        if isinstance(value, np.ndarray):
+            dct['info'][key] = value.tolist()
+            continue
+
+        dct['info'][key] = value
+
     if atoms.calc is not None:
-        dct['calculator'] = atoms.calc.name.lower()
-        dct['calculator_parameters'] = atoms.calc.todict()
-        if len(atoms.calc.check_state(atoms)) == 0:
-            for prop in all_properties:
-                try:
-                    x = atoms.calc.get_property(prop, atoms, False)
-                except PropertyNotImplementedError:
-                    pass
-                else:
-                    if x is not None:
-                        dct[prop] = x.tolist()
+        dct['results']['calculator_name'] = atoms.calc.name.lower(),
+        dct['results']['calculator_parameters'] = atoms.calc.todict()
+
+        for key, value in atoms.calc.results.items():
+
+            if isinstance(value, np.ndarray):
+                dct['results'][key] = value.tolist()
+                continue
+
+            dct['results'][key] = value
+
+    # if atoms.constraints:
+    #     dct['constraints'] = [c.todict() for c in atoms.constraints]
+
     return dct
 
 
@@ -137,26 +158,26 @@ if __name__ == '__main__':
     db = MongoDatabase('mongodb://localhost:27017/')
     db.info()
 
-    for at in iread('../../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
+    for atoms in iread('../../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
         # print(at)
-        at.calc.results['forces'] = at.arrays['force']
+        atoms.calc.results['forces'] = atoms.arrays['force']
         # at.arrays['force'] = None
 
-        json_data = json.dumps(at, cls=JSONEncoderOld)
+        json_data = json.dumps(atoms, cls=JSONEncoderOld)
         print(json_data)
 
         atom_dict = json.loads(json_data, cls=JSONDecoderOld)
         print(atom_dict)
 
-        print(at == atom_dict)
+        print(atoms == atom_dict)
 
     with JSONEncoder() as encoder:
-        data = encoder.encode(at)
+        data = encoder.encode(atoms)
 
     print(data)
 
     with DictEncoder() as encoder:
-        data = encoder.encode(at)
+        data = encoder.encode(atoms)
 
     pprint(data)
 
@@ -164,4 +185,4 @@ if __name__ == '__main__':
 
     dumps(data)
 
-    db.collection.insert_one(atoms2dict(at))
+    db.collection.insert_one(atoms2dict(atoms))

@@ -62,6 +62,10 @@ class DictEncoder(BaseEncoderNew):
 
         return dct
 
+    def encode_many(self, traj):
+        for atoms in traj:
+            yield self.encode(atoms)
+
 #
 # class DictEncoder(BaseEncoder):
 #     # default_properties = ['numbers', 'positions']

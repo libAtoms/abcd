@@ -50,7 +50,7 @@ class MongoDatabase(Database):
             self.collection.insert_many(data)
 
     def upload(self, file):
-        data = iread(file)
+        data = ase.io.iread(file)
         self.push(data)
 
     def pull(self, query=None, properties=None):
@@ -123,9 +123,5 @@ if __name__ == '__main__':
         data = encoder.encode(atoms)
 
     pprint(data)
-
-    from bson.json_util import dumps, _json_convert
-
-    dumps(data)
 
     db.collection.insert_one(DictEncoder().encode(atoms))

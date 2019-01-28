@@ -1,29 +1,20 @@
 import json
-import base64
-import datetime
-import numpy as np
 from os import linesep
+
 import types
-from typing import Union, Generator
-from ase import Atoms
+from typing import Union, Generator, Iterable
+
 import ase
-from ase.calculators.singlepoint import SinglePointCalculator
-
 from pymongo import MongoClient
-from abcd_server.db.base import Database
 
+from abcd_server.db.base import Database
 from abcd_server.encoders import JSONEncoder, DictEncoder
 from abcd_server.encoders.json import JSONEncoderOld, JSONDecoderOld
-from abcd_server.encoders.dictionary import to_dict
-from bson.objectid import ObjectId
 
 
 class PropertyNotImplementedError(NotImplementedError):
     """Raised if a calculator does not implement the requested property."""
 
-
-# all_properties = ['energy', 'forces', 'stress', 'stresses', 'dipole',
-#                   'charges', 'magmom', 'magmoms', 'free_energy']
 
 class MongoDatabase(Database):
     """Wrapper to make database operations easy"""
@@ -47,19 +38,20 @@ class MongoDatabase(Database):
     def destroy(self):
         self.collection.remove()
 
-    def push(self, atoms: Union[ase.Atoms, Generator, list]):
+    def push(self, atoms: Union[ase.Atoms, Iterable]):
         # with DictEncoder() as encoder:
         #     data = encoder.encode(atoms)
         if isinstance(atoms, ase.Atoms):
-            data = atoms2dict(atoms)
+            data = DictEncoder().encode(atoms)
             self.collection.insert_one(data)
 
-        if isinstance(atoms, types.GeneratorType):
-            raise NotImplementedError('Generators')
+        if isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
+            data = DictEncoder().encode_many(atoms)
+            self.collection.insert_many(data)
 
-        if isinstance(atoms, list):
-            raise NotImplementedError()
-            # self.collection.insert_many()
+    def upload(self, file):
+        data = iread(file)
+        self.push(data)
 
     def pull(self, query=None, properties=None):
         # atoms = json.loads(message)
@@ -71,8 +63,8 @@ class MongoDatabase(Database):
     def search(self, query_string: str):
         raise NotImplementedError
 
-    def get_atoms(self, id: str) -> Atoms:
-        raise NotImplementedError
+    def get_atoms(self, id: str) -> ase.Atoms:
+        raise NotImplementedError()
 
     def __repr__(self):
         return f'{self.__class__.__name__}(' \
@@ -81,7 +73,7 @@ class MongoDatabase(Database):
             f'collection={self.collection.name})'
 
     def _repr_html_(self):
-        """jupyter notebook representation"""
+        """Jupyter notebook representation"""
         return '<b>ABCD MongoDB database</b>'
 
     def print_info(self):
@@ -100,55 +92,6 @@ class MongoDatabase(Database):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
-
-
-def atoms2dict(atoms: ase.Atoms) -> dict:
-    """ASE's original implementation"""
-    arrays = atoms.arrays.copy()
-
-    dct = {
-        'cell': atoms.cell.tolist(),
-        'pbc': atoms.pbc.tolist(),
-        'numbers': arrays.pop('numbers').tolist(),
-        'positions': arrays.pop('positions').tolist(),
-        'arrays': {},
-        'info': {},
-        'results': {},
-        'constraints': [],
-    }
-
-    for key, value in arrays.items():
-
-        if isinstance(value, np.ndarray):
-            dct['arrays'][key] = value.tolist()
-            continue
-
-        dct[key] = value
-
-    for key, value in atoms.info.items():
-
-        if isinstance(value, np.ndarray):
-            dct['info'][key] = value.tolist()
-            continue
-
-        dct['info'][key] = value
-
-    if atoms.calc is not None:
-        dct['results']['calculator_name'] = atoms.calc.name.lower(),
-        dct['results']['calculator_parameters'] = atoms.calc.todict()
-
-        for key, value in atoms.calc.results.items():
-
-            if isinstance(value, np.ndarray):
-                dct['results'][key] = value.tolist()
-                continue
-
-            dct['results'][key] = value
-
-    # if atoms.constraints:
-    #     dct['constraints'] = [c.todict() for c in atoms.constraints]
-
-    return dct
 
 
 if __name__ == '__main__':
@@ -185,4 +128,4 @@ if __name__ == '__main__':
 
     dumps(data)
 
-    db.collection.insert_one(atoms2dict(atoms))
+    db.collection.insert_one(DictEncoder().encode(atoms))

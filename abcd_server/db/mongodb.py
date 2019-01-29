@@ -2,14 +2,14 @@ import json
 from os import linesep
 
 import types
-from typing import Union, Generator, Iterable
+from typing import Union, Iterable
 
 import ase
 from pymongo import MongoClient
 
 from abcd_server.db.base import Database
-from abcd_server.encoders import JSONEncoderOld, DictEncoder
-from abcd_server.encoders.myjson import JSONEncoderOld, JSONDecoderOld
+from formats import DictEncoder
+from formats.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
 
 
 class PropertyNotImplementedError(NotImplementedError):
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
         print(atoms == atom_dict)
 
-    with JSONEncoderOld() as encoder:
+    with JSONEncoder() as encoder:
         data = encoder.encode(atoms)
 
     print(data)

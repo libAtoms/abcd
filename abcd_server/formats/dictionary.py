@@ -1,10 +1,9 @@
 import numpy as np
 
 from ase import Atoms
-from ase.calculators.calculator import get_calculator
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from abcd_server.encoders.base import BaseEncoder, BaseDecoder
+from formats.base import BaseEncoder, BaseDecoder
 
 
 class PropertyNotImplementedError(NotImplementedError):
@@ -159,11 +158,6 @@ if __name__ == '__main__':
     from pathlib import Path
     from ase.io import iread
 
-    from ase.db.row import AtomsRow, atoms2dict
-
-    import bson
-    from bson.codec_options import CodecOptions
-
     direcotry = Path('../../utils/data/')
 
     file = direcotry / 'bcc_bulk_54_expanded_2_high.xyz'
@@ -185,4 +179,4 @@ if __name__ == '__main__':
         print(new_atoms)
         print(new_atoms == atoms)
         #
-        from ase.db.row import AtomsRow, atoms2dict
+

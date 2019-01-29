@@ -1,6 +1,6 @@
 import json
 import base64
-from abcd_server.encoders.base import BaseEncoderOld
+from formats.base import BaseEncoderOld
 import numpy as np
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
@@ -26,7 +26,7 @@ class JSONNumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-class JSONEncoderOld(BaseEncoderOld):
+class JSONEncoder(BaseEncoderOld):
 
     def visit_atoms(self, atoms):
         """walk through on the structure of an Atoms object """
@@ -123,7 +123,6 @@ class JSONDecoderOld(json.JSONDecoder):
 if __name__ == '__main__':
 
     from ase.io import iread
-    from pprint import pprint
 
     for atoms in iread('../../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
         # print(at)

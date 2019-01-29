@@ -1,11 +1,11 @@
 import logging
 import requests
 from os import linesep
-from typing import Callable, Iterable, Union, Optional, List
+from typing import List
 
 import ase
 from abcd_server.db.base import Database
-from abcd_server.encoders import DictEncoder
+from formats import DictEncoder
 
 logger = logging.getLogger(__name__)
 

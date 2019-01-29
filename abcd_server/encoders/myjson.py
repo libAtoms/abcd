@@ -1,6 +1,6 @@
 import json
 import base64
-from abcd_server.encoders.base import BaseEncoder
+from abcd_server.encoders.base import BaseEncoderOld
 import numpy as np
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
@@ -26,7 +26,7 @@ class JSONNumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-class JSONEncoder(BaseEncoder):
+class JSONEncoderOld(BaseEncoderOld):
 
     def visit_atoms(self, atoms):
         """walk through on the structure of an Atoms object """
@@ -138,7 +138,7 @@ if __name__ == '__main__':
 
         print(atoms == atom_dict)
 
-    with JSONEncoder() as encoder:
+    with JSONEncoderOld() as encoder:
         data = encoder.encode(atoms)
 
     print(data)

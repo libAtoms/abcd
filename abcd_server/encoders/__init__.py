@@ -1,4 +1,4 @@
-from .json import JSONEncoder
+from .myjson import JSONEncoderOld
 from .dictionary import DictEncoder
 
-__all__ = [JSONEncoder, DictEncoder]
+__all__ = [JSONEncoderOld, DictEncoder]

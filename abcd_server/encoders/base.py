@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 
-class BaseEncoderNew(metaclass=ABCMeta):
+class BaseEncoder(metaclass=ABCMeta):
     """Abstract class for the visitor pattern"""
 
     def __init__(self):
@@ -20,7 +20,26 @@ class BaseEncoderNew(metaclass=ABCMeta):
         pass
 
 
-class BaseEncoder(object, metaclass=ABCMeta):
+class BaseDecoder(metaclass=ABCMeta):
+    """Abstract class for the visitor pattern"""
+
+    def __init__(self):
+        pass
+
+    def __enter__(self):
+        """support with statement and error handling in python"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    @abstractmethod
+    def decode(self, data):
+        """main function"""
+        pass
+
+
+class BaseEncoderOld(object, metaclass=ABCMeta):
     """Abstract class for the visitor pattern"""
     default_properties = []
 

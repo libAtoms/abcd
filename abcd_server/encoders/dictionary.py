@@ -1,20 +1,23 @@
-import ase
 import numpy as np
 
-from abcd_server.encoders.base import BaseEncoder, BaseEncoderNew
+from ase import Atoms
+from ase.calculators.calculator import get_calculator
+from ase.calculators.singlepoint import SinglePointCalculator
+
+from abcd_server.encoders.base import BaseEncoder, BaseDecoder
 
 
 class PropertyNotImplementedError(NotImplementedError):
     """Raised if a calculator does not implement the requested property."""
 
 
-class DictEncoder(BaseEncoderNew):
+class DictEncoder(BaseEncoder):
     # default_properties = ['numbers', 'positions']
 
     def __init__(self):
         super().__init__()
 
-    def encode(self, atoms: ase.Atoms) -> dict:
+    def encode(self, atoms: Atoms) -> dict:
         """ASE's original implementation"""
         arrays = atoms.arrays.copy()
 
@@ -46,7 +49,7 @@ class DictEncoder(BaseEncoderNew):
             dct['info'][key] = value
 
         if atoms.calc is not None:
-            dct['results']['calculator_name'] = atoms.calc.name.lower(),
+            dct['results']['calculator_name'] = atoms.calc.__class__.__name__
             dct['results']['calculator_parameters'] = atoms.calc.todict()
 
             for key, value in atoms.calc.results.items():
@@ -65,6 +68,39 @@ class DictEncoder(BaseEncoderNew):
     def encode_many(self, traj):
         for atoms in traj:
             yield self.encode(atoms)
+
+
+class DictDecoder(BaseDecoder):
+
+    def __init__(self):
+        super().__init__()
+
+    def decode(self, data: dict):
+        cell = data.pop('cell', None)
+        pbc = data.pop('pbc', None)
+
+        numbers = data.pop('numbers', None)
+        positions = data.pop('positions', None)
+
+        atoms = Atoms(numbers=numbers,
+                      cell=cell,
+                      pbc=pbc,
+                      positions=positions)
+
+        atoms.arrays.update(data['arrays'])
+        atoms.info.update(data['info'])
+
+        if 'calculator_name' in data['results']:
+            calculator_name = data['results'].pop('calculator_name')
+            params = data['results'].pop('calculator_parameters', {})
+
+            # TODO: Proper initialisation fo Calculators
+            # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
+
+            atoms.calc = SinglePointCalculator(atoms, **params, **data['results'])
+
+        return atoms
+
 
 #
 # class DictEncoder(BaseEncoder):
@@ -135,14 +171,18 @@ if __name__ == '__main__':
     for atoms in iread(file.as_posix(), index=slice(1)):
         print(atoms)
 
+        # Fixing force label
+        atoms.calc.results['forces'] = atoms.arrays.pop('force')
+
         with DictEncoder() as encoder:
             d = encoder.encode(atoms)
 
         print(d)
 
-        new_atoms = AtomsRow(d).toatoms()
+        with DictDecoder() as decoder:
+            new_atoms = decoder.decode(d)
+
         print(new_atoms)
         print(new_atoms == atoms)
-
-    d = encoder.encode(atoms)
-    print(bson.BSON.encode(d))
+        #
+        from ase.db.row import AtomsRow, atoms2dict

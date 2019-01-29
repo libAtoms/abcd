@@ -8,8 +8,8 @@ import ase
 from pymongo import MongoClient
 
 from abcd_server.db.base import Database
-from abcd_server.encoders import JSONEncoder, DictEncoder
-from abcd_server.encoders.json import JSONEncoderOld, JSONDecoderOld
+from abcd_server.encoders import JSONEncoderOld, DictEncoder
+from abcd_server.encoders.myjson import JSONEncoderOld, JSONDecoderOld
 
 
 class PropertyNotImplementedError(NotImplementedError):
@@ -79,11 +79,9 @@ class MongoDatabase(Database):
     def print_info(self):
         """shows basic information about the connected database"""
 
-        out = linesep.join([
-            '{:=^50}'.format(' ABCD MongoDB '),
-            '{:>10}: {}'.format('type', 'mongodb'),
-            linesep.join('{:>10}: {}'.format(k, v) for k, v in self.info().items())
-        ])
+        out = linesep.join(['{:=^50}'.format(' ABCD MongoDB '),
+                            '{:>10}: {}'.format('type', 'mongodb'),
+                            linesep.join('{:>10}: {}'.format(k, v) for k, v in self.info().items())])
 
         print(out)
 
@@ -114,7 +112,7 @@ if __name__ == '__main__':
 
         print(atoms == atom_dict)
 
-    with JSONEncoder() as encoder:
+    with JSONEncoderOld() as encoder:
         data = encoder.encode(atoms)
 
     print(data)

@@ -1,9 +1,7 @@
 import copy
 from flask import Blueprint, request, jsonify
 
-# from app.db import mongo
-
-
+from app.models import Atoms
 
 bp = Blueprint('api', __name__)
 
@@ -56,8 +54,7 @@ def query_calculation():
 # endpoint to show all users
 @bp.route("/calculation", methods=["GET"])
 def get_calculation():
-
-    all_calculations = [str(calculation['_id']) for calculation in mongo.db.atoms.find()]
+    all_calculations = [str(calculation['id']) for calculation in Atoms.objects]
 
     return jsonify(all_calculations)
 
@@ -65,41 +62,19 @@ def get_calculation():
 # endpoint to get user detail by id
 @bp.route("/calculation/<calc_id>", methods=["GET"])
 def calculation_detail(calc_id):
-    calculation = mongo.db.atoms.find_one_or_404(calc_id)
+    calculation = Atoms.objects.get_or_404(id=calc_id)
+    return jsonify(calculation)
 
-    return jsonify(fix_id(calculation))
 
-
-# endpoint to update user
 @bp.route("/calculation", methods=["PUT"])
 def add_calculation():
-    new_calculation = request.json
-    ack = mongo.db.atoms.insert_one(new_calculation)
-
-    # return make_response('', 403)
-    return jsonify(str(ack.inserted_id))
+    atoms = Atoms(**request.json).save()
+    return jsonify(str(atoms.id))
 
 
 # endpoint to delete user
 @bp.route("/calculation/<calc_id>", methods=["DELETE"])
 def delete_calculation(calc_id):
-    calculation = mongo.db.atoms.find_one_or_404(calc_id)
-    _ = mongo.db.atoms.delete_one(calculation)
-
-    return jsonify(fix_id(calculation))
-    # return make_response('The item has been deleted!', 200)
-
-
-@bp.route("/search/", methods=['GET'])
-def search_calculation():
-    data = [str(calc['_id']) for calc in mongo.db.atoms.find()]
-    return jsonify(data)
-
-# # @api.route('/stream_test')
-# # def stream_test():
-# #     def generate():
-# #         # create and return your data in small parts here
-# #         for i in range(10000):
-# #             yield str(i)
-# #
-# #     return Response(stream_with_context(generate()))
+    calculation = Atoms.objects.get_or_404(id=calc_id)
+    calculation.delete()
+    return jsonify(str(calculation.id))

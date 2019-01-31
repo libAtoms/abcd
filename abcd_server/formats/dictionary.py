@@ -3,7 +3,7 @@ import numpy as np
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from formats.base import BaseEncoder, BaseDecoder
+from abcd_server.formats.base import BaseEncoder, BaseDecoder
 
 
 class PropertyNotImplementedError(NotImplementedError):
@@ -19,16 +19,18 @@ class DictEncoder(BaseEncoder):
     def encode(self, atoms: Atoms) -> dict:
         """ASE's original implementation"""
         arrays = atoms.arrays.copy()
-
+        natoms = len(atoms)
         dct = {
-            'cell': atoms.cell.tolist(),
-            'pbc': atoms.pbc.tolist(),
-            'numbers': arrays.pop('numbers').tolist(),
-            'positions': arrays.pop('positions').tolist(),
-            'arrays': {},
-            'info': {},
-            'results': {},
-            'constraints': [],
+            'arrays': {
+                'numbers': arrays.pop('numbers').tolist(),
+                'positions': arrays.pop('positions').tolist(),
+
+            },
+            'info': {
+                'cell': atoms.cell.tolist(),
+                'pbc': atoms.pbc.tolist(),
+                'constraints': [],
+            },
         }
 
         for key, value in arrays.items():
@@ -37,7 +39,7 @@ class DictEncoder(BaseEncoder):
                 dct['arrays'][key] = value.tolist()
                 continue
 
-            dct[key] = value
+            dct['arrays'][key] = value
 
         for key, value in atoms.info.items():
 
@@ -48,16 +50,20 @@ class DictEncoder(BaseEncoder):
             dct['info'][key] = value
 
         if atoms.calc is not None:
-            dct['results']['calculator_name'] = atoms.calc.__class__.__name__
-            dct['results']['calculator_parameters'] = atoms.calc.todict()
+            dct['info']['calculator_name'] = atoms.calc.__class__.__name__
+            dct['info']['calculator_parameters'] = atoms.calc.todict()
 
             for key, value in atoms.calc.results.items():
 
                 if isinstance(value, np.ndarray):
-                    dct['results'][key] = value.tolist()
+                    if value.shape[0] == natoms:
+                        dct['arrays'][key] = value.tolist()
+                    else:
+                        dct['info'][key] = value.tolist()
+
                     continue
 
-                dct['results'][key] = value
+                dct['info'][key] = value
 
         # if atoms.constraints:
         #     dct['constraints'] = [c.todict() for c in atoms.constraints]
@@ -75,28 +81,28 @@ class DictDecoder(BaseDecoder):
         super().__init__()
 
     def decode(self, data: dict):
-        cell = data.pop('cell', None)
-        pbc = data.pop('pbc', None)
+        cell = data['info'].pop('cell', None)
+        pbc = data['info'].pop('pbc', None)
 
-        numbers = data.pop('numbers', None)
-        positions = data.pop('positions', None)
+        numbers = data['arrays'].pop('numbers', None)
+        positions = data['arrays'].pop('positions', None)
 
         atoms = Atoms(numbers=numbers,
                       cell=cell,
                       pbc=pbc,
                       positions=positions)
 
-        atoms.arrays.update(data['arrays'])
-        atoms.info.update(data['info'])
-
-        if 'calculator_name' in data['results']:
-            calculator_name = data['results'].pop('calculator_name')
-            params = data['results'].pop('calculator_parameters', {})
+        if 'calculator_name' in data['info']:
+            calculator_name = data['info'].pop('calculator_name')
+            params = data['info'].pop('calculator_parameters', {})
 
             # TODO: Proper initialisation fo Calculators
             # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
 
             atoms.calc = SinglePointCalculator(atoms, **params, **data['results'])
+
+        atoms.arrays.update(data['arrays'])
+        atoms.info.update(data['info'])
 
         return atoms
 
@@ -179,4 +185,3 @@ if __name__ == '__main__':
         print(new_atoms)
         print(new_atoms == atoms)
         #
-

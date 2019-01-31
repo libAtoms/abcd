@@ -1,6 +1,6 @@
 import json
 import base64
-from formats.base import BaseEncoderOld
+from abcd_server.formats.base import BaseEncoderOld
 import numpy as np
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator

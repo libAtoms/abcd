@@ -1,10 +1,9 @@
 import logging
-
 from flask import Flask, url_for, render_template
-
 from app.db import db
 
 logger = logging.getLogger(__name__)
+
 
 
 def create_app():
@@ -12,17 +11,31 @@ def create_app():
 
     app.config.from_mapping(
         SECRET_KEY='dev',
+        DEBUG=True,
+
         # SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.root_path, 'app.db'),
         # SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'app.db'),
         # SQLALCHEMY_DATABASE_URI='postgresql://docker:docker@localhost/postgres',
         # SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        # MONGO_URI='mongodb://localhost:27017/atoms',
-        MONGO_URI='mongodb://fekad:qwe123@ds211613.mlab.com:11613/fekad_test'
-    )
-    app.config.from_pyfile('config.py', silent=True)
 
+        # Configurations for PyMongo
+        # MONGO_URI='mongodb://localhost:27017/abcd',
+        # MONGO_URI='mongodb://fekad:qwe123@ds211613.mlab.com:11613/fekad_test'
+
+        # Configurations for Flask_mongoengine
+        MONGODB_SETTINGS={
+            'db': 'atoms',
+            'host': 'mongodb://localhost:27017/abcd'
+        }
+    )
+    # app.config.from_pyfile('config.py', silent=True)
+    app.config['DEBUG_TB_PANELS'] = ['flask_mongoengine.panels.MongoDebugPanel']
+
+    # with app.app_context():
     db.init_app(app)
 
+    # con = connect('abcd', host='mongodb://localhost/', alias='default')
+    # db = con['abcd']
     # # # This will create the database file using SQLAlchemy
     # with app.app_context():
     #     db.create_all()

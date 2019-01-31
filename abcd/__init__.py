@@ -17,8 +17,6 @@ class ABCD(object):
             raise NotImplementedError('Unknown url!')
 
 
-
-
 if __name__ == '__main__':
     from ase.io import iread
 

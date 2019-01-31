@@ -1,4 +1,8 @@
-from flask_pymongo import PyMongo
+from flask_mongoengine import MongoEngine
 
-mongo = PyMongo()
-db = mongo
+# from app import models
+
+db = MongoEngine()
+
+from flask_pymongo import PyMongo
+# mongo = PyMongo()

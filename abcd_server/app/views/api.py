@@ -1,7 +1,9 @@
 import copy
 from flask import Blueprint, request, jsonify
 
-from app.db import mongo
+# from app.db import mongo
+
+
 
 bp = Blueprint('api', __name__)
 
@@ -54,13 +56,14 @@ def query_calculation():
 # endpoint to show all users
 @bp.route("/calculation", methods=["GET"])
 def get_calculation():
+
     all_calculations = [str(calculation['_id']) for calculation in mongo.db.atoms.find()]
 
     return jsonify(all_calculations)
 
 
 # endpoint to get user detail by id
-@bp.route("/calculation/<ObjectId:calc_id>", methods=["GET"])
+@bp.route("/calculation/<calc_id>", methods=["GET"])
 def calculation_detail(calc_id):
     calculation = mongo.db.atoms.find_one_or_404(calc_id)
 
@@ -78,7 +81,7 @@ def add_calculation():
 
 
 # endpoint to delete user
-@bp.route("/calculation/<ObjectId:calc_id>", methods=["DELETE"])
+@bp.route("/calculation/<calc_id>", methods=["DELETE"])
 def delete_calculation(calc_id):
     calculation = mongo.db.atoms.find_one_or_404(calc_id)
     _ = mongo.db.atoms.delete_one(calculation)

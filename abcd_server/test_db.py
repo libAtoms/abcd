@@ -1,30 +1,59 @@
-from app import db, create_app
-from app.db import Atoms
+from pathlib import Path
 
-from ase.io import read
+from ase.io import iread, read
+from utils.ext_xyz import XYZReader
+
+from abcd import ABCD
 
 if __name__ == '__main__':
-    app = create_app()
+    url = 'mongodb://localhost:27017'
+    # url = 'http://localhost:5000/api'
+    abcd = ABCD(url)
+    print(abcd)
 
-    traj = read('../utils/data/bcc_bulk_54_expanded_2_high.xyz')
-    print(traj)
-    # data = {"key1": "value1", "key2": "value2"}
+    abcd.print_info()
 
-    u = Atoms(numbers={"key1": "value1", "key2": "value2"})
 
-    # # This will create the database file using SQLAlchemy
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
+    with abcd as db:
+        db.destroy()
 
-    with app.app_context():
-        db.session.add(u)
-        db.session.commit()
 
-    with app.app_context():
-        atoms = Atoms.query.all()
+    direcotry = Path('../utils/data/')
+    file = direcotry / 'bcc_bulk_54_expanded_2_high.xyz'
+    # file = direcotry / 'GAP_6.xyz'
 
-    print(atoms)
+    traj = read(file.as_posix(), index=slice(None))
 
-    for at in atoms:
-        print(at.id, at.numbers)
+    db.push(traj)
+    abcd.print_info()
+
+# from app import db, create_app
+# from app.db import Atoms
+#
+# from ase.io import read
+#
+# if __name__ == '__main__':
+#     app = create_app()
+#
+#     traj = read('../utils/data/bcc_bulk_54_expanded_2_high.xyz')
+#     print(traj)
+#     # data = {"key1": "value1", "key2": "value2"}
+#
+#     u = Atoms(numbers={"key1": "value1", "key2": "value2"})
+#
+#     # # This will create the database file using SQLAlchemy
+#     with app.app_context():
+#         db.drop_all()
+#         db.create_all()
+#
+#     with app.app_context():
+#         db.session.add(u)
+#         db.session.commit()
+#
+#     with app.app_context():
+#         atoms = Atoms.query.all()
+#
+#     print(atoms)
+#
+#     for at in atoms:
+#         print(at.id, at.numbers)

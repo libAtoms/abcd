@@ -5,7 +5,7 @@ from typing import List
 
 import ase
 from abcd_server.db.base import Database
-from formats import DictEncoder
+from abcd_server.formats import DictEncoder
 
 logger = logging.getLogger(__name__)
 

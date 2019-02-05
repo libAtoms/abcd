@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid">
+    <!--<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">-->
+        <!--<h1 class="h2">Dashboard</h1>-->
+    <!--</div>-->
+
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <iframe style="width: 98vw;height: 80vh;position: relative;" src="{{url}}" frameborder="0" allowfullscreen></iframe>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+{%- endblock %}

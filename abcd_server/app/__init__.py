@@ -5,13 +5,12 @@ from app.db import db
 logger = logging.getLogger(__name__)
 
 
-
 def create_app():
     app = Flask(__name__)
 
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DEBUG=True,
+        # DEBUG=True,
 
         # SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.root_path, 'app.db'),
         # SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'app.db'),
@@ -48,6 +47,14 @@ def create_app():
 
     from app.views import api
     app.register_blueprint(api.bp, url_prefix='/api')
+
+    from app.views import graphql
+    app.register_blueprint(graphql.bp, url_prefix='/graphql')
+
+    from app.nav import nav, BootstrapRenderer
+    from flask_nav import register_renderer
+    register_renderer(app, 'BootstrapRenderer', BootstrapRenderer)
+    nav.init_app(app)
 
     # @app.route('/user/<username>')
     # def show_user(username):

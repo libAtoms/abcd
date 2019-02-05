@@ -16,30 +16,85 @@ class DictEncoder(BaseEncoder):
     def __init__(self):
         super().__init__()
 
+    # def encode(self, atoms: Atoms) -> dict:
+    #     """ASE's original implementation"""
+    #     arrays = atoms.arrays.copy()
+    #     natoms = len(atoms)
+    #     dct = {
+    #         'arrays': {
+    #             'numbers': arrays.pop('numbers').tolist(),
+    #             'positions': arrays.pop('positions').tolist(),
+    #
+    #         },
+    #         'info': {
+    #             'cell': atoms.cell.tolist(),
+    #             'pbc': atoms.pbc.tolist(),
+    #             'constraints': [],
+    #         },
+    #         'pbc': atoms.pbc.tolist(),
+    #     }
+    #
+    #     for key, value in arrays.items():
+    #
+    #         if isinstance(value, np.ndarray):
+    #             dct['arrays'][key] = value.tolist()
+    #             continue
+    #
+    #         dct['arrays'][key] = value
+    #
+    #     for key, value in atoms.info.items():
+    #
+    #         if isinstance(value, np.ndarray):
+    #             dct['info'][key] = value.tolist()
+    #             continue
+    #
+    #         dct['info'][key] = value
+    #
+    #     if atoms.calc is not None:
+    #         dct['info']['calculator_name'] = atoms.calc.__class__.__name__
+    #         dct['info']['calculator_parameters'] = atoms.calc.todict()
+    #
+    #         for key, value in atoms.calc.results.items():
+    #
+    #             if isinstance(value, np.ndarray):
+    #                 if value.shape[0] == natoms:
+    #                     dct['arrays'][key] = value.tolist()
+    #                 else:
+    #                     dct['info'][key] = value.tolist()
+    #
+    #                 continue
+    #
+    #             dct['info'][key] = value
+    #
+    #     # if atoms.constraints:
+    #     #     dct['constraints'] = [c.todict() for c in atoms.constraints]
+    #
+    #     return dct
+
     def encode(self, atoms: Atoms) -> dict:
         """ASE's original implementation"""
         arrays = atoms.arrays.copy()
         natoms = len(atoms)
         dct = {
-            'arrays': {
-                'numbers': arrays.pop('numbers').tolist(),
-                'positions': arrays.pop('positions').tolist(),
-
-            },
+            'arrays': [
+                {'name': 'numbers', 'value': arrays.pop('numbers').tolist()},
+                {'name': 'positions', 'value': arrays.pop('positions').tolist()},
+            ],
             'info': {
                 'cell': atoms.cell.tolist(),
                 'pbc': atoms.pbc.tolist(),
                 'constraints': [],
             },
+            'pbc': atoms.pbc.tolist(),
         }
 
         for key, value in arrays.items():
 
             if isinstance(value, np.ndarray):
-                dct['arrays'][key] = value.tolist()
+                dct['arrays'].append({'name': key, 'value': value.tolist()})
                 continue
 
-            dct['arrays'][key] = value
+            dct['arrays'].append({'name': key, 'value': value})
 
         for key, value in atoms.info.items():
 
@@ -57,7 +112,7 @@ class DictEncoder(BaseEncoder):
 
                 if isinstance(value, np.ndarray):
                     if value.shape[0] == natoms:
-                        dct['arrays'][key] = value.tolist()
+                        dct['arrays'].append({'name': key, 'value': value.tolist()})
                     else:
                         dct['info'][key] = value.tolist()
 

@@ -1,32 +1,59 @@
 # from mongoengine import Document, EmbeddedDocument, fields
 from app.db import db
 
+from mongoengine import Document, EmbeddedDocument
+from mongoengine.fields import (
+    DateTimeField, EmbeddedDocumentField,
+    ListField, ReferenceField, StringField, IntField, BooleanField, FloatField, DictField, ObjectIdField
+)
 
-class Arrays(db.EmbeddedDocument):
-    meta = {'strict': False}
-    numbers = db.ListField(db.IntField(), required=True)
-    positions = db.ListField(db.ListField(db.FloatField()), required=True)
+# class Arrays(EmbeddedDocument):
+#     meta = {'strict': False}
+#     numbers = ListField(IntField())
+#     # positions = db.ListField(db.ListField(db.FloatField()))
+#
+#     # forces = db.ListField()
 
-    forces = db.ListField()
+# class Arrays(EmbeddedDocument):
+#     # meta = {'strict': False}
+#     name = StringField()
+#     value = ListField()
+#     # positions = db.ListField(db.ListField(db.FloatField()))
+
+    # forces = db.ListField()
+
+# #
+# class Info(EmbeddedDocument):
+#     meta = {'strict': False}
+#     #     pbc = ListField(BooleanField())
+#     #     # cell = db.ListField(db.ListField(db.FloatField()), required=True)
+#     #
+#     #     energy = FloatField()
+#     #
+#     calculator_name = StringField()
+#     calculator_parameters = ListField()
 
 
-class Info(db.EmbeddedDocument):
-    meta = {'strict': False}
-    pbc = db.ListField(db.BooleanField(), required=True)
-    cell = db.ListField(db.ListField(db.FloatField()), required=True)
-
-    energy = db.FloatField()
-
-    calculator_name = db.StringField()
-    calculator_parameters = db.DictField()
-    constraints = db.ListField()
+#     constraints = ListField()
+#
+#
+# class Atoms(db.Document):
+#     meta = {'collection': 'atoms', 'strict': False}
+#
+#     arrays = DictField(EmbeddedDocumentField(Arrays))
+#     # info = db.EmbeddedDocumentField(Info)
 
 
-class Atoms(db.Document):
+class Atoms(Document):
     meta = {'collection': 'atoms', 'strict': False}
+    # id = ObjectIdField()
+    # pbc = ListField(db.BooleanField())
+    # numbers = db.ListField(db.IntField())
+    arrays = ListField(DictField())
+    info = DictField()
+    # info = EmbeddedDocumentField(Info)
 
-    arrays = db.EmbeddedDocumentField(Arrays)
-    info = db.EmbeddedDocumentField(Info)
+    # positions = db.ListField(db.ListField(db.FloatField()))
 
 
 sample = {

@@ -10,20 +10,22 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='database.css')}}" rel="stylesheet">
+
     <title>{% block title %}{% if title %}{{ title }}{% else %}Welcome to ...{% endif %}{% endblock %}</title>
     {% endblock %}
 </head>
 <body>
-<div id="container">
-    {% block content %}
+<header>
+    {% block navbar %}
+    {{nav.topnavbar.render(renderer='BootstrapRenderer')}}
     {% endblock %}
-</div>
+</header>
 
-<div id="footer">
-    {% block footer %}
-    &copy; Copyright 2010 by <a href="http://domain.invalid/">you</a>.
-    {% endblock %}
-</div>
+{% block content %}
+{% endblock %}
+
 
 <!-- Optional JavaScript -->
 <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -38,6 +40,3 @@
         crossorigin="anonymous"></script>
 </body>
 </html>
-
-
-

@@ -1,9 +1,13 @@
 import copy
 from flask import Blueprint, request, jsonify
+from flask_graphql import GraphQLView
 
 from app.models import Atoms
+from app.schema import schema
 
 bp = Blueprint('api', __name__)
+
+bp.add_url_rule('graphql', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
 
 
 def fix_id(calc):

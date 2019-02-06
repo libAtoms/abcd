@@ -3,9 +3,10 @@ from app.db import db
 
 from mongoengine import Document, EmbeddedDocument
 from mongoengine.fields import (
-    DateTimeField, EmbeddedDocumentField,
+    DateTimeField, EmbeddedDocumentField, EmbeddedDocumentListField,
     ListField, ReferenceField, StringField, IntField, BooleanField, FloatField, DictField, ObjectIdField
 )
+
 
 # class Arrays(EmbeddedDocument):
 #     meta = {'strict': False}
@@ -14,13 +15,12 @@ from mongoengine.fields import (
 #
 #     # forces = db.ListField()
 
-# class Arrays(EmbeddedDocument):
-#     # meta = {'strict': False}
-#     name = StringField()
-#     value = ListField()
-#     # positions = db.ListField(db.ListField(db.FloatField()))
+class Arrays(EmbeddedDocument):
+    meta = {'strict': False}
+    numbers = ListField(IntField())
+    positions = ListField(ListField(FloatField()))
 
-    # forces = db.ListField()
+# forces = db.ListField()
 
 # #
 # class Info(EmbeddedDocument):
@@ -43,17 +43,28 @@ from mongoengine.fields import (
 #     arrays = DictField(EmbeddedDocumentField(Arrays))
 #     # info = db.EmbeddedDocumentField(Info)
 
+class Derived(EmbeddedDocument):
+    # meta = {'strict': False}
+
+    elements = DictField(IntField())
+    arrays_keys = ListField(StringField())
+    info_keys = ListField(StringField())
+
 
 class Atoms(Document):
     meta = {'collection': 'atoms', 'strict': False}
     # id = ObjectIdField()
     # pbc = ListField(db.BooleanField())
     # numbers = db.ListField(db.IntField())
-    arrays = ListField(DictField())
+    arrays = DictField()
     info = DictField()
-    # info = EmbeddedDocumentField(Info)
-
+    derived = EmbeddedDocumentField(Derived)
+    arrays = EmbeddedDocumentField(Arrays)
     # positions = db.ListField(db.ListField(db.FloatField()))
+
+    @classmethod
+    def from_ase(cls, atoms):
+        return cls()
 
 
 sample = {

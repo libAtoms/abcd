@@ -48,8 +48,8 @@ def create_app():
     from app.views import api
     app.register_blueprint(api.bp, url_prefix='/api')
 
-    from app.views import graphql
-    app.register_blueprint(graphql.bp, url_prefix='/graphql')
+    # from app.views import graphql
+    # app.register_blueprint(graphql.bp, url_prefix='/graphql')
 
     from app.nav import nav, BootstrapRenderer
     from flask_nav import register_renderer

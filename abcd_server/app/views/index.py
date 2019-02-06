@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, flash, redirect, url_for, request
 from flask import jsonify
 import requests
 
+from app.models import Atoms
 from abcd_server.app.views import api
 
 bp = Blueprint('index', __name__)
@@ -47,6 +48,8 @@ def schema():
 # "templates/index.html" documentation for more details.
 @bp.route('/')
 def database():
+    # data = Atoms.objects()
+    # list(Atoms.objects.aggregate({'$unwind': '$derived.arrays_keys'}, {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}))
     columns = [
         ('formula', 'Formula'),
         ('energy', 'Energy'),
@@ -56,6 +59,8 @@ def database():
         {'formula': 'Fe2O', 'energy': 1.212, 'n_atoms': 112},
         {'formula': 'Fe2O', 'energy': 3.234, 'n_atoms': 342}
     ]
+
+    Atoms.objects()
 
     return render_template("database.html",
                            title=index_title,

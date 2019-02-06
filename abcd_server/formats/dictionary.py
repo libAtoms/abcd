@@ -10,91 +10,39 @@ class PropertyNotImplementedError(NotImplementedError):
     """Raised if a calculator does not implement the requested property."""
 
 
+from collections import Counter
+
+
 class DictEncoder(BaseEncoder):
     # default_properties = ['numbers', 'positions']
 
     def __init__(self):
         super().__init__()
 
-    # def encode(self, atoms: Atoms) -> dict:
-    #     """ASE's original implementation"""
-    #     arrays = atoms.arrays.copy()
-    #     natoms = len(atoms)
-    #     dct = {
-    #         'arrays': {
-    #             'numbers': arrays.pop('numbers').tolist(),
-    #             'positions': arrays.pop('positions').tolist(),
-    #
-    #         },
-    #         'info': {
-    #             'cell': atoms.cell.tolist(),
-    #             'pbc': atoms.pbc.tolist(),
-    #             'constraints': [],
-    #         },
-    #         'pbc': atoms.pbc.tolist(),
-    #     }
-    #
-    #     for key, value in arrays.items():
-    #
-    #         if isinstance(value, np.ndarray):
-    #             dct['arrays'][key] = value.tolist()
-    #             continue
-    #
-    #         dct['arrays'][key] = value
-    #
-    #     for key, value in atoms.info.items():
-    #
-    #         if isinstance(value, np.ndarray):
-    #             dct['info'][key] = value.tolist()
-    #             continue
-    #
-    #         dct['info'][key] = value
-    #
-    #     if atoms.calc is not None:
-    #         dct['info']['calculator_name'] = atoms.calc.__class__.__name__
-    #         dct['info']['calculator_parameters'] = atoms.calc.todict()
-    #
-    #         for key, value in atoms.calc.results.items():
-    #
-    #             if isinstance(value, np.ndarray):
-    #                 if value.shape[0] == natoms:
-    #                     dct['arrays'][key] = value.tolist()
-    #                 else:
-    #                     dct['info'][key] = value.tolist()
-    #
-    #                 continue
-    #
-    #             dct['info'][key] = value
-    #
-    #     # if atoms.constraints:
-    #     #     dct['constraints'] = [c.todict() for c in atoms.constraints]
-    #
-    #     return dct
-
     def encode(self, atoms: Atoms) -> dict:
         """ASE's original implementation"""
         arrays = atoms.arrays.copy()
         natoms = len(atoms)
         dct = {
-            'arrays': [
-                {'name': 'numbers', 'value': arrays.pop('numbers').tolist()},
-                {'name': 'positions', 'value': arrays.pop('positions').tolist()},
-            ],
+            'arrays': {
+                'numbers': arrays.pop('numbers').tolist(),
+                'positions': arrays.pop('positions').tolist(),
+
+            },
             'info': {
                 'cell': atoms.cell.tolist(),
                 'pbc': atoms.pbc.tolist(),
                 'constraints': [],
             },
-            'pbc': atoms.pbc.tolist(),
         }
 
         for key, value in arrays.items():
 
             if isinstance(value, np.ndarray):
-                dct['arrays'].append({'name': key, 'value': value.tolist()})
+                dct['arrays'][key] = value.tolist()
                 continue
 
-            dct['arrays'].append({'name': key, 'value': value})
+            dct['arrays'][key] = value
 
         for key, value in atoms.info.items():
 
@@ -112,7 +60,7 @@ class DictEncoder(BaseEncoder):
 
                 if isinstance(value, np.ndarray):
                     if value.shape[0] == natoms:
-                        dct['arrays'].append({'name': key, 'value': value.tolist()})
+                        dct['arrays'][key] = value.tolist()
                     else:
                         dct['info'][key] = value.tolist()
 
@@ -123,7 +71,63 @@ class DictEncoder(BaseEncoder):
         # if atoms.constraints:
         #     dct['constraints'] = [c.todict() for c in atoms.constraints]
 
+        dct['derived'] = {
+            'elements': Counter(atoms.get_chemical_symbols()),
+            'arrays_keys': list(dct['arrays'].keys()),
+            'info_keys': list(dct['info'].keys())
+        }
         return dct
+
+    # def encode(self, atoms: Atoms) -> dict:
+    #     """ASE's original implementation"""
+    #     arrays = atoms.arrays.copy()
+    #     natoms = len(atoms)
+    #     dct = {
+    #         'arrays': [
+    #             {'name': 'numbers', 'value': arrays.pop('numbers').tolist()},
+    #             {'name': 'positions', 'value': arrays.pop('positions').tolist()},
+    #         ],
+    #         'info': {
+    #             'cell': atoms.cell.tolist(),
+    #             'pbc': atoms.pbc.tolist(),
+    #             'constraints': [],
+    #         },
+    #         'pbc': atoms.pbc.tolist(),
+    #     }
+    #
+    #     for key, value in arrays.items():
+    #
+    #         if isinstance(value, np.ndarray):
+    #             dct['arrays'].append({'name': key, 'value': value.tolist()})
+    #             continue
+    #
+    #         dct['arrays'].append({'name': key, 'value': value})
+    #
+    #     for key, value in atoms.info.items():
+    #
+    #         if isinstance(value, np.ndarray):
+    #             dct['info'][key] = value.tolist()
+    #             continue
+    #
+    #         dct['info'][key] = value
+    #
+    #     if atoms.calc is not None:
+    #         dct['info']['calculator_name'] = atoms.calc.__class__.__name__
+    #         dct['info']['calculator_parameters'] = atoms.calc.todict()
+    #
+    #         for key, value in atoms.calc.results.items():
+    #
+    #             if isinstance(value, np.ndarray):
+    #                 if value.shape[0] == natoms:
+    #                     dct['arrays'].append({'name': key, 'value': value.tolist()})
+    #                 else:
+    #                     dct['info'][key] = value.tolist()
+    #
+    #                 continue
+    #
+    #             dct['info'][key] = value
+    #
+    #     return dct
 
     def encode_many(self, traj):
         for atoms in traj:
@@ -150,11 +154,11 @@ class DictDecoder(BaseDecoder):
         if 'calculator_name' in data['info']:
             calculator_name = data['info'].pop('calculator_name')
             params = data['info'].pop('calculator_parameters', {})
-
+            results = data.pop('results', {})
             # TODO: Proper initialisation fo Calculators
             # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
 
-            atoms.calc = SinglePointCalculator(atoms, **params, **data['results'])
+            atoms.calc = SinglePointCalculator(atoms, **params, **results)
 
         atoms.arrays.update(data['arrays'])
         atoms.info.update(data['info'])

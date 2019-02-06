@@ -4,8 +4,6 @@ from graphene_mongo import MongoengineConnectionField, MongoengineObjectType
 
 from app import models
 
-import graphene
-
 
 # #
 # class Query(graphene.ObjectType):
@@ -29,7 +27,16 @@ import graphene
 #         model = models.Info
 #         interfaces = (Node,)
 
-#
+class Derived(MongoengineObjectType):
+    class Meta:
+        model = models.Derived
+
+
+class Arrays(MongoengineObjectType):
+    class Meta:
+        model = models.Arrays
+
+
 class Atoms(MongoengineObjectType):
     class Meta:
         model = models.Atoms
@@ -39,6 +46,11 @@ class Atoms(MongoengineObjectType):
 class Query(graphene.ObjectType):
     node = Node.Field()
     all_atoms = MongoengineConnectionField(Atoms)
+
+    myatoms = graphene.Field(Atoms)
+
+    def resolve_myatoms(self, info):
+        return models.Atoms.objects().first()
 
 
 #

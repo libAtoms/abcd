@@ -19,7 +19,7 @@ class DictEncoder(BaseEncoder):
     def __init__(self):
         super().__init__()
 
-    def encode(self, atoms: Atoms) -> dict:
+    def encode(self, atoms: Atoms, extra_info=None) -> dict:
         """ASE's original implementation"""
         arrays = atoms.arrays.copy()
         natoms = len(atoms)
@@ -70,6 +70,9 @@ class DictEncoder(BaseEncoder):
 
         # if atoms.constraints:
         #     dct['constraints'] = [c.todict() for c in atoms.constraints]
+
+        if extra_info is not None:
+            dct['info'].update(extra_info)
 
         dct['derived'] = {
             'elements': Counter(atoms.get_chemical_symbols()),
@@ -129,9 +132,9 @@ class DictEncoder(BaseEncoder):
     #
     #     return dct
 
-    def encode_many(self, traj):
+    def encode_many(self, traj, extra_info=None):
         for atoms in traj:
-            yield self.encode(atoms)
+            yield self.encode(atoms, extra_info)
 
 
 class DictDecoder(BaseDecoder):

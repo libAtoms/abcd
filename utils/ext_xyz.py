@@ -82,9 +82,10 @@ class XYZReader(object):
             for (name, dtype, ncols) in property_types:
                 if ncols == 1:
                     results[name].append(data[ind])
-                else:
-                    results[name].append([dtype(x) for x in data[ind:ind + ncols]])
+                    ind += ncols
+                    continue
 
+                results[name].append([dtype(x) for x in data[ind:ind + ncols]])
                 ind += ncols
 
         return results

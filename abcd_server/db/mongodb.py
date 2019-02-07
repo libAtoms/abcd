@@ -38,15 +38,17 @@ class MongoDatabase(Database):
     def destroy(self):
         self.collection.remove()
 
-    def push(self, atoms: Union[ase.Atoms, Iterable]):
+    def push(self, atoms: Union[ase.Atoms, Iterable], extra_info=None):
         # with DictEncoder() as encoder:
         #     data = encoder.encode(atoms)
         if isinstance(atoms, ase.Atoms):
             data = DictEncoder().encode(atoms)
+            if extra_info is not None:
+                data['info'].update(extra_info)
             self.collection.insert_one(data)
 
         if isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-            data = DictEncoder().encode_many(atoms)
+            data = DictEncoder().encode_many(atoms, extra_info)
             self.collection.insert_many(data)
 
     def upload(self, file):
@@ -63,8 +65,62 @@ class MongoDatabase(Database):
     def search(self, query_string: str):
         raise NotImplementedError
 
-    def get_atoms(self, id: str) -> ase.Atoms:
-        raise NotImplementedError()
+    def get_atoms(self, dbfilter):
+        from abcd_server.formats.dictionary import DictDecoder
+        with DictDecoder() as decoder:
+            for atoms in self.db.atoms.find(dbfilter):
+                yield decoder.decode(atoms)
+
+    def count(self, dbfilter=None):
+        if dbfilter is None:
+            return self.collection.count()
+
+        return self.db.atoms.count_documents(dbfilter)
+
+    def get_property(self, name, dbfilter=None):
+
+        if dbfilter is None:
+            dbfilter = {}
+
+        pipeline = [
+            {'$match': dbfilter},
+            {'$match': {'{}'.format(name): {"$exists": True}}},
+            {'$project': {'_id': False, 'data': '${}'.format(name)}}
+        ]
+
+        return [val['data'] for val in self.collection.aggregate(pipeline)]
+
+    def count_properties(self, dbfilter=None):
+
+        if dbfilter is None:
+            dbfilter = {}
+
+        properties = {
+            'info': {},
+            'arrays': {}
+        }
+
+        pipeline = [
+            {'$match': dbfilter},
+            {'$unwind': '$derived.info_keys'},
+            {'$group': {'_id': '$derived.info_keys', 'count': {'$sum': 1}}}
+        ]
+
+        info_keys = self.db.atoms.aggregate(pipeline)
+        # {'_id': 'calculator_name', 'count': 56},
+        for val in info_keys:
+            properties['info'][val['_id']] = {'count': val['count']}
+
+        pipeline = [
+            {'$match': dbfilter},
+            {'$unwind': '$derived.arrays_keys'},
+            {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}
+        ]
+        arrays_keys = list(self.db.atoms.aggregate(pipeline))
+        for val in arrays_keys:
+            properties['arrays'][val['_id']] = {'count': val['count']}
+
+        return properties
 
     def __repr__(self):
         return f'{self.__class__.__name__}(' \

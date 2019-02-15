@@ -1,0 +1,43 @@
+{% extends "layout_base.html" %}
+
+
+{% block body %}
+    <body>
+
+    {% block header %}
+        <header>
+            {{ nav.main_navbar.render(renderer='BootstrapRenderer') }}
+        </header>
+    {% endblock %}
+
+    <div class="container-fluid" style="background-color: #f5f5f5">
+        <div class="container">
+            <h1 class="h2">
+                {% block database_name %}{##}
+                {% endblock %}
+            </h1>
+            {#<ul class="nav nav-tabs nav-fill">#}
+            {#    <li class="nav-item">#}
+            {#        <a class="nav-link" href="{{ url_for('database.database', database_name=database_name) }}">Database</a>#}
+            {#    </li>#}
+            {#    <li class="nav-item">#}
+            {#        <a class="nav-link" href="{{ url_for('database.database', database_name=database_name) }}">Collections</a>#}
+            {#    </li>#}
+            {#    <li class="nav-item">#}
+            {#        <a class="nav-link" href="{{ url_for('database.database', database_name=database_name) }}">Statistics</a>#}
+            {#    </li>#}
+            {#    <li class="nav-item">#}
+            {#        <a class="nav-link" href="{{ url_for('database.settings', database_name=database_name) }}">Settings</a>#}
+            {#    </li>#}
+            {#</ul>#}
+            {{ nav.database_navbar.render(renderer='DatabaseNav', database_name=database_name) }}
+        </div>
+    </div>
+    <div class="container">
+
+        {% block content %}
+        {% endblock %}
+
+    </div>
+
+{% endblock %}

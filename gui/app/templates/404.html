@@ -1,0 +1,27 @@
+{% extends "layout_base.html" %}
+
+{% block title %}404 - Page not found!{% endblock %}
+
+<body>
+
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block content %}
+    <main role="main">
+
+        <section class="jumbotron text-center">
+            <div class="container">
+                <h1 class="jumbotron-heading">Not Found</h1>
+                <p class="lead text-muted">The requested URL was not found on the server. If you entered the URL
+                    manually please check your spelling and try again.</p>
+                <p>
+                    <a href="#" class="btn btn-primary my-2">Back</a>
+                    <a href="#" class="btn btn-secondary my-2">Main</a>
+                </p>
+            </div>
+        </section>
+
+    </main>
+{% endblock %}

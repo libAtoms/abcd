@@ -1,0 +1,41 @@
+{% extends "layout_base.html" %}
+{% block title %}ABCD database - Create new database{% endblock %}
+
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+
+{% block content %}
+    <div class="container">
+        <form class="">
+            <div class="card" id="settings">
+                <h5 class="card-header">Settings</h5>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="database_name">Database name:</label>
+                        <input type="text" class="form-control" id="database_name"
+                               aria-describedby="database_name_help">
+                        <small id="database_name_help" class="form-text text-muted">
+                            It must be slug! (Now white and other special character)
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="database_description">Description:</label>
+                        <textarea class="form-control" id="database_description" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="database_public">
+                        <label class="form-check-label" for="database_public">Publicly available</label>
+                    </div>
+                </div>
+            </div>
+            <div class="text-left" style="margin-bottom: 15px">
+                <button type="submit" class="btn btn-primary">Create database</button>
+            </div>
+
+        </form>
+    </div>
+{%- endblock %}

@@ -95,7 +95,7 @@ class XYZReader(object):
 
             cell = frame_properties.pop('Lattice', None)
             if cell is not None:
-                cell = np.array(cell).reshape((3, 3), order='F').T
+                cell = np.array(cell, order='F').reshape((3, 3))
 
             pbc = frame_properties.pop('pbc', None)
             if cell is not None and pbc is None:
@@ -107,8 +107,8 @@ class XYZReader(object):
                 symbols = [s.capitalize() for s in symbols]
                 numbers = None
 
-            charges = atoms_properties.pop('charge', None)
             positions = atoms_properties.pop('pos', None)
+            charges = atoms_properties.pop('charge', None)
 
             atoms = Atoms(symbols=symbols,
                           positions=positions,
@@ -203,7 +203,7 @@ def convert(text: str):
 if __name__ == '__main__':
     from pathlib import Path
 
-    directory = Path('data/')
+    directory = Path('../tutorials/data/')
     file = directory / 'bcc_bulk_54_expanded_2_high.xyz'
     # file = directory / 'GAP_6.xyz'
 

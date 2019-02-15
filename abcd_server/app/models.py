@@ -8,6 +8,13 @@ from mongoengine.fields import (
 )
 
 
+class Databases(Document):
+    meta = {'collection': 'databases'}
+    name = StringField(required=True)
+    description = StringField(max_length=300)
+    tags = ListField(StringField(max_length=30))
+
+
 # class Arrays(EmbeddedDocument):
 #     meta = {'strict': False}
 #     numbers = ListField(IntField())
@@ -19,6 +26,7 @@ class Arrays(EmbeddedDocument):
     meta = {'strict': False}
     numbers = ListField(IntField())
     positions = ListField(ListField(FloatField()))
+
 
 # forces = db.ListField()
 
@@ -60,6 +68,7 @@ class Atoms(Document):
     info = DictField()
     derived = EmbeddedDocumentField(Derived)
     arrays = EmbeddedDocumentField(Arrays)
+
     # positions = db.ListField(db.ListField(db.FloatField()))
 
     @classmethod

@@ -39,7 +39,7 @@ def get_value(row, c):
 
 @bp.route('/schema')
 def schema():
-  return render_template("schema.html",
+  return render_template("graphql.html",
                          title=index_title,
                          url=url_for('api.graphql')
                          )

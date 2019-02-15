@@ -1,0 +1,18 @@
+{% extends "layout_base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12">
+                <iframe style="width: 98vw; height: 85vh; position: relative;" src="{{ url }}" frameborder="0"
+                        allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+{%- endblock %}

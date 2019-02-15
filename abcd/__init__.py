@@ -14,7 +14,7 @@ class ABCD(object):
         elif url.startswith('http://') or url.startswith('https://'):
             raise NotImplementedError('http not yet supported! soon...')
         else:
-            raise NotImplementedError('Unknown url!')
+            raise NotImplementedError(f'Unable to recognise the type of connection. (url: {url})')
 
 
 if __name__ == '__main__':

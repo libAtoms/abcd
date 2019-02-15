@@ -1,0 +1,57 @@
+{% extends "layout_database.html" %}
+
+{% block title %}ABCD database - {{ database_name }} - settings{% endblock %}
+
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block database_name %}
+    {{ database_name }}
+{% endblock %}
+
+
+{% block content %}
+
+    <form class="">
+
+        <div class="card" id="settings">
+            <h5 class="card-header">Settings</h5>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="database_name">Database name:</label>
+                    <input type="text" class="form-control" id="database_name" aria-describedby="database_name_help"
+                           placeholder="{{ info.name }}">
+                    <small id="database_name_help" class="form-text text-muted">It must be slug! (Now white and other
+                        special character)
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="database_description">Description:</label>
+                    <textarea class="form-control" id="database_description" rows="3">{{ info.description }}</textarea>
+                </div>
+
+                <div class="form-group form-check">
+                    <input type="checkbox" class="form-check-input" id="database_public" {{ 'checked' if info.public }}>
+                    <label class="form-check-label" for="database_public">Publicly available</label>
+                </div>
+            </div>
+        </div>
+                <div class="text-left" style="margin-bottom: 15px">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+
+        <div class="card">
+            <h5 class="card-header">Danger zone</h5>
+            <div class="card-body">
+                <h5 class="card-title">Delete database</h5>
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3">
+
+                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                    <a href="#" class="btn btn-danger">Delete</a></div>
+
+            </div>
+        </div>
+    </form>
+{%- endblock %}

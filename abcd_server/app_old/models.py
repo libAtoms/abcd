@@ -1,10 +1,8 @@
 # from mongoengine import Document, EmbeddedDocument, fields
-from app.db import db
 
 from mongoengine import Document, EmbeddedDocument
 from mongoengine.fields import (
-    DateTimeField, EmbeddedDocumentField, EmbeddedDocumentListField,
-    ListField, ReferenceField, StringField, IntField, BooleanField, FloatField, DictField, ObjectIdField
+    EmbeddedDocumentField, ListField, StringField, IntField, FloatField, DictField
 )
 
 

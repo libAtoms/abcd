@@ -27,13 +27,13 @@ if __name__ == '__main__':
     db.push(traj)
     abcd.print_info()
 
-# from app import db, create_app
-# from app.db import Atoms
+# from app_old import db, create_app
+# from app_old.db import Atoms
 #
 # from ase.io import read
 #
 # if __name__ == '__main__':
-#     app = create_app()
+#     app_old = create_app()
 #
 #     traj = read('../utils/data/bcc_bulk_54_expanded_2_high.xyz')
 #     print(traj)
@@ -42,15 +42,15 @@ if __name__ == '__main__':
 #     u = Atoms(numbers={"key1": "value1", "key2": "value2"})
 #
 #     # # This will create the database file using SQLAlchemy
-#     with app.app_context():
+#     with app_old.app_context():
 #         db.drop_all()
 #         db.create_all()
 #
-#     with app.app_context():
+#     with app_old.app_context():
 #         db.session.add(u)
 #         db.session.commit()
 #
-#     with app.app_context():
+#     with app_old.app_context():
 #         atoms = Atoms.query.all()
 #
 #     print(atoms)

@@ -1,7 +1,7 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint
 from flask_graphql import GraphQLView
 
-from app.schema import schema
+from abcd_server.app.schema import schema
 
 bp = Blueprint('graphql', __name__)
 
@@ -15,7 +15,7 @@ bp.add_url_rule('/', view_func=GraphQLView.as_view('graphql', schema=schema, gra
 # from database import init_db
 # from flask import Flask
 # from flask_graphql import GraphQLView
-# from app.schema import schema
+# from app_old.schema import schema
 #
 # default_query = '''
 # {

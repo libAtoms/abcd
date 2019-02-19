@@ -1,21 +1,27 @@
-<!doctype html>
-<html lang="en">
+{% extends "layout_base.html" %}
 
-<head>
-    <meta charset="utf-8">
-    <title>Page Not Found :(</title>
-</head>
+{% block title %}404 - Page not found!{% endblock %}
 
 <body>
-<h1>Not found
-    <span>:(</span>
-</h1>
-<p>Sorry, but the page you were trying to view does not exist.</p>
-<p>It looks like this was the result of either:</p>
-<ul>
-    <li>a mistyped address</li>
-    <li>an out-of-date link</li>
-</ul>
-</body>
 
-</html>
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block content %}
+    <main role="main">
+
+        <section class="jumbotron text-center">
+            <div class="container">
+                <h1 class="jumbotron-heading">Not Found</h1>
+                <p class="lead text-muted">The requested URL was not found on the server. If you entered the URL
+                    manually please check your spelling and try again.</p>
+                <p>
+                    <a href="#" class="btn btn-primary my-2">Back</a>
+                    <a href="#" class="btn btn-secondary my-2">Main</a>
+                </p>
+            </div>
+        </section>
+
+    </main>
+{% endblock %}

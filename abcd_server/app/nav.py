@@ -4,16 +4,26 @@ from hashlib import sha1
 
 from dominate import tags
 from flask_nav.renderers import Renderer
+from flask import url_for
 
 nav = Nav()
 
 
+class TopNavbar(Navbar):
+    def __init__(self, title, *args, **kwargs):
+        super().__init__(title, *args)
+
+
 @nav.navigation()
-def topnavbar():
-    return Navbar(
+def main_navbar():
+    return TopNavbar(
         'ABCD',
-        View('Database', 'index.database'),
-        View('GraphQL', 'index.schema'),
+        View('Databases', 'index.index'),
+        View('GraphQL', 'index.graphql'),
+        View('Login', 'index.login'),
+
+        View('New', 'index.new'),
+
         Subgroup(
             'Links',
             Link('Docs', 'https://fekad.github.io/abcd/'),
@@ -23,10 +33,54 @@ def topnavbar():
     )
 
 
+@nav.navigation()
+def database_navbar():
+    return Navbar(
+        '',
+        View('Database', 'database.database'),
+        Link('Collections', '#'),
+        Link('History', '#'),
+        Link('Statistics', '#'),
+        View('Settings', 'database.settings'),
+    )
+
+
+class DatabaseNav(Renderer):
+    def __init__(self, database_name=''):
+        self.database_name = database_name
+
+    def visit_Navbar(self, node):
+        root = tags.ul(_class="nav nav-tabs nav-fill")
+
+        for item in node.items:
+            root.add(self.visit(item))
+
+        return root
+
+    def visit_Text(self, node):
+        return tags.li(tags.a(node.text, _class='nav-link disabled'), _class="nav-item")
+
+    def visit_Link(self, node):
+        item = tags.li(_class='nav-item')
+        item.add(tags.a(node.text, href=node.get_url(), _class='nav-link'))
+
+        return item
+
+    def visit_View(self, node):
+        # Dinamically modify the url
+        node.url_for_kwargs.update({'database_name': self.database_name})
+
+        item = tags.li(_class='nav-item')
+        item.add(tags.a(node.text, href=node.get_url(), title=node.text, _class='nav-link'))
+        if node.active:
+            item['class'] = 'nav-item active'
+
+        return item
+
+
 class BootstrapRenderer(Renderer):
     def __init__(self, nav_id=None):
         self.id = nav_id
-
         self._in_dropdown = False
 
     def visit_Navbar(self, node):
@@ -64,15 +118,20 @@ class BootstrapRenderer(Renderer):
         for item in node.items:
             bar_list.add(self.visit(item))
 
-        # search_form = root.add(tags.form(_class="form-inline mt-2 mt-md-0"))
+
+        search_form = bar.add(tags.form(_class="form-inline mt-2 mt-md-0"))
         # search_input = search_form.add(tags.input(_class="form-control mr-sm-2"))
         # search_input['type'] = "text"
         # search_input['placeholder'] = "Search"
         # search_input['aria-label'] = "Search"
-        #
-        # search_btn = search_form.add(tags.button(_class="btn btn-outline-success my-2 my-sm-0"))
-        # search_btn['type'] = "submit"
-        # search_btn.add_raw_string('Search')
+
+        search_btn = search_form.add(tags.button(_class="btn btn-success my-2 my-sm-0"))
+        search_btn['type'] = "submit"
+        search_btn.add_raw_string('+')
+
+        search_btn = search_form.add(tags.button(_class="btn btn-success my-2 my-sm-0"))
+        search_btn['type'] = "submit"
+        search_btn.add_raw_string('Login')
 
         return root
 

@@ -169,7 +169,7 @@ if __name__ == '__main__':
 
 #
 #
-# models.py
+# mongoengine.py
 # gb_ener = 16.02*((sub_dict['E_gb']-(-4.2731*sub_dict['n_at']))/(2*sub_dict['A']))
 #
 # gb_ener = 16.02*((gb_dict['E_gb']-(ener_per_atom[param_file]*float(gb_dict['n_at'])))/(2*gb_dict['A']))

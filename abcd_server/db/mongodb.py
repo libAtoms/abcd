@@ -5,7 +5,7 @@ import types
 from typing import Union, Iterable
 
 import ase
-from pymongo import MongoClient
+from abcd_server.db.backends.pymongo import MongoClient
 
 from abcd_server.db.base import Database
 from abcd_server.formats import DictEncoder
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     db = MongoDatabase('mongodb://localhost:27017/')
     db.info()
 
-    for atoms in iread('../../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
+    for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
         # print(at)
         atoms.calc.results['forces'] = atoms.arrays['force']
         # at.arrays['force'] = None

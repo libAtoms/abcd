@@ -1,40 +1,8 @@
-# from mongoengine import Document, EmbeddedDocument, fields
+from abcd_server.app.db import db
 
-from mongoengine import Document, EmbeddedDocument
+
+# from mongoengine import Document, EmbeddedDocument
 from mongoengine.fields import EmbeddedDocumentField, ListField, DictField, IntField, FloatField, StringField
-
-
-class Databases(Document):
-    meta = {'collection': 'databases'}
-    name = StringField(required=True)
-    description = StringField(max_length=300)
-    tags = ListField(StringField(max_length=30))
-
-
-class Arrays(EmbeddedDocument):
-    meta = {'strict': False}
-    numbers = ListField(IntField())
-    positions = ListField(ListField(FloatField()))
-
-
-class Info(EmbeddedDocument):
-    meta = {'strict': False}
-
-
-class Derived(EmbeddedDocument):
-    elements = DictField(IntField())
-    arrays_keys = ListField(StringField())
-    info_keys = ListField(StringField())
-
-
-class Atoms(Document):
-    meta = {'strict': False}
-
-    # id = ObjectIdField()
-    arrays = EmbeddedDocumentField(Arrays)
-    info = EmbeddedDocumentField(Info)
-    derived = EmbeddedDocumentField(Derived)
-
 
 # class Atoms(Document):
 #     meta = {'strict': False}
@@ -47,6 +15,39 @@ class Atoms(Document):
 #     @classmethod
 #     def from_ase(cls, atoms):
 #         return cls()
+
+
+class Databases(db.Document):
+    meta = {'collection': 'databases'}
+    name = db.StringField(required=True)
+    description = db.StringField(max_length=300)
+    tags = db.ListField(db.StringField(max_length=30))
+
+
+class Arrays(db.EmbeddedDocument):
+    meta = {'strict': False}
+    numbers = db.ListField(db.IntField())
+    positions = db.ListField(db.ListField(db.FloatField()))
+
+
+class Info(db.EmbeddedDocument):
+    meta = {'strict': False}
+
+
+class Derived(db.EmbeddedDocument):
+    elements = db.DictField(db.IntField())
+    n_atoms = db.IntField(default=111)
+    arrays_keys = db.ListField(db.StringField())
+    info_keys = db.ListField(db.StringField())
+
+
+class Atoms(db.Document):
+    meta = {'strict': False}
+
+    # id = ObjectIdField()
+    arrays = db.EmbeddedDocumentField(Arrays)
+    info = db.EmbeddedDocumentField(Info)
+    derived = db.EmbeddedDocumentField(Derived)
 
 
 if __name__ == '__main__':
@@ -90,5 +91,5 @@ if __name__ == '__main__':
 
     collection_name = 'atoms'
 
-    db  = connect('mongodb://localhost:27017/abcd')
+    db = connect('mongodb://localhost:27017/abcd')
     print(db)

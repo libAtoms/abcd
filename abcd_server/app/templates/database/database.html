@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block database_name %}
-    {{ database_name }}
+    {{ db_info.name }}
 {% endblock %}
 
 
@@ -15,8 +15,7 @@
 
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3">
         <p>
-            Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo
-            luctus.
+            {{ db_info.description }}
         </p>
         <div class="btn-toolbar mb-2 mb-md-0">
             {#            <div class="btn-group mr-2">#}
@@ -56,7 +55,6 @@
         <!--end of col-->
     </div>
 
-
     <div class="row">
         <div class="col">
 
@@ -65,12 +63,12 @@
                 <table class="table table-striped table-bordered table-hover model-list">
 
                     <thead>
-                    <tr>{% for column in columns %}
+                    <tr>{% for column in db_info.columns %}
                         <th class="column-header col-data-{{ column.slug }}">{{ column.name }}</th>{% endfor %}
                     </tr>
                     </thead>
-                    <tbody>{% for row in data %}
-                        <tr id="{{ row.id }}">{% for column in columns %}
+                    <tbody>{% for row in atoms.items %}
+                        <tr id="{{ row.id }}">{% for column in db_info.columns %}
                             <td class="col-data-{{ column.slug }}">{{ row[column.slug] }}</td>{% endfor %}
                         </tr>
                     {% endfor %}
@@ -79,17 +77,54 @@
             </div>
         </div>
     </div>
-    <nav aria-label="Page navigation example">
-        <ul class="pagination justify-content-center">
-            <li class="page-item disabled">
-                <a class="page-link" href="#" tabindex="-1">Previous</a>
-            </li>
-            <li class="page-item"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item">
-                <a class="page-link" href="#">Next</a>
-            </li>
-        </ul>
-    </nav>
+
+    {# Macro for creating navigation links #}
+    {% macro render_navigation(pagination, endpoint='database.database') %}
+        <nav aria-label="Page navigation example">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ url_for(endpoint, database_name=db_info.name,  page=pagination.prev_num) }}"
+                           tabindex="-1">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                {% endif %}
+                {% for page in pagination.iter_pages() %}
+                    {% if page %}
+                        {% if page != pagination.page %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="{{ url_for(endpoint, database_name=db_info.name,  page=page) }}">{{ page }}</a>
+                            </li>
+
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link"
+                                   href="{{ url_for(endpoint, database_name=db_info.name,  page=page) }}">
+                                    <strong>{{ page }}</strong></a></li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ url_for(endpoint, database_name=db_info.name,  page=pagination.next_num) }}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endmacro %}
+
+    {{ render_navigation(atoms) }}
+
 {%- endblock %}

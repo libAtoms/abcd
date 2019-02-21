@@ -46,7 +46,7 @@ def database_navbar():
 
 
 class DatabaseNav(Renderer):
-    def __init__(self, database_name=''):
+    def __init__(self, database_name='atoms'):
         self.database_name = database_name
 
     def visit_Navbar(self, node):

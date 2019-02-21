@@ -32,20 +32,9 @@ def database(database_name):
         'columns': [
             {'slug': 'formula', 'name': 'Formula'},
             {'slug': 'energy', 'name': 'Energy'},
-            {'slug': 'n_atoms', 'name': "# of atoms"}
+            {'slug': 'derived.n_atoms', 'name': "# of atoms"}
         ],
     }
-
-    columns = [
-        {'slug': 'formula', 'name': 'Formula'},
-        {'slug': 'energy', 'name': 'Energy'},
-        {'slug': 'n_atoms', 'name': "# of atoms"}
-    ]
-
-    data = [
-        {'id': '111', 'formula': 'Fe2O', 'energy': 1.212, 'n_atoms': 112},
-        {'id': '333', 'formula': 'Fe2O', 'energy': 3.234, 'n_atoms': 342}
-    ]
 
     from abcd_server.app.models import Atoms
     page = request.args.get('page', 1, type=int)
@@ -56,14 +45,10 @@ def database(database_name):
         paginated_atoms = atoms.paginate(page, per_page=10)
         # paginated_atoms = atoms.paginate_field('tags', page, per_page=10)
 
-        # print(Atoms.objects.paginate(page=page, per_page=10))
-
     # list(Atoms.objects.aggregate({'$unwind': '$derived.arrays_keys'}, {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}))
 
     return render_template("database/database.html",
                            db_info=db_info,
-                           columns=columns,
-                           data=data,
                            atoms=paginated_atoms)
 
 

@@ -1,15 +1,15 @@
-import json
 from os import linesep
 
 import types
 from typing import Union, Iterable
 
-import ase
+from ase import Atoms
+from ase.io import iread
+
 from pymongo import MongoClient
 
 from abcd_server.db.base import Database
 from tmp.formats import DictEncoder
-from tmp.formats.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
 
 
 class PropertyNotImplementedError(NotImplementedError):
@@ -38,10 +38,10 @@ class MongoDatabase(Database):
     def destroy(self):
         self.collection.remove()
 
-    def push(self, atoms: Union[ase.Atoms, Iterable], extra_info=None):
+    def push(self, atoms: Union[Atoms, Iterable], extra_info=None):
         # with DictEncoder() as encoder:
         #     data = encoder.encode(atoms)
-        if isinstance(atoms, ase.Atoms):
+        if isinstance(atoms, Atoms):
             data = DictEncoder().encode(atoms)
             if extra_info is not None:
                 data['info'].update(extra_info)
@@ -52,7 +52,7 @@ class MongoDatabase(Database):
             self.collection.insert_many(data)
 
     def upload(self, file):
-        data = ase.io.iread(file)
+        data = iread(file)
         self.push(data)
 
     def pull(self, query=None, properties=None):
@@ -149,33 +149,37 @@ class MongoDatabase(Database):
 
 
 if __name__ == '__main__':
-    from ase.io import iread
-    from pprint import pprint
+    pass
 
-    db = MongoDatabase('mongodb://localhost:27017/')
-    db.info()
-
-    for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
-        # print(at)
-        atoms.calc.results['forces'] = atoms.arrays['force']
-        # at.arrays['force'] = None
-
-        json_data = json.dumps(atoms, cls=JSONEncoderOld)
-        print(json_data)
-
-        atom_dict = json.loads(json_data, cls=JSONDecoderOld)
-        print(atom_dict)
-
-        print(atoms == atom_dict)
-
-    with JSONEncoder() as encoder:
-        data = encoder.encode(atoms)
-
-    print(data)
-
-    with DictEncoder() as encoder:
-        data = encoder.encode(atoms)
-
-    pprint(data)
-
-    db.collection.insert_one(DictEncoder().encode(atoms))
+    # import json
+    # from ase.io import iread
+    # from pprint import pprint
+    # from abcd_server.formats.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
+    #
+    # db = MongoDatabase('mongodb://localhost:27017/')
+    # db.info()
+    #
+    # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
+    #     # print(at)
+    #     atoms.calc.results['forces'] = atoms.arrays['force']
+    #     # at.arrays['force'] = None
+    #
+    #     json_data = json.dumps(atoms, cls=JSONEncoderOld)
+    #     print(json_data)
+    #
+    #     atom_dict = json.loads(json_data, cls=JSONDecoderOld)
+    #     print(atom_dict)
+    #
+    #     print(atoms == atom_dict)
+    #
+    # with JSONEncoder() as encoder:
+    #     data = encoder.encode(atoms)
+    #
+    # print(data)
+    #
+    # with DictEncoder() as encoder:
+    #     data = encoder.encode(atoms)
+    #
+    # pprint(data)
+    #
+    # db.collection.insert_one(DictEncoder().encode(atoms))

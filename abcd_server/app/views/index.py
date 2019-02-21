@@ -16,6 +16,7 @@ def index():
 def login():
     return render_template("login.html")
 
+
 @bp.route('/new/')
 def new():
     return render_template("new.html")

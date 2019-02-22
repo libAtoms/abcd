@@ -8,7 +8,7 @@ from ase import Atoms
 from ase.io import iread
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals
+from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals, connect
 from mongoengine.context_managers import switch_collection
 
 from abcd.backends.base import Database
@@ -28,7 +28,6 @@ class AtomsQuerySet(queryset.QuerySet):
 
         for obj in self:
             yield obj.to_atoms()
-
 
 
 class DerivedModel(EmbeddedDocument):
@@ -195,17 +194,19 @@ class MongoDatabase(Database):
         }
 
     def destroy(self):
-        with switch_collection(AtomsModel, self.collection_name) as AtomsModel:
-            AtomsModel.drop_collection()
+        with switch_collection(AtomsModel, self.collection_name) as model:
+            model.drop_collection()
 
     def push(self, atoms, extra_info=None):
 
-        with switch_collection(self.model, self.collection_name) as AtomsModel:
+        with switch_collection(AtomsModel, self.collection_name) as model:
             if isinstance(atoms, Atoms):
-                AtomsModel.from_atoms(atoms, extra_info).save()
+                model.from_atoms(atoms, extra_info).save()
 
             elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-                self.collection.insert_many(AtomsModel.from_atoms(at) for at in atoms)
+                # NOTE: insert method is not able to handle generators
+                model._get_collection().insert_many(model.from_atoms(at).to_mongo() for at in atoms)
+                # model.objects.insert(list(model.from_atoms(at) for at in atoms))
 
     def upload(self, file):
         data = iread(file)
@@ -226,10 +227,9 @@ class MongoDatabase(Database):
             yield AtomsModel(dct).to_atoms()
 
     def count(self, dbfilter=None):
-        with switch_collection(self.model, self.collection_name) as AtomsModel:
-
+        with switch_collection(AtomsModel, self.collection_name) as model:
             if dbfilter is None:
-                return AtomsModel.objects.count()
+                return model.objects.count()
 
             return self.db.atoms.count_documents(dbfilter)
 
@@ -305,8 +305,6 @@ class MongoDatabase(Database):
 
 
 if __name__ == '__main__':
-    from mongoengine import connect
-
     logging.basicConfig(level=logging.DEBUG)
 
     collection_name = 'atoms'

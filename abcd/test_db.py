@@ -6,23 +6,24 @@ from abcd import ABCD
 if __name__ == '__main__':
     url = 'mongodb://localhost:27017'
     # url = 'http://localhost:5000/api'
-    abcd = ABCD(url)
+    abcd = ABCD(url, db_name='test', collection_name='newatoms')
     print(abcd)
 
     abcd.print_info()
 
-
     with abcd as db:
         db.destroy()
 
-
-    direcotry = Path('../utils/data/')
+    direcotry = Path('../tutorials/data/')
     file = direcotry / 'bcc_bulk_54_expanded_2_high.xyz'
     # file = direcotry / 'GAP_6.xyz'
 
     traj = read(file.as_posix(), index=slice(None))
+    abcd.print_info()
 
-    db.push(traj)
+    with abcd as db:
+        db.push(traj)
+
     abcd.print_info()
 
 # from app_old import db, create_app

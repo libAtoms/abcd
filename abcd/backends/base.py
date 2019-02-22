@@ -7,7 +7,7 @@ class ConnectionType(Enum):
     http = auto()
 
 
-class Database(metaclass=ABCMeta):
+class Database(object, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self):

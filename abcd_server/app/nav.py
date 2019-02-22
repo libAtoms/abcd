@@ -118,7 +118,6 @@ class BootstrapRenderer(Renderer):
         for item in node.items:
             bar_list.add(self.visit(item))
 
-
         search_form = bar.add(tags.form(_class="form-inline mt-2 mt-md-0"))
         # search_input = search_form.add(tags.input(_class="form-control mr-sm-2"))
         # search_input['type'] = "text"

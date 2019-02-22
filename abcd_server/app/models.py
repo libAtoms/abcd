@@ -1,28 +1,7 @@
 from abcd_server.app.db import db
 from ase import Atoms
 
-
-# from mongoengine import Document, EmbeddedDocument
-from mongoengine.fields import EmbeddedDocumentField, ListField, DictField, IntField, FloatField, StringField
-
-# class Atoms(Document):
-#     meta = {'strict': False}
-#
-#     # id = ObjectIdField()
-#     arrays = DictField()
-#     info = DictField()
-#     derived = EmbeddedDocumentField(Derived)
-#
-#     @classmethod
-#     def from_ase(cls, atoms):
-#         return cls()
-
-
-class Databases(db.Document):
-    meta = {'collection': 'databases'}
-    name = db.StringField(required=True)
-    description = db.StringField(max_length=300)
-    tags = db.ListField(db.StringField(max_length=30))
+tags = db.ListField(db.StringField(max_length=30))
 
 
 class Arrays(db.EmbeddedDocument):
@@ -50,9 +29,9 @@ class Atoms(db.Document):
     info = db.EmbeddedDocumentField(Info)
     derived = db.EmbeddedDocumentField(Derived)
 
-    def __getattr__(self,  *args, **kwargs):
-        print( *args, **kwargs)
-        super().__getattr__(  *args, **kwargs)
+    def __getattr__(self, *args, **kwargs):
+        print(*args, **kwargs)
+        super().__getattr__(*args, **kwargs)
 
 
 if __name__ == '__main__':

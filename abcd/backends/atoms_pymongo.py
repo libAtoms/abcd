@@ -2,18 +2,118 @@ from os import linesep
 
 import types
 from typing import Union, Iterable
+from collections import Counter
 
 from ase import Atoms
 from ase.io import iread
+from ase.calculators.singlepoint import SinglePointCalculator
+
+import numpy as np
 
 from pymongo import MongoClient
 
-from abcd_server.db.base import Database
-from tmp.formats import DictEncoder
+from abcd.backends.base import Database
 
 
 class PropertyNotImplementedError(NotImplementedError):
     """Raised if a calculator does not implement the requested property."""
+
+
+class AtomsModel(dict):
+
+    @classmethod
+    def from_atoms(cls, atoms: Atoms, extra_info=None, **kwargs):
+        dct = cls()
+
+        """ASE's original implementation"""
+        arrays = atoms.arrays.copy()
+        n_atoms = len(atoms)
+        dct = {
+            'arrays': {
+                'numbers': arrays.pop('numbers').tolist(),
+                'positions': arrays.pop('positions').tolist(),
+
+            },
+            'info': {
+                'cell': atoms.cell.tolist(),
+                'pbc': atoms.pbc.tolist(),
+                'constraints': [],
+            },
+        }
+
+        for key, value in arrays.items():
+
+            if isinstance(value, np.ndarray):
+                dct['arrays'][key] = value.tolist()
+                continue
+
+            dct['arrays'][key] = value
+
+        for key, value in atoms.info.items():
+
+            if isinstance(value, np.ndarray):
+                dct['info'][key] = value.tolist()
+                continue
+
+            dct['info'][key] = value
+
+        if atoms.calc is not None:
+            dct['info']['calculator_name'] = atoms.calc.__class__.__name__
+            dct['info']['calculator_parameters'] = atoms.calc.todict()
+
+            for key, value in atoms.calc.results.items():
+
+                if isinstance(value, np.ndarray):
+                    if value.shape[0] == n_atoms:
+                        dct['arrays'][key] = value.tolist()
+                    else:
+                        dct['info'][key] = value.tolist()
+
+                    continue
+
+                dct['info'][key] = value
+
+        # if atoms.constraints:
+        #     dct['constraints'] = [c.todict() for c in atoms.constraints]
+
+        if extra_info is not None:
+            dct['info'].update(extra_info)
+
+        dct['derived'] = {
+            'elements': Counter(atoms.get_chemical_symbols()),
+            'arrays_keys': list(dct['arrays'].keys()),
+            'info_keys': list(dct['info'].keys())
+        }
+
+        return dct
+
+    def to_atoms(self):
+        data = self
+
+        cell = data['info'].pop('cell', None)
+        pbc = data['info'].pop('pbc', None)
+
+        numbers = data['arrays'].pop('numbers', None)
+        positions = data['arrays'].pop('positions', None)
+
+        atoms = Atoms(numbers=numbers,
+                      cell=cell,
+                      pbc=pbc,
+                      positions=positions)
+
+        if 'calculator_name' in data['info']:
+            calculator_name = data['info'].pop('calculator_name')
+            params = data['info'].pop('calculator_parameters', {})
+            results = data.pop('results', {})
+            # TODO: Proper initialisation fo Calculators
+            # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
+
+            atoms.calc = SinglePointCalculator(atoms, **params, **results)
+
+        atoms.arrays.update(data['arrays'])
+        atoms.info.update(data['info'])
+
+        return atoms
 
 
 class MongoDatabase(Database):
@@ -39,17 +139,15 @@ class MongoDatabase(Database):
         self.collection.remove()
 
     def push(self, atoms: Union[Atoms, Iterable], extra_info=None):
-        # with DictEncoder() as encoder:
-        #     data = encoder.encode(atoms)
+
         if isinstance(atoms, Atoms):
-            data = DictEncoder().encode(atoms)
+            data = AtomsModel.from_atoms(atoms)
             if extra_info is not None:
                 data['info'].update(extra_info)
             self.collection.insert_one(data)
 
         if isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-            data = DictEncoder().encode_many(atoms, extra_info)
-            self.collection.insert_many(data)
+            self.collection.insert_many(AtomsModel.from_atoms(at) for at in atoms)
 
     def upload(self, file):
         data = iread(file)
@@ -66,10 +164,8 @@ class MongoDatabase(Database):
         raise NotImplementedError
 
     def get_atoms(self, dbfilter):
-        from tmp.formats.dictionary import DictDecoder
-        with DictDecoder() as decoder:
-            for atoms in self.db.atoms.find(dbfilter):
-                yield decoder.decode(atoms)
+        for dct in self.db.atoms.find(dbfilter):
+            yield AtomsModel(dct).to_atoms()
 
     def count(self, dbfilter=None):
         if dbfilter is None:
@@ -107,7 +203,7 @@ class MongoDatabase(Database):
         ]
 
         info_keys = self.db.atoms.aggregate(pipeline)
-        # {'_id': 'calculator_name', 'count': 56},
+
         for val in info_keys:
             properties['info'][val['_id']] = {'count': val['count']}
 
@@ -149,16 +245,15 @@ class MongoDatabase(Database):
 
 
 if __name__ == '__main__':
-    pass
-
     # import json
     # from ase.io import iread
     # from pprint import pprint
     # from abcd_server.formats.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
-    #
-    # db = MongoDatabase('mongodb://localhost:27017/')
-    # db.info()
-    #
+
+    print('hello')
+    db = MongoDatabase('mongodb://localhost:27017/')
+    print(db.info())
+
     # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
     #     # print(at)
     #     atoms.calc.results['forces'] = atoms.arrays['force']

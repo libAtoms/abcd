@@ -1,5 +1,5 @@
 import logging
-from abcd_server import db
+from abcd import backends
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,7 @@ class ABCD(object):
 
     def __new__(cls, url, *args, **kwargs):
         if url.startswith('mongodb://'):
-            return db.MongoDatabase(url, *args, **kwargs)
+            return backends.MongoDatabase(url, *args, **kwargs)
 
         elif url.startswith('http://') or url.startswith('https://'):
             raise NotImplementedError('http not yet supported! soon...')

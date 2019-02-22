@@ -1,12 +1,17 @@
+import types
 import logging
 import numpy as np
+from os import linesep
 from collections import Counter
 
 from ase import Atoms
+from ase.io import iread
 from ase.calculators.singlepoint import SinglePointCalculator
 
 from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals
 from mongoengine.context_managers import switch_collection
+
+from abcd.backends.base import Database
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +25,10 @@ class AtomsQuerySet(queryset.QuerySet):
         """Generator which convert all the result of a query to Atoms object.
         """
         # return [obj.to_atoms() for obj in self]
+
         for obj in self:
             yield obj.to_atoms()
+
 
 
 class DerivedModel(EmbeddedDocument):
@@ -166,8 +173,139 @@ class Databases(Document):
     tags = fields.ListField(fields.StringField(max_length=30))
 
 
+class MongoDatabase(Database):
+    """Wrapper to make database operations easy"""
+
+    def __init__(self, url='mongodb://localhost:27017/', db_name='abcd', collection_name='atoms'):
+        super().__init__()
+
+        self.client = connect(db_name, host=url)
+        self.collection_name = collection_name
+
+        self.db = self.client.get_database(db_name)
+        self.collection = self.db[collection_name]
+
+    def info(self):
+        return {
+            'host': self.client.HOST,
+            'port': self.client.PORT,
+            'db': self.db.name,
+            'collection': self.collection.name,
+            'number of confs': self.collection.count()
+        }
+
+    def destroy(self):
+        with switch_collection(AtomsModel, self.collection_name) as AtomsModel:
+            AtomsModel.drop_collection()
+
+    def push(self, atoms, extra_info=None):
+
+        with switch_collection(self.model, self.collection_name) as AtomsModel:
+            if isinstance(atoms, Atoms):
+                AtomsModel.from_atoms(atoms, extra_info).save()
+
+            elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
+                self.collection.insert_many(AtomsModel.from_atoms(at) for at in atoms)
+
+    def upload(self, file):
+        data = iread(file)
+        self.push(data)
+
+    def pull(self, query=None, properties=None):
+        # atoms = json.loads(message)
+        raise NotImplementedError
+
+    def query(self, query_string):
+        raise NotImplementedError
+
+    def search(self, query_string: str):
+        raise NotImplementedError
+
+    def get_atoms(self, dbfilter):
+        for dct in self.db.atoms.find(dbfilter):
+            yield AtomsModel(dct).to_atoms()
+
+    def count(self, dbfilter=None):
+        with switch_collection(self.model, self.collection_name) as AtomsModel:
+
+            if dbfilter is None:
+                return AtomsModel.objects.count()
+
+            return self.db.atoms.count_documents(dbfilter)
+
+    def get_property(self, name, dbfilter=None):
+
+        if dbfilter is None:
+            dbfilter = {}
+
+        pipeline = [
+            {'$match': dbfilter},
+            {'$match': {'{}'.format(name): {"$exists": True}}},
+            {'$project': {'_id': False, 'data': '${}'.format(name)}}
+        ]
+
+        return [val['data'] for val in self.collection.aggregate(pipeline)]
+
+    def count_properties(self, dbfilter=None):
+
+        if dbfilter is None:
+            dbfilter = {}
+
+        properties = {
+            'info': {},
+            'arrays': {}
+        }
+
+        pipeline = [
+            {'$match': dbfilter},
+            {'$unwind': '$derived.info_keys'},
+            {'$group': {'_id': '$derived.info_keys', 'count': {'$sum': 1}}}
+        ]
+
+        info_keys = self.db.atoms.aggregate(pipeline)
+
+        for val in info_keys:
+            properties['info'][val['_id']] = {'count': val['count']}
+
+        pipeline = [
+            {'$match': dbfilter},
+            {'$unwind': '$derived.arrays_keys'},
+            {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}
+        ]
+        arrays_keys = list(self.db.atoms.aggregate(pipeline))
+        for val in arrays_keys:
+            properties['arrays'][val['_id']] = {'count': val['count']}
+
+        return properties
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(' \
+            f'url={self.client.HOST}:{self.client.PORT}, ' \
+            f'db={self.db.name}, ' \
+            f'collection={self.collection.name})'
+
+    def _repr_html_(self):
+        """Jupyter notebook representation"""
+        return '<b>ABCD MongoDB database</b>'
+
+    def print_info(self):
+        """shows basic information about the connected database"""
+
+        out = linesep.join(['{:=^50}'.format(' ABCD MongoDB '),
+                            '{:>10}: {}'.format('type', 'mongodb'),
+                            linesep.join('{:>10}: {}'.format(k, v) for k, v in self.info().items())])
+
+        print(out)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 if __name__ == '__main__':
-    from mongoengine import connect, register_connection
+    from mongoengine import connect
 
     logging.basicConfig(level=logging.DEBUG)
 

@@ -1,7 +1,5 @@
 from pathlib import Path
-
 from ase.io import iread, read
-from utils.ext_xyz import XYZReader
 
 from abcd import ABCD
 

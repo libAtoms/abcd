@@ -26,7 +26,7 @@ def database(database_name):
 
     print(request.method)
 
-    db_info = {
+    info = {
         'name': database_name,
         'description': 'Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus.',
         'columns': [
@@ -48,7 +48,7 @@ def database(database_name):
     # list(Atoms.objects.aggregate({'$unwind': '$derived.arrays_keys'}, {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}))
 
     return render_template("database/database.html",
-                           db_info=db_info,
+                           info=info,
                            atoms=paginated_atoms)
 
 
@@ -56,10 +56,15 @@ def database(database_name):
 # "templates/index.html" documentation for more details.
 @bp.route('/<database_name>/settings')
 def settings(database_name):
+
     info = {
         'name': database_name,
-        'description': "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. ",
-        'public': True,
+        'description': 'Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus.',
+        'columns': [
+            {'slug': 'formula', 'name': 'Formula'},
+            {'slug': 'energy', 'name': 'Energy'},
+            {'slug': 'derived.n_atoms', 'name': "# of atoms"}
+        ],
+        'public': True
     }
-
     return render_template("database/settings.html", database_name=database_name, info=info)

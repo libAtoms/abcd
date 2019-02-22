@@ -4,15 +4,25 @@ from ase.io import iread, read
 from abcd import ABCD
 
 if __name__ == '__main__':
-    url = 'mongodb://localhost:27017'
+    # http requests
     # url = 'http://localhost:5000/api'
-    abcd = ABCD(url, db_name='test', collection_name='newatoms')
+
+    # Pymongo
+    # url = 'mongodb://root:example@localhost:27018/?authSource=admin'
+
+    # Mongoengine
+    # https://stackoverflow.com/questions/36200288/mongolab-pymongo-connection-error
+    url = 'mongodb://root:example@localhost:27018/?authSource=admin'
+
+    abcd = ABCD(url, db='abcd', collection='default')
     print(abcd)
 
     abcd.print_info()
 
     with abcd as db:
         db.destroy()
+
+    abcd.destroy()
 
     direcotry = Path('../tutorials/data/')
     file = direcotry / 'bcc_bulk_54_expanded_2_high.xyz'

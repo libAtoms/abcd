@@ -175,19 +175,21 @@ class Databases(Document):
 class MongoDatabase(Database):
     """Wrapper to make database operations easy"""
 
-    def __init__(self, url='mongodb://localhost:27017/', db_name='abcd', collection_name='atoms'):
+    def __init__(self, url='mongodb://localhost:27017/', db='abcd', collection='atoms', **kwargs):
         super().__init__()
 
-        self.client = connect(db_name, host=url)
-        self.collection_name = collection_name
+        self.client = connect(db, host=url, **kwargs)
+        self.collection_name = collection
 
-        self.db = self.client.get_database(db_name)
-        self.collection = self.db[collection_name]
+        self.db = self.client.get_database(db)
+        self.collection = self.db[collection]
 
     def info(self):
+        host, port = self.client.address
+
         return {
-            'host': self.client.HOST,
-            'port': self.client.PORT,
+            'host': host,
+            'port': port,
             'db': self.db.name,
             'collection': self.collection.name,
             'number of confs': self.collection.count()
@@ -279,8 +281,10 @@ class MongoDatabase(Database):
         return properties
 
     def __repr__(self):
+        host, port = self.client.address
+
         return f'{self.__class__.__name__}(' \
-            f'url={self.client.HOST}:{self.client.PORT}, ' \
+            f'url={host}:{port}, ' \
             f'db={self.db.name}, ' \
             f'collection={self.collection.name})'
 

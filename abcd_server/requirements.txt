@@ -1,0 +1,13 @@
+ase
+requests
+mongoengine
+blinker
+
+Flask
+Flask-MongoEngine
+Flask-Nav
+
+Flask-GraphQL
+graphene-mongo
+
+gunicorn

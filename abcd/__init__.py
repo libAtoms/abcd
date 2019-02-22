@@ -9,7 +9,7 @@ class ABCD(object):
 
     def __new__(cls, url, *args, **kwargs):
         if url.startswith('mongodb://'):
-            return backends.MongoDatabase(url, *args, **kwargs)
+            return backends.MongoDatabase(url=url, *args, **kwargs)
 
         elif url.startswith('http://') or url.startswith('https://'):
             raise NotImplementedError('http not yet supported! soon...')

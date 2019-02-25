@@ -1,6 +1,14 @@
+import os
+import sys
 import logging
 from flask import Flask, render_template
+from flask_nav import register_renderer
+
 from abcd_server.app.db import db
+from abcd_server.app.nav import nav, BootstrapRenderer, DatabaseNav
+from abcd_server.app.views import index
+from abcd_server.app.views import api
+from abcd_server.app.views import database
 
 logger = logging.getLogger(__name__)
 
@@ -12,43 +20,31 @@ def page_not_found(e):
 def create_app():
     app = Flask(__name__)
 
-    app.config['DEBUG'] = True
-    app.config['SECRET_KEY'] = 'sadfgsdf'
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(12).hex())
 
-    # Configurations for Flask_mongoengine
     app.config['MONGODB_SETTINGS'] = {
-        'db': 'abcd',
-        'host': 'mongodb://localhost:27017/'
+        # 'db': os.getenv('MONGODB_DB', 'abcd'),
+        'name': os.getenv('MONGODB_DB', 'abcd'),
+        'host': os.getenv('MONGODB_HOST', '127.0.0.1'),
+        'port': int(os.getenv('MONGODB_PORT', 27017)),
+        'username': os.getenv('MONGODB_USERNAME', None),
+        'password': os.getenv('MONGODB_PASSWORD', None),
+        'authentication_source': 'admin'
     }
 
-    app.register_error_handler(404, page_not_found)
+    db.init_app(app)
 
-    from abcd_server.app.nav import nav, BootstrapRenderer, DatabaseNav
-    from flask_nav import register_renderer
     register_renderer(app, 'BootstrapRenderer', BootstrapRenderer)
     register_renderer(app, 'DatabaseNav', DatabaseNav)
     nav.init_app(app)
 
-    # with app_old.app_context():
-    db.init_app(app)
+    app.register_error_handler(404, page_not_found)
 
-    # con = connect('abcd', host='mongodb://localhost/', alias='default')
-    # db = con['abcd']
-    # # # This will create the database file using SQLAlchemy
-    # with app_old.app_context():
-    #     db.create_all()
-
-    # from app_old.views import auth
-    # app_old.register_blueprint(auth.bp)
-
-    from abcd_server.app.views import index
     app.register_blueprint(index.bp)
-
-    from abcd_server.app.views import api
     app.register_blueprint(api.bp, url_prefix='/api')
-
-    from abcd_server.app.views import database
     app.register_blueprint(database.bp, url_prefix='/db')
+
+    print(app.config, file=sys.stderr)
 
     return app
 
@@ -56,39 +52,11 @@ def create_app():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
-    # with app_old.test_request_context():
-    #     print(url_for('index'))
-    #     print(url_for('login'))
-    #     print(url_for('login', next='/'))
-    #     print(url_for('profile', username='John Doe'))
-
     app = create_app()
 
-    # with app_old.app_context():
-    #     # admin = User(username='admin', email='admin@example.com')
-    #     # guest = User(username='guest', email='guest@example.com')
-    #     # db.session.add(admin)
-    #     # db.session.add(guest)
-    #     # db.session.commit()
-    #
-    #     print(User.query.all())
 
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run()
 
-    # from ase.io import write
-    # from ase.io.jsonio import read_json
-    # write(atoms, '-', format='json')
-    #
-    # traj = read('../../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None))
-    # for atoms in traj:
-    #     # Hack to fix the representation of forces
-    #     atoms.calc.results['forces'] = atoms.arrays['force']
-    #
-    # print(traj)
-    #
-    # atoms = traj[0]
-    #
-    # # message = json.dumps(atoms)
 
 # # Using Extensions:
 

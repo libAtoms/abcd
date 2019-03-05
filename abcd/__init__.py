@@ -1,4 +1,5 @@
 import logging
+from urllib import parse
 from abcd import backends
 
 logger = logging.getLogger(__name__)
@@ -7,11 +8,23 @@ logger = logging.getLogger(__name__)
 class ABCD(object):
     """Factory method"""
 
-    def __new__(cls, url, *args, **kwargs):
-        if url.startswith('mongodb://'):
-            return backends.MongoDatabase(url=url, *args, **kwargs)
+    def __new__(cls, url, **kwargs):
 
-        elif url.startswith('http://') or url.startswith('https://'):
+        r = parse.urlparse(url)
+
+        if r.scheme == 'mongodb':
+
+            conn_settings = {
+                'host': r.hostname,
+                'port': r.port,
+                'username': r.username,
+                'password': r.password,
+                'authentication_source': 'admin',
+            }
+            print(conn_settings)
+            return backends.MongoDatabase(**conn_settings, **kwargs)
+
+        elif r.scheme == 'http' or r.scheme == 'https':
             raise NotImplementedError('http not yet supported! soon...')
         else:
             raise NotImplementedError(f'Unable to recognise the type of connection. (url: {url})')

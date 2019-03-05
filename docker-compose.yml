@@ -20,8 +20,6 @@ services:
       - MONGODB_PORT=27017
       - MONGODB_USERNAME=${DB_USER}
       - MONGODB_PASSWORD=${DB_PASS}
-    expose:
-      - 5000
     ports:
       - 8080:5000
     depends_on:

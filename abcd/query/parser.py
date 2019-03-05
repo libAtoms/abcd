@@ -87,7 +87,10 @@ class QueryParser(QueryLexer):
     @staticmethod
     def p_statements_multiple(p):
         """statements : statements statement"""
-        p[0] = p[1] + [p[2]]
+
+        p[0] = ('AND',
+                p[1][1:] if p[1][0] == 'AND' else p[1],
+                p[2][1:] if p[2][0] == 'AND' else p[2])
 
     @staticmethod
     def p_statement_expr(p):
@@ -114,10 +117,30 @@ class QueryParser(QueryLexer):
         """expression : NAME"""
         p[0] = ('NAME', p[1])
 
+    # @staticmethod
+    # def p_expression_name_exist(p):
+    #     """expression : NAME expression"""
+    #     p[0] = ('AND', ('EXSITS', p[1]), p[2])
+
+    @staticmethod
+    def p_expression_and(p):
+        """expression : expression AND expression"""
+        out = ('AND',)
+        if p[1][0] == 'AND':
+            out += p[1][1:]
+        else:
+            out += (p[1],)
+
+        if p[3][0] == 'AND':
+            out += p[3][1:]
+        else:
+            out += (p[3],)
+
+        p[0] = out
+
     @staticmethod
     def p_expression_binop(p):
-        """expression : expression AND expression
-                      | expression OR expression
+        """expression : expression OR expression
                       | expression IN expression
                       | expression NIN expression
                       | expression EQ expression
@@ -142,6 +165,9 @@ class QueryParser(QueryLexer):
             logger.error("Syntax error at EOF")
 
     def parse(self, s):
+        if not s:
+            return None
+
         return self.parser.parse(s)
 
 
@@ -151,7 +177,8 @@ if __name__ == '__main__':
     parser = QueryParser()
 
     queries = (
-        'aa & bb > 23 ',
+        'aa bb > 23 ',
+        'aa & bb > 23 & bb > 23 & bb > 23 ',
         'aa & bb > 23.54 | (22 in cc & dd)',
         'aa and bb > 23.54 or (22 in cc and dd)',
         'aa and (bb > 23.54 or (22 in cc and dd))',

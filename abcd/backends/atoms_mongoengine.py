@@ -175,10 +175,15 @@ class Databases(Document):
 class MongoDatabase(Database):
     """Wrapper to make database operations easy"""
 
-    def __init__(self, url='mongodb://localhost:27017/', db='abcd', collection='atoms', **kwargs):
+    def __init__(self, db='abcd', collection='atoms',  **kwargs):
         super().__init__()
 
-        self.client = connect(db, host=url, **kwargs)
+        self.client = connect(db, **kwargs)
+        # source='admin' is the default...
+        self.client[kwargs['authentication_source']].authenticate(
+            name=kwargs['username'], password=kwargs['password']
+        )
+
         self.collection_name = collection
 
         self.db = self.client.get_database(db)

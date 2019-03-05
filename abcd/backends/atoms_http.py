@@ -16,7 +16,7 @@ class Atoms(ase.Atoms):
         return cls(numbers=data['numbers'], positions=data['positions'])
 
 
-class RemoteDatabase(Database):
+class HttpDatabase(Database):
     """client/local interface"""
 
     def __init__(self, url='http://localhost'):

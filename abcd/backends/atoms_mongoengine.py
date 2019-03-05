@@ -11,7 +11,10 @@ from ase.calculators.singlepoint import SinglePointCalculator
 from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals, connect
 from mongoengine.context_managers import switch_collection
 
+import matplotlib.pyplot as plt
+
 from abcd.backends.base import Database
+from abcd.query.parser import QueryParser
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +24,91 @@ class AtomsQuerySet(queryset.QuerySet):
     This class contains helper methods to directly access the Atoms objects
     """
 
+    def from_string(self, query):
+        with MongoQuery() as parser:
+            query = parser(query)
+        return self.from_dict(query)
+
+    def from_dict(self, query):
+        return self(__raw__=query)
+
     def to_atoms(self):
         """Generator which convert all the result of a query to Atoms object.
         """
-        # return [obj.to_atoms() for obj in self]
+        return (obj.to_atoms() for obj in self)
 
-        for obj in self:
-            yield obj.to_atoms()
+    def query(self, query):
+        if query is None:
+            return self
+        elif isinstance(query, dict):
+            return self(__raw__=query)
+        elif isinstance(query, str):
+            return self.from_string(query)
+        else:
+            raise NotImplementedError(f'Query string should be string or dictionary and not {type(query)}!')
+
+
+class MongoQuery(object):
+
+    def __init__(self):
+        self.parser = QueryParser()
+
+    def visit(self, syntax_tree):
+        op, *args = syntax_tree
+        try:
+            fun = self.__getattribute__(f'visit_{op.lower()}')
+            return fun(*args)
+        except:
+            pass
+
+    def visit_name(self, fields):
+        return {fields: {'$exists': True}}
+
+    def visit_and(self, *args):
+        return {'$and': [self.visit(arg) for arg in args]}
+        # TODO recursively combining all the and statements
+        # out = {}
+        # for arg in args:
+        #     a = self.visit(arg)
+        #
+        #     out.update(**a)
+        # return out
+
+    def visit_or(self, *args):
+        return {'$or': [self.visit(arg) for arg in args]}
+
+    def visit_eq(self, field, value):
+        return {field[1]: value[1]}
+
+    def visit_gt(self, field, value):
+        return {field[1]: {'$gt': value[1]}}
+
+    def visit_gte(self, field, value):
+        return {field[1]: {'$gte': value[1]}}
+
+    def visit_lt(self, field, value):
+        return {field[1]: {'$lt': value[1]}}
+
+    def visit_lte(self, field, value):
+        return {field[1]: {'$lte': value[1]}}
+
+    def visit_in(self, field, *values):
+        return {field[1]: {'$in': [value[1] for value in values]}}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def __call__(self, string):
+
+        ast = self.parser.parse(string)
+
+        if ast is None:
+            return {}
+
+        return self.visit(ast)
 
 
 class DerivedModel(EmbeddedDocument):
@@ -175,19 +256,20 @@ class Databases(Document):
 class MongoDatabase(Database):
     """Wrapper to make database operations easy"""
 
-    def __init__(self, db='abcd', collection='atoms',  **kwargs):
+    def __init__(self, db='abcd', collection='atoms', authentication_source='admin', username=None, password=None,
+                 **kwargs):
         super().__init__()
 
         self.client = connect(db, **kwargs)
-        # source='admin' is the default...
-        self.client[kwargs['authentication_source']].authenticate(
-            name=kwargs['username'], password=kwargs['password']
-        )
+        if username:
+            self.client[authentication_source].authenticate(name=username, password=password)
 
         self.collection_name = collection
 
-        self.db = self.client.get_database(db)
-        self.collection = self.db[collection]
+        self._db = self.client.get_database(db)
+        self._collection = self._db[collection]
+
+        self.queryparser = MongoQuery()
 
     def info(self):
         host, port = self.client.address
@@ -195,9 +277,9 @@ class MongoDatabase(Database):
         return {
             'host': host,
             'port': port,
-            'db': self.db.name,
-            'collection': self.collection.name,
-            'number of confs': self.collection.count()
+            'db': self._db.name,
+            'collection': self._collection.name,
+            'number of confs': self.count()
         }
 
     def destroy(self):
@@ -205,7 +287,6 @@ class MongoDatabase(Database):
             model.drop_collection()
 
     def push(self, atoms, extra_info=None):
-
         with switch_collection(AtomsModel, self.collection_name) as model:
             if isinstance(atoms, Atoms):
                 model.from_atoms(atoms, extra_info).save()
@@ -223,65 +304,64 @@ class MongoDatabase(Database):
         # atoms = json.loads(message)
         raise NotImplementedError
 
-    def query(self, query_string):
-        raise NotImplementedError
-
-    def search(self, query_string: str):
-        raise NotImplementedError
-
-    def get_atoms(self, dbfilter):
-        for dct in self.db.atoms.find(dbfilter):
-            yield AtomsModel(dct).to_atoms()
-
-    def count(self, dbfilter=None):
+    def get_atoms(self, query=None):
         with switch_collection(AtomsModel, self.collection_name) as model:
-            if dbfilter is None:
-                return model.objects.count()
+            return model.objects.query(query).to_atoms()
 
-            return self.db.atoms.count_documents(dbfilter)
+    def count(self, query=None):
+        with switch_collection(AtomsModel, self.collection_name) as model:
+            return model.objects.query(query).count()
 
-    def get_property(self, name, dbfilter=None):
+    def property(self, name, query=None):
+        with switch_collection(AtomsModel, self.collection_name) as model:
+            pipeline = [
+                {'$match': {'{}'.format(name): {"$exists": True}}},
+                {'$project': {'_id': False, 'data': '${}'.format(name)}}
+            ]
 
-        if dbfilter is None:
-            dbfilter = {}
+            return [val['data'] for val in model.objects.query(query).aggregate(*pipeline)]
 
-        pipeline = [
-            {'$match': dbfilter},
-            {'$match': {'{}'.format(name): {"$exists": True}}},
-            {'$project': {'_id': False, 'data': '${}'.format(name)}}
-        ]
+    def properties(self, query=None):
+        with switch_collection(AtomsModel, self.collection_name) as model:
+            properties = {}
 
-        return [val['data'] for val in self.collection.aggregate(pipeline)]
+            pipeline = [
+                {'$unwind': '$derived.info_keys'},
+                {'$group': {'_id': '$derived.info_keys'}}
+            ]
+            properties['info'] = [value['_id'] for value in model.objects.query(query).aggregate(*pipeline)]
 
-    def count_properties(self, dbfilter=None):
+            pipeline = [
+                {'$unwind': '$derived.arrays_keys'},
+                {'$group': {'_id': '$derived.arrays_keys'}}
+            ]
+            properties['arrays'] = [value['_id'] for value in model.objects.query(query).aggregate(*pipeline)]
 
-        if dbfilter is None:
-            dbfilter = {}
+            return properties
 
-        properties = {
-            'info': {},
-            'arrays': {}
-        }
+    def count_properties(self, query=None):
+        with switch_collection(AtomsModel, self.collection_name) as model:
 
-        pipeline = [
-            {'$match': dbfilter},
-            {'$unwind': '$derived.info_keys'},
-            {'$group': {'_id': '$derived.info_keys', 'count': {'$sum': 1}}}
-        ]
+            properties = {
+                'info': {},
+                'arrays': {}
+            }
 
-        info_keys = self.db.atoms.aggregate(pipeline)
+            pipeline = [
+                {'$unwind': '$derived.info_keys'},
+                {'$group': {'_id': '$derived.info_keys', 'count': {'$sum': 1}}}
+            ]
 
-        for val in info_keys:
-            properties['info'][val['_id']] = {'count': val['count']}
+            for value in model.objects.query(query).aggregate(*pipeline):
+                properties['info'][value['_id']] = {'count': value['count']}
 
-        pipeline = [
-            {'$match': dbfilter},
-            {'$unwind': '$derived.arrays_keys'},
-            {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}
-        ]
-        arrays_keys = list(self.db.atoms.aggregate(pipeline))
-        for val in arrays_keys:
-            properties['arrays'][val['_id']] = {'count': val['count']}
+            pipeline = [
+                {'$unwind': '$derived.arrays_keys'},
+                {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}
+            ]
+
+            for value in model.objects.query(query).aggregate(*pipeline):
+                properties['arrays'][value['_id']] = {'count': value['count']}
 
         return properties
 
@@ -290,8 +370,8 @@ class MongoDatabase(Database):
 
         return f'{self.__class__.__name__}(' \
             f'url={host}:{port}, ' \
-            f'db={self.db.name}, ' \
-            f'collection={self.collection.name})'
+            f'db={self._db.name}, ' \
+            f'collection={self._collection.name})'
 
     def _repr_html_(self):
         """Jupyter notebook representation"""
@@ -312,16 +392,38 @@ class MongoDatabase(Database):
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    def stats(self, prop, query=None, **kwargs):
+        data = self.property(prop, query)
+        return {
+            prop: {
+                'min': min(data),
+                'max': max(data),
+            }
+        }
+
+    def plot_hist(self, prop, query=None, **kwargs):
+        data = self.property(prop, query)
+        _, _, ax = plt.hist(data, **kwargs)
+        return ax
+
 
 if __name__ == '__main__':
+    from ase.io import iread
+
     logging.basicConfig(level=logging.DEBUG)
 
     collection_name = 'atoms'
+    url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017'
 
-    # register_connection('default', db='abcd', host='localhost', port=27017)
-    con = connect('abcd', host='localhost', port=27017)
-    db = con.get_database('abcd')
-    print(db)
+    abcd = MongoDatabase(collection='test', username='2ef35d3635e9dc5a922a6a42', password='ac6ce72e259f5ddcc8dd5178')
+
+    abcd.print_info()
+
+    # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
+    #     # Hack to fix the representation of forces
+    #     atoms.calc.results['forces'] = atoms.arrays['force']
+    #
+    #     print(atoms)
 
     with switch_collection(AtomsModel, collection_name) as AtomsModel:
         atoms = AtomsModel.objects.first().to_atoms()
@@ -332,6 +434,16 @@ if __name__ == '__main__':
     Databases(name=collection_name).save()
 
     print(Databases.objects(name=collection_name).first())
+
+    print(abcd.query('arrays.positions'))
+
+    print(abcd.count_properties())
+
+    query = {
+        'info.config_type': 'bcc_bulk_54_high'
+    }
+    # query ='info.config_type=bcc_bulk_54_high'
+    print(abcd.count(query))
 
 # class ArraysModel(EmbeddedDocument):
 #     meta = {'strict': False}

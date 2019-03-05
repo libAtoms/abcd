@@ -19,6 +19,10 @@ class QueryLexer(object):
               'EQ', 'LT', 'GT', 'LTE', 'GTE',
               'LPAREN', 'RPAREN') + tuple(reserved.values())
 
+    # tokens = ('FLOAT', 'INT', 'NAME', 'STRING',
+    #           'EQ', 'LT', 'GT', 'LTE', 'GTE',
+    #           'LPAREN', 'RPAREN', 'BEGIN_ARRAY', 'END_ARRAY', 'VALUE_SEPARATOR') + tuple(reserved.values())
+
     # Tokens
     t_FLOAT = r'[-+]?[0-9]+(\.([0-9]+)?([eE][-+]?[0-9]+)?|[eE][-+]?[0-9]+)'
     t_INT = r'[-+]?[0-9]+'
@@ -35,6 +39,9 @@ class QueryLexer(object):
 
     t_LPAREN, t_RPAREN = r'\(', r'\)'
 
+    # t_BEGIN_ARRAY, t_END_ARRAY = r'\[', r'\]'
+    # t_VALUE_SEPARATOR = r','
+
     # A string containing ignored characters (spaces and tabs)
     t_ignore = ' \t'
 
@@ -44,7 +51,7 @@ class QueryLexer(object):
 
     @staticmethod
     def t_name(t):
-        r'[a-zA-Z_][a-zA-Z0-9_]*'
+        r'[a-zA-Z_][a-zA-Z0-9_.]*'
         t.type = reserved.get(t.value, 'NAME')  # Check for reserved words
         return t
 
@@ -156,6 +163,33 @@ class QueryParser(QueryLexer):
     def p_expression_group(p):
         """expression : LPAREN expression RPAREN"""
         p[0] = p[2]
+    #
+    # # @staticmethod
+    # # def p_number(p):
+    # #     """number : FLOAT"""
+    # #     p[0] = p[1]
+    #
+    # @staticmethod
+    # def p_value(p):
+    #     """value : array
+    #              | FLOAT
+    #              | INT
+    #     """
+    #     p[0] = p[1]
+    #
+    # @staticmethod
+    # def p_values(p):
+    #     """values : values value VALUE_SEPARATOR
+    #               | values value"""
+    #     if len(p) == 1:
+    #         p[0] = list()
+    #     else:
+    #         p[1].append(p[2])
+    #         p[0] = p[1]
+    #
+    # def p_array(self, p):
+    #     """array : BEGIN_ARRAY values END_ARRAY"""
+    #     p[0] = p[2]
 
     @staticmethod
     def p_error(p):
@@ -177,6 +211,7 @@ if __name__ == '__main__':
     parser = QueryParser()
 
     queries = (
+        'aa = [True True True]',
         'aa bb > 23 ',
         'aa & bb > 23 & bb > 23 & bb > 23 ',
         'aa & bb > 23.54 | (22 in cc & dd)',

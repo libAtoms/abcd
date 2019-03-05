@@ -21,8 +21,11 @@ class ABCD(object):
                 'password': r.password,
                 'authentication_source': 'admin',
             }
-            print(conn_settings)
-            return backends.MongoDatabase(**conn_settings, **kwargs)
+
+            db = r.path.split('/', 1)[1]
+            db = db if db else 'abcd'
+
+            return backends.MongoDatabase(db=db, **conn_settings, **kwargs)
 
         elif r.scheme == 'http' or r.scheme == 'https':
             raise NotImplementedError('http not yet supported! soon...')
@@ -35,12 +38,17 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.INFO)
 
-    for atoms in iread('../utils/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
+    url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/abcd'
+    abcd = ABCD(url, collection='atoms')
+    abcd.print_info()
+
+    for atoms in iread('../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
         # Hack to fix the representation of forces
         atoms.calc.results['forces'] = atoms.arrays['force']
 
         print(atoms)
 
+    abcd.query('aa>22 bb')
     # todo: query_str2_query_dict
 
     # db = ABCD(url='http://localhost:5000/api')

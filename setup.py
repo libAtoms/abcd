@@ -4,7 +4,7 @@ setup(
     name='abcd',
     version='0.3',
     packages=['abcd'],  # packages=find_packages(),
-    install_requires=['ase', 'click', 'flask', 'ply'],
+    install_requires=['ase', 'click', 'flask', 'ply', 'matplotlib'],
     entry_points={
         'console_scripts': ['abcd=abcd.cli:cli']
     },

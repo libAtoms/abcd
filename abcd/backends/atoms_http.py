@@ -75,3 +75,9 @@ class HttpDatabase(Database):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
+
+
+if __name__ == '__main__':
+
+    abcd = HttpDatabase(url='http://localhost:8080/api')
+    abcd.print_info()

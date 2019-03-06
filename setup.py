@@ -4,7 +4,7 @@ setup(
     name='abcd',
     version='0.3',
     packages=find_packages(),
-    install_requires=['ase', 'click', 'flask', 'ply', 'matplotlib'],
+    install_requires=['ase', 'click', 'flask', 'ply', 'matplotlib', 'blinker', 'mongoengine'],
     entry_points={
         'console_scripts': ['abcd=abcd.cli:cli']
     },

@@ -102,13 +102,8 @@ class MongoQuery(object):
         pass
 
     def __call__(self, string):
-
         ast = self.parser.parse(string)
-
-        if ast is None:
-            return {}
-
-        return self.visit(ast)
+        return self.visit(ast) if ast is not None else {}
 
 
 class DerivedModel(EmbeddedDocument):
@@ -168,6 +163,10 @@ class AtomsModel(DynamicDocument):
 
     @classmethod
     def from_atoms(cls, atoms: Atoms, extra_info=None, **kwargs):
+
+        # if isinstance(atoms, list):
+        #     return (cls.from_atoms(value, extra_info=None, **kwargs) for value in atoms)
+
         arrays = atoms.arrays.copy()
         natoms = len(atoms)
 
@@ -256,7 +255,8 @@ class Databases(Document):
 class MongoDatabase(Database):
     """Wrapper to make database operations easy"""
 
-    def __init__(self, db='abcd', collection='atoms', authentication_source='admin', username=None, password=None,
+    def __init__(self, db='abcd', collection='atoms',
+                 authentication_source='admin', username=None, password=None,
                  **kwargs):
         super().__init__()
 
@@ -264,6 +264,7 @@ class MongoDatabase(Database):
         if username:
             self.client[authentication_source].authenticate(name=username, password=password)
 
+        self.db_name= db
         self.collection_name = collection
 
         self._db = self.client.get_database(db)
@@ -277,8 +278,8 @@ class MongoDatabase(Database):
         return {
             'host': host,
             'port': port,
-            'db': self._db.name,
-            'collection': self._collection.name,
+            'db': self.db_name,
+            'collection': self.collection_name,
             'number of confs': self.count()
         }
 
@@ -293,8 +294,9 @@ class MongoDatabase(Database):
 
             elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
                 # NOTE: insert method is not able to handle generators
-                model._get_collection().insert_many(model.from_atoms(at).to_mongo() for at in atoms)
-                # model.objects.insert(list(model.from_atoms(at) for at in atoms))
+
+                # model._get_collection().insert_many(model.from_atoms(at).to_mongo() for at in atoms)
+                model.objects.insert(list(model.from_atoms(at) for at in atoms))
 
     def upload(self, file):
         data = iread(file)
@@ -370,8 +372,8 @@ class MongoDatabase(Database):
 
         return f'{self.__class__.__name__}(' \
             f'url={host}:{port}, ' \
-            f'db={self._db.name}, ' \
-            f'collection={self._collection.name})'
+            f'db={self.db_name}, ' \
+            f'collection={self.collection_name})'
 
     def _repr_html_(self):
         """Jupyter notebook representation"""
@@ -408,8 +410,6 @@ class MongoDatabase(Database):
 
 
 if __name__ == '__main__':
-    from ase.io import iread
-
     logging.basicConfig(level=logging.DEBUG)
 
     collection_name = 'atoms'

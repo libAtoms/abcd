@@ -1,4 +1,8 @@
+import os
 import click
+import json
+from abcd import ABCD
+from ase.io import write
 
 
 @click.group()
@@ -6,15 +10,35 @@ def cli():
     pass
 
 
+class Config(dict):
+    def save_json(self, filename='.config.json'):
+        # TODO: filepath from environmental variable
+
+        with open(filename, 'w') as file:
+            json.dump(self, file)
+
+    def load_json(self, filename='.config.json'):
+        with open(filename) as file:
+            self.update(json.load(file))
+        return self
+
+
 @cli.command('login', short_help='login to the database')
 @click.argument('url', default='http://localhost', metavar='<url>')
-def login(url):
+@click.argument('collection', default='atoms', metavar='<collection>')
+def db_login(url, collection):
     """login to the database
 
     Arguments:\n
-    url     The url of abcd api (default: http://localhost)'
+    url         The url of abcd api (default: http://localhost)'
+    collection  The name of collection (default: atoms)'
     """
-    click.echo(f"login: {url}")
+
+    config['url'] = url
+    config['collection'] = collection
+    config.save_json()
+
+    click.echo(f"login: url={url}, collection={collection}")
 
 
 @cli.command('list', short_help='list data available in the database')
@@ -23,11 +47,38 @@ def db_list():
     click.echo(f"list:")
 
 
-@cli.command('pull', short_help='pull data from the database')
-@click.option('--file-format', type=click.Choice(['xyz', 'json']), default='xyz')
-def db_pull(file_format):
+@cli.command('status', short_help='list data available in the database')
+def db_status():
+    """list data available in the database."""
+
+    click.echo(f"connected: {config['url']}")
+    abcd.print_info()
+
+
+@cli.command('properties', short_help='available properties of data in the database')
+@click.option('--details', is_flag=True)
+@click.option('-q', '--query')
+def db_properties(details, query=None):
     """pull data from the database"""
-    click.echo(f"push: {file_format}")
+    if details:
+        data = abcd.count_properties(query)
+    else:
+        data = abcd.properties(query)
+
+    click.echo(json.dumps(data, indent=2))
+
+
+@cli.command('pull', short_help='pull data from the database')
+@click.option('-a', '--append', is_flag=True)
+@click.option('-q', '--query')
+@click.argument('filename')
+def db_pull(append, query, filename):
+    """pull data from the database"""
+
+    atoms = abcd.get_atoms(query)
+    write(filename, atoms)
+
+    click.echo(f"push: filename={filename}")
 
 
 @cli.command('push', short_help='push data to the database')
@@ -40,6 +91,7 @@ def db_push(recursive, file_format, path):
     format
     path      The folder which contains the trajectories
     """
+
     click.echo(f"push: {recursive}, {file_format}, {path}")
 
 
@@ -50,8 +102,31 @@ def db_query(query_string):
     click.echo(f"query: {query_string}")
 
 
+@cli.command('destroy', short_help='destroying the database')
+@click.argument('collection')
+def db_query(collection):
+    """query data from the database"""
+
+    if collection == config['collection']:
+        abcd.destroy()
+
+    click.echo(f"Database destroyed: {collection}")
+
+
+config = Config()
+config.load_json()
+abcd = ABCD(config['url'], collection=config['collection'])
+
 if __name__ == '__main__':
-    cli()
+    # config = Config()
+    # config['url'] = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/'
+    # config.save_json()
+
+    # db_login('mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/', 'atoms')
+    # db_pull(filename='test.xyz')
+
+    if __name__ == '__main__':
+        db_login('mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/', 'atoms')
 
 # import argparse
 #

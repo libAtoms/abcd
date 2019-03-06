@@ -3,6 +3,7 @@ import logging
 import numpy as np
 from os import linesep
 from collections import Counter
+import numpy as np
 
 from ase import Atoms
 from ase.io import iread
@@ -135,26 +136,34 @@ class AtomsModel(DynamicDocument):
         Returns:
 
         """
+        # TODO: properly converting lists to numpy arrays
+
         cell = self['info'].pop('cell', None)
         pbc = self['info'].pop('pbc', None)
 
         numbers = self['arrays'].pop('numbers', None)
         positions = self['arrays'].pop('positions', None)
 
-        atoms = Atoms(numbers=numbers,
-                      cell=cell,
-                      pbc=pbc,
-                      positions=positions)
+        atoms = Atoms(numbers=np.array(numbers),
+                      cell=np.array(cell),
+                      pbc=np.array(pbc),
+                      positions=np.array(positions))
 
         if 'calculator_name' in self['info']:
             calculator_name = self['info'].pop('calculator_name')
             params = self['info'].pop('calculator_parameters', {})
             results = self['results']
 
+            for k, v in results.items():
+                results[k] = np.array(v)
+
             # TODO: Proper initialisation fo Calculators
             # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
 
             atoms.calc = SinglePointCalculator(atoms, **params, **results)
+
+        for k, v in self['arrays'].items():
+            self['arrays'][k] = np.array(v)
 
         atoms.arrays.update(self['arrays'])
         atoms.info.update(self['info'])
@@ -264,7 +273,7 @@ class MongoDatabase(Database):
         if username:
             self.client[authentication_source].authenticate(name=username, password=password)
 
-        self.db_name= db
+        self.db_name = db
         self.collection_name = collection
 
         self._db = self.client.get_database(db)
@@ -415,7 +424,7 @@ if __name__ == '__main__':
     collection_name = 'atoms'
     url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017'
 
-    abcd = MongoDatabase(collection='test', username='2ef35d3635e9dc5a922a6a42', password='ac6ce72e259f5ddcc8dd5178')
+    abcd = MongoDatabase(collection='atoms', username='2ef35d3635e9dc5a922a6a42', password='ac6ce72e259f5ddcc8dd5178')
 
     abcd.print_info()
 
@@ -445,6 +454,8 @@ if __name__ == '__main__':
     # query ='info.config_type=bcc_bulk_54_high'
     print(abcd.count(query))
 
+    a = list(abcd.get_atoms())
+    print(type(a[0].arrays['forces']))
 # class ArraysModel(EmbeddedDocument):
 #     meta = {'strict': False}
 #     numbers = ListField(IntField())

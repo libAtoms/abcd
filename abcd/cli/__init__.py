@@ -3,24 +3,36 @@ import click
 import json
 from abcd import ABCD
 from ase.io import write
+from pathlib import Path
+
+
+# https://martin-thoma.com/configuration-files-in-python/
+class Config(dict):
+
+    def __init__(self, file=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.file = file or os.environ.get('ABCD_CONFIG') or Path('./.abcd')
+
+    @classmethod
+    def from_file(cls, file=Path('./.abcd')):
+        if not file.is_file():
+            return cls(file)
+
+        with open(file) as f:
+            data = json.load(f)
+        return cls(file, data)
+
+    def save_json(self):
+        with open(self.file, 'w') as file:
+            json.dump(self, file)
+
+    def __getitem__(self, key):
+        return self.get(key) or os.environ.get(key)
 
 
 @click.group()
 def cli():
     pass
-
-
-class Config(dict):
-    def save_json(self, filename='.config.json'):
-        # TODO: filepath from environmental variable
-
-        with open(filename, 'w') as file:
-            json.dump(self, file)
-
-    def load_json(self, filename='.config.json'):
-        with open(filename) as file:
-            self.update(json.load(file))
-        return self
 
 
 @cli.command('login', short_help='login to the database')
@@ -113,11 +125,27 @@ def db_query(collection):
     click.echo(f"Database destroyed: {collection}")
 
 
-config = Config()
-config.load_json()
-abcd = ABCD(config['url'], collection=config['collection'])
+# config = Config()
+# config.load_json()
+# abcd = ABCD(config['url'], collection=config['collection'])
 
 if __name__ == '__main__':
+    config = Config.from_file()
+    config['test1'] = 123
+    config['test2'] = 'dsfkjak fds'
+    config['test3'] = 'asdfksd kfjs dl'
+    config.save_json()
+
+    print(config['test1'])
+    print(config['test2'])
+    print(config['test3'])
+    print(config['test4'])
+    print(config.get('test4'))
+
+    del config['test2']
+    print(config.items())
+    config.save_json()
+
     # config = Config()
     # config['url'] = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/'
     # config.save_json()
@@ -125,8 +153,8 @@ if __name__ == '__main__':
     # db_login('mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/', 'atoms')
     # db_pull(filename='test.xyz')
 
-    if __name__ == '__main__':
-        db_login('mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/', 'atoms')
+    # if __name__ == '__main__':
+    #     db_login('mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/', 'atoms')
 
 # import argparse
 #

@@ -1,9 +1,11 @@
 import types
 import logging
+
 import numpy as np
 from os import linesep
 from collections import Counter
-import numpy as np
+
+import matplotlib.pyplot as plt
 
 from ase import Atoms
 from ase.io import iread
@@ -11,8 +13,6 @@ from ase.calculators.singlepoint import SinglePointCalculator
 
 from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals, connect
 # from mongoengine.context_managers import switch_collection, switch_db
-
-import matplotlib.pyplot as plt
 
 from abcd.backends.base import Database
 from abcd.query.parser import QueryParser

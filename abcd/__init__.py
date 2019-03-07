@@ -32,6 +32,10 @@ class ABCD(object):
         else:
             raise NotImplementedError(f'Unable to recognise the type of connection. (url: {url})')
 
+    @classmethod
+    def from_config(cls, config):
+        url = config['url']
+        return cls(url)
 
 if __name__ == '__main__':
     from ase.io import iread

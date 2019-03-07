@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='abcd',
-    version='0.3',
+    version='0.4',
     packages=find_packages(),
     install_requires=['ase', 'click', 'flask', 'ply', 'matplotlib', 'blinker', 'mongoengine'],
     entry_points={

@@ -25,7 +25,7 @@ services:
     depends_on:
       - mongo
     volumes:
-      - ./abcd_server:/usr/src/app/abcd_server
+      - ./server:/usr/src/app/server
 
 
   mongo:

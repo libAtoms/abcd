@@ -1,4 +1,4 @@
-from abcd_server.app import create_app
+from abcd.server.app import create_app
 
 app = create_app()
 

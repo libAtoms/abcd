@@ -252,7 +252,7 @@ if __name__ == '__main__':
     # import json
     # from ase.io import iread
     # from pprint import pprint
-    # from abcd_server.formats.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
+    # from server.formats.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
 
     print('hello')
     db = MongoDatabase('mongodb://localhost:27017/')

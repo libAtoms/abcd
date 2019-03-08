@@ -1,13 +1,5 @@
-# Use root/example as user/password credentials
 version: '3'
-
 services:
-#  nginx:
-#    build: ./nginx
-#    ports:
-#      - 1337:80
-#    depends_on:
-#      - abcd
 
   abcd:
     build: .
@@ -26,7 +18,6 @@ services:
       - mongo
     volumes:
       - ./server:/usr/src/app/server
-
 
   mongo:
     image: mongo

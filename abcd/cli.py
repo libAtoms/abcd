@@ -1,3 +1,5 @@
+import cmd
+import json
 import click
 
 from abcd import ABCD
@@ -6,7 +8,20 @@ from abcd.config import Config
 from ase.io import write
 
 
-@click.group()
+class REPL(cmd.Cmd):
+    def __init__(self, ctx):
+        cmd.Cmd.__init__(self)
+        self.ctx = ctx
+
+    def default(self, line):
+        subcommand = cli.commands.get(line)
+        if subcommand:
+            self.ctx.invoke(subcommand)
+        else:
+            return cmd.Cmd.default(self, line)
+
+
+@click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
     if ctx.invoked_subcommand == 'login':
@@ -20,11 +35,17 @@ def cli(ctx):
 
     ctx.obj = ABCD(url=config['url'])
 
+    # start a command loop
+    if ctx.invoked_subcommand is None:
+        repl = REPL(ctx)
+        repl.cmdloop()
+
 
 @cli.command('login', short_help='login to the database')
 @click.argument('url', default='http://localhost', metavar='<url>')
 @click.argument('collection', default='atoms', metavar='<collection>')
-def db_login(url, collection):
+@click.pass_context
+def db_login(ctx, url, collection):
     """login to the database
 
     \b
@@ -36,6 +57,10 @@ def db_login(url, collection):
 
     config['url'] = url
     config['collection'] = collection
+
+    # try to connect
+    ctx.obj = ABCD(url=config['url'])
+
     config.save_json()
 
     # click.echo(f"login: url={url}, collection={collection}")
@@ -53,6 +78,7 @@ def db_list():
 def db_status(abcd):
     """list data available in the database."""
     # click.echo(f"connected: {config['url']}")
+
     abcd.print_info()
 
 
@@ -131,6 +157,10 @@ if __name__ == '__main__':
     # sys.argv[1:] = ['login', 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/abcd', 'atoms']
     # print(sys.argv)
     # cli()
+
+    sys.argv[1:] = ['status']
+    print(sys.argv)
+    cli()
 
     sys.argv[1:] = ['status']
     print(sys.argv)

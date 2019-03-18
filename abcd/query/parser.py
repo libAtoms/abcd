@@ -211,7 +211,7 @@ if __name__ == '__main__':
     parser = QueryParser()
 
     queries = (
-        'aa = [True True True]',
+        # 'aa = [True True True]',
         'aa bb > 23 ',
         'aa & bb > 23 & bb > 23 & bb > 23 ',
         'aa & bb > 23.54 | (22 in cc & dd)',

@@ -13,7 +13,6 @@ from ase.io import iread
 from ase.calculators.singlepoint import SinglePointCalculator
 
 from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals, connect
-# from mongoengine.context_managers import switch_collection, switch_db
 
 from abcd.backends.base import Database
 from abcd.query.parser import QueryParser

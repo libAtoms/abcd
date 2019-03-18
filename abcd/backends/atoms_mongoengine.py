@@ -112,6 +112,7 @@ class DerivedModel(EmbeddedDocument):
     elements = fields.DictField(fields.IntField())
     arrays_keys = fields.ListField(fields.StringField())
     info_keys = fields.ListField(fields.StringField())
+    n_atoms = fields.IntField()
 
 
 class AtomsModel(DynamicDocument):
@@ -194,6 +195,7 @@ class AtomsModel(DynamicDocument):
             'cell': atoms.cell.tolist(),
             'pbc': atoms.pbc.tolist(),
             'constraints': [],
+            'formula': atoms.get_chemical_formula()
         }
 
         for key, value in arrays.items():
@@ -238,11 +240,17 @@ class AtomsModel(DynamicDocument):
         elements = Counter(str(element) for element in document.arrays['numbers'])
         arrays_keys = list(document.arrays.keys())
         info_keys = list(document.info.keys())
+        n_atoms = len(document.arrays['numbers'])
+
+        document.derived = DerivedModel(
+            elements=elements,
+            arrays_keys=arrays_keys,
+            info_keys=info_keys,
+            n_atoms=n_atoms
+        )
 
         document.uploaded = datetime.datetime.utcnow()
         document.modified = datetime.datetime.utcnow()
-
-        document.derived = DerivedModel(elements=elements, arrays_keys=arrays_keys, info_keys=info_keys)
 
         logger.debug("Pre Save: %s" % document)
 
@@ -440,7 +448,6 @@ if __name__ == '__main__':
     atoms = AtomsModel.objects.first().to_atoms()
 
     saved = AtomsModel.from_atoms(atoms).save()
-
 
     # Update
     Databases(name=collection_name).save()

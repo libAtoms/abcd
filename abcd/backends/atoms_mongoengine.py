@@ -1,5 +1,6 @@
 import types
 import logging
+import datetime
 
 import numpy as np
 from os import linesep
@@ -121,6 +122,11 @@ class AtomsModel(DynamicDocument):
 
     # arrays = EmbeddedDocumentField(ArraysModel)
     # info = EmbeddedDocumentField(InfoModel)
+
+    author = fields.StringField(max_length=120, default='anonymous')
+    uploaded = fields.DateTimeField()
+    modified = fields.DateTimeField()
+
     arrays = fields.DictField()
     info = fields.DictField()
     results = fields.DictField()
@@ -232,6 +238,9 @@ class AtomsModel(DynamicDocument):
         elements = Counter(str(element) for element in document.arrays['numbers'])
         arrays_keys = list(document.arrays.keys())
         info_keys = list(document.info.keys())
+
+        document.uploaded = datetime.datetime.utcnow()
+        document.modified = datetime.datetime.utcnow()
 
         document.derived = DerivedModel(elements=elements, arrays_keys=arrays_keys, info_keys=info_keys)
 
@@ -431,6 +440,7 @@ if __name__ == '__main__':
     atoms = AtomsModel.objects.first().to_atoms()
 
     saved = AtomsModel.from_atoms(atoms).save()
+
 
     # Update
     Databases(name=collection_name).save()

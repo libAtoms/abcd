@@ -24,8 +24,8 @@ class REPL(cmd.Cmd):
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
-    if ctx.invoked_subcommand == 'login':
-        return
+    # if ctx.invoked_subcommand == 'login':
+    #     return
 
     config = Config.from_file()
 
@@ -35,10 +35,10 @@ def cli(ctx):
 
     ctx.obj = ABCD(url=config['url'])
 
-    # start a command loop
-    if ctx.invoked_subcommand is None:
-        repl = REPL(ctx)
-        repl.cmdloop()
+    # # start a command loop
+    # if ctx.invoked_subcommand is None:
+    #     repl = REPL(ctx)
+    #     repl.cmdloop()
 
 
 @cli.command('login', short_help='login to the database')

@@ -9,9 +9,11 @@ class ABCD(object):
     """Factory method"""
 
     def __new__(cls, url, **kwargs):
+        # Factory method
 
         r = parse.urlparse(url)
-        print(r)
+        logger.info(r)
+
         if r.scheme == 'mongodb':
 
             conn_settings = {
@@ -22,9 +24,10 @@ class ABCD(object):
                 'authentication_source': 'admin',
             }
 
-            db = r.path.split('/', 1)[1]
+            db = r.path.split('/')[1] if r.path else None
             db = db if db else 'abcd'
 
+            # return super().__new__(backends.MongoDatabase, db=db, **conn_settings, **kwargs)
             return backends.MongoDatabase(db=db, **conn_settings, **kwargs)
 
         elif r.scheme == 'http' or r.scheme == 'https':
@@ -43,7 +46,8 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.INFO)
 
-    url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/abcd'
+    # url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/abcd'
+    url = 'mongodb://localhost:27017'
     abcd = ABCD(url, collection='atoms')
     abcd.print_info()
 

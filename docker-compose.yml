@@ -17,7 +17,7 @@ services:
     depends_on:
       - mongo
     volumes:
-      - ./server:/usr/src/app/server
+      - .:/usr/src/app/
 
   mongo:
     image: mongo

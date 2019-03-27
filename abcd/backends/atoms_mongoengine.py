@@ -286,6 +286,7 @@ class MongoDatabase(Database):
         super().__init__()
 
         self.client = connect(db, **kwargs)
+
         if username:
             self.client[authentication_source].authenticate(name=username, password=password)
 
@@ -321,9 +322,9 @@ class MongoDatabase(Database):
             # model._get_collection().insert_many(model.from_atoms(at).to_mongo() for at in atoms)
             AtomsModel.objects.insert(list(AtomsModel.from_atoms(at) for at in atoms))
 
-    def upload(self, file):
+    def upload(self, file, extra_info=None):
         data = iread(file)
-        self.push(data)
+        self.push(data, extra_info)
 
     def pull(self, query=None, properties=None):
         # atoms = json.loads(message)

@@ -14,8 +14,8 @@ from ase.calculators.singlepoint import SinglePointCalculator
 
 from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals, connect
 
-from abcd.backends.base import Database
-from abcd.query.parser import QueryParser
+from abcd.backends.abstract import Database
+from abcd.parsers.queries import QueryParser
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ from flask import Blueprint
 from flask_graphql import GraphQLView
 
 # from app_old.models import Atoms
-from abcd_server.app.schema import schema
+from abcd.server.app import schema
 
 bp = Blueprint('api', __name__)
 

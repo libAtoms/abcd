@@ -1,10 +1,8 @@
-from flask import jsonify
-from flask import Blueprint, render_template, flash, redirect, url_for, request
-import requests
+from flask import Blueprint, render_template, request
 
 from mongoengine.context_managers import switch_collection
 
-# from abcd_server.db.backends.mongoengine import Atoms
+# from server.db.backends.mongoengine import Atoms
 
 
 bp = Blueprint('database', __name__)
@@ -36,7 +34,7 @@ def database(database_name):
         ],
     }
 
-    from abcd_server.app.models import Atoms
+    from abcd.server.app.models import Atoms
     page = request.args.get('page', 1, type=int)
 
     with switch_collection(Atoms, database_name) as Atoms:

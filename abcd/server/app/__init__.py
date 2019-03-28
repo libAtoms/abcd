@@ -1,14 +1,13 @@
 import os
 import sys
 import logging
+
 from flask import Flask, render_template
 from flask_nav import register_renderer
 
-from abcd_server.app.db import db
-from abcd_server.app.nav import nav, BootstrapRenderer, DatabaseNav
-from abcd_server.app.views import index
-from abcd_server.app.views import api
-from abcd_server.app.views import database
+from abcd.server.app.db import db
+from abcd.server.app.nav import nav, BootstrapRenderer, DatabaseNav
+from abcd.server.app.views import database, api, index
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +53,7 @@ if __name__ == '__main__':
 
     app = create_app()
 
-
     app.run()
-
 
 # # Using Extensions:
 

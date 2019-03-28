@@ -12,7 +12,7 @@ import numpy as np
 
 from pymongo import MongoClient
 
-from abcd.backends.base import Database
+from abcd.backends.abstract import Database
 
 
 class PropertyNotImplementedError(NotImplementedError):
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     # import json
     # from ase.io import iread
     # from pprint import pprint
-    # from abcd_server.formats.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
+    # from server.styles.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
 
     print('hello')
     db = MongoDatabase('mongodb://localhost:27017/')

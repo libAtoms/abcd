@@ -1,5 +1,4 @@
-from abcd_server.app.db import db
-from ase import Atoms
+from abcd.server.app import db
 
 tags = db.ListField(db.StringField(max_length=30))
 

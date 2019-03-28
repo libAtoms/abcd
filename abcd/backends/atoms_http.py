@@ -4,7 +4,7 @@ from os import linesep
 from typing import List
 
 import ase
-from abcd.backends.base import Database
+from abcd.backends.abstract import Database
 
 logger = logging.getLogger(__name__)
 

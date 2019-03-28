@@ -59,7 +59,7 @@ class QueryLexer(object):
     @staticmethod
     def t_newline(t):
         r'\n+'
-        t.lexer.lineno += len(t.value)
+        t.lexer.lineno += len(  t.value)
 
     # Error handling rule
     @staticmethod
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     parser = QueryParser()
 
     queries = (
-        'aa = [True True True]',
+        # 'aa = [True True True]',
         'aa bb > 23 ',
         'aa & bb > 23 & bb > 23 & bb > 23 ',
         'aa & bb > 23.54 | (22 in cc & dd)',

@@ -1,21 +1,21 @@
 import types
 import logging
+import datetime
+
 import numpy as np
 from os import linesep
 from collections import Counter
-import numpy as np
+
+import matplotlib.pyplot as plt
 
 from ase import Atoms
 from ase.io import iread
 from ase.calculators.singlepoint import SinglePointCalculator
 
 from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals, connect
-from mongoengine.context_managers import switch_collection
 
-import matplotlib.pyplot as plt
-
-from abcd.backends.base import Database
-from abcd.query.parser import QueryParser
+from abcd.backends.abstract import Database
+from abcd.parsers.queries import QueryParser
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +111,7 @@ class DerivedModel(EmbeddedDocument):
     elements = fields.DictField(fields.IntField())
     arrays_keys = fields.ListField(fields.StringField())
     info_keys = fields.ListField(fields.StringField())
+    n_atoms = fields.IntField()
 
 
 class AtomsModel(DynamicDocument):
@@ -121,6 +122,11 @@ class AtomsModel(DynamicDocument):
 
     # arrays = EmbeddedDocumentField(ArraysModel)
     # info = EmbeddedDocumentField(InfoModel)
+
+    author = fields.StringField(max_length=120, default='anonymous')
+    uploaded = fields.DateTimeField()
+    modified = fields.DateTimeField()
+
     arrays = fields.DictField()
     info = fields.DictField()
     results = fields.DictField()
@@ -188,6 +194,7 @@ class AtomsModel(DynamicDocument):
             'cell': atoms.cell.tolist(),
             'pbc': atoms.pbc.tolist(),
             'constraints': [],
+            'formula': atoms.get_chemical_formula()
         }
 
         for key, value in arrays.items():
@@ -232,8 +239,17 @@ class AtomsModel(DynamicDocument):
         elements = Counter(str(element) for element in document.arrays['numbers'])
         arrays_keys = list(document.arrays.keys())
         info_keys = list(document.info.keys())
+        n_atoms = len(document.arrays['numbers'])
 
-        document.derived = DerivedModel(elements=elements, arrays_keys=arrays_keys, info_keys=info_keys)
+        document.derived = DerivedModel(
+            elements=elements,
+            arrays_keys=arrays_keys,
+            info_keys=info_keys,
+            n_atoms=n_atoms
+        )
+
+        document.uploaded = datetime.datetime.utcnow()
+        document.modified = datetime.datetime.utcnow()
 
         logger.debug("Pre Save: %s" % document)
 
@@ -265,11 +281,12 @@ class MongoDatabase(Database):
     """Wrapper to make database operations easy"""
 
     def __init__(self, db='abcd', collection='atoms',
-                 authentication_source='admin', username=None, password=None,
+                 username=None, password=None, authentication_source='admin',
                  **kwargs):
         super().__init__()
 
         self.client = connect(db, **kwargs)
+
         if username:
             self.client[authentication_source].authenticate(name=username, password=password)
 
@@ -293,86 +310,79 @@ class MongoDatabase(Database):
         }
 
     def destroy(self):
-        with switch_collection(AtomsModel, self.collection_name) as model:
-            model.drop_collection()
+        AtomsModel.drop_collection()
 
     def push(self, atoms, extra_info=None):
-        with switch_collection(AtomsModel, self.collection_name) as model:
-            if isinstance(atoms, Atoms):
-                model.from_atoms(atoms, extra_info).save()
+        if isinstance(atoms, Atoms):
+            AtomsModel.from_atoms(atoms, extra_info).save()
 
-            elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-                # NOTE: insert method is not able to handle generators
+        elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
+            # NOTE: insert method is not able to handle generators
 
-                # model._get_collection().insert_many(model.from_atoms(at).to_mongo() for at in atoms)
-                model.objects.insert(list(model.from_atoms(at) for at in atoms))
+            # model._get_collection().insert_many(model.from_atoms(at).to_mongo() for at in atoms)
+            AtomsModel.objects.insert(list(AtomsModel.from_atoms(at) for at in atoms))
 
-    def upload(self, file):
+    def upload(self, file, extra_info=None):
         data = iread(file)
-        self.push(data)
+        self.push(data, extra_info)
 
     def pull(self, query=None, properties=None):
         # atoms = json.loads(message)
         raise NotImplementedError
 
     def get_atoms(self, query=None):
-        with switch_collection(AtomsModel, self.collection_name) as model:
-            return model.objects.query(query).to_atoms()
+        return AtomsModel.objects.query(query).to_atoms()
 
     def count(self, query=None):
-        with switch_collection(AtomsModel, self.collection_name) as model:
-            return model.objects.query(query).count()
+        return AtomsModel.objects.query(query).count()
 
     def property(self, name, query=None):
-        with switch_collection(AtomsModel, self.collection_name) as model:
-            pipeline = [
-                {'$match': {'{}'.format(name): {"$exists": True}}},
-                {'$project': {'_id': False, 'data': '${}'.format(name)}}
-            ]
+        pipeline = [
+            {'$match': {'{}'.format(name): {"$exists": True}}},
+            {'$project': {'_id': False, 'data': '${}'.format(name)}}
+        ]
 
-            return [val['data'] for val in model.objects.query(query).aggregate(*pipeline)]
+        return [val['data'] for val in AtomsModel.objects.query(query).aggregate(*pipeline)]
 
     def properties(self, query=None):
-        with switch_collection(AtomsModel, self.collection_name) as model:
-            properties = {}
+        properties = {}
 
-            pipeline = [
-                {'$unwind': '$derived.info_keys'},
-                {'$group': {'_id': '$derived.info_keys'}}
-            ]
-            properties['info'] = [value['_id'] for value in model.objects.query(query).aggregate(*pipeline)]
+        pipeline = [
+            {'$unwind': '$derived.info_keys'},
+            {'$group': {'_id': '$derived.info_keys'}}
+        ]
+        properties['info'] = [value['_id'] for value in AtomsModel.objects.query(query).aggregate(*pipeline)]
 
-            pipeline = [
-                {'$unwind': '$derived.arrays_keys'},
-                {'$group': {'_id': '$derived.arrays_keys'}}
-            ]
-            properties['arrays'] = [value['_id'] for value in model.objects.query(query).aggregate(*pipeline)]
+        pipeline = [
+            {'$unwind': '$derived.arrays_keys'},
+            {'$group': {'_id': '$derived.arrays_keys'}}
+        ]
+        properties['arrays'] = [value['_id'] for value in AtomsModel.objects.query(query).aggregate(*pipeline)]
 
-            return properties
+        return properties
 
     def count_properties(self, query=None):
-        with switch_collection(AtomsModel, self.collection_name) as model:
 
-            properties = {
-                'info': {},
-                'arrays': {}
-            }
+        properties = {
+            'info': {},
+            'arrays': {}
+        }
 
-            pipeline = [
-                {'$unwind': '$derived.info_keys'},
-                {'$group': {'_id': '$derived.info_keys', 'count': {'$sum': 1}}}
-            ]
+        pipeline = [
+            {'$unwind': '$derived.info_keys'},
+            {'$group': {'_id': '$derived.info_keys', 'count': {'$sum': 1}}}
+        ]
 
-            for value in model.objects.query(query).aggregate(*pipeline):
-                properties['info'][value['_id']] = {'count': value['count']}
+        for value in AtomsModel.objects.query(query).aggregate(*pipeline):
+            properties['info'][value['_id']] = {'count': value['count']}
 
-            pipeline = [
-                {'$unwind': '$derived.arrays_keys'},
-                {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}
-            ]
+        pipeline = [
+            {'$unwind': '$derived.arrays_keys'},
+            {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}
+        ]
 
-            for value in model.objects.query(query).aggregate(*pipeline):
-                properties['arrays'][value['_id']] = {'count': value['count']}
+        for value in AtomsModel.objects.query(query).aggregate(*pipeline):
+            properties['arrays'][value['_id']] = {'count': value['count']}
 
         return properties
 
@@ -434,8 +444,8 @@ if __name__ == '__main__':
     #
     #     print(atoms)
 
-    with switch_collection(AtomsModel, collection_name) as AtomsModel:
-        atoms = AtomsModel.objects.first().to_atoms()
+    # with switch_collection(AtomsModel, collection_name) as AtomsModel:
+    atoms = AtomsModel.objects.first().to_atoms()
 
     saved = AtomsModel.from_atoms(atoms).save()
 

@@ -4,7 +4,8 @@ from hashlib import sha1
 
 from dominate import tags
 from flask_nav.renderers import Renderer
-from flask import url_for
+
+# from flask import url_for
 
 nav = Nav()
 

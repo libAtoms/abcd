@@ -2,22 +2,24 @@ from setuptools import setup, find_packages
 
 setup(
     name='abcd',
-    version='0.3',
-    packages=find_packages(),
-    install_requires=['ase', 'click', 'flask', 'ply', 'matplotlib', 'blinker', 'mongoengine'],
-    entry_points={
-        'console_scripts': ['abcd=abcd.cli:cli']
+    version='0.4',
+    author='Adam Fekete, Gabor Csanyi',
+    author_email='adam.fekete@kcl.ac.uk',
+    description='This is an package witch help to store and share atomistic data.',
+    keywords='ase, database, mongo, flask',
+    url='https://fekad.github.io/abcd/',  # project home page, if any
+    project_urls={
+        'Documentation': 'https://fekad.github.io/abcd/',
+        'Source Code': 'https://github.com/fekad/abcd',
     },
-    # metadata to display on PyPI
-    # author="Me",
-    # author_email="me@example.com",
-    # description="This is an Example Package",
-    # license="PSF",
-    # keywords="hello world example examples",
-    # url="http://example.com/HelloWorld/",  # project home page, if any
-    # project_urls={
-    #     "Bug Tracker": "https://bugs.example.com/HelloWorld/",
-    #     "Documentation": "https://docs.example.com/HelloWorld/",
-    #     "Source Code": "https://code.example.com/HelloWorld/",
-    # }
+    packages=find_packages(),
+    install_requires=['ase', 'click', 'ply'],
+    extras_require={
+        'mongo': ['mongoengine', 'blinker'],
+        'http': ['requests'],
+        'server': ['flask', 'Flask-MongoEngine', 'Flask-Nav', 'gunicorn'],
+    },
+    entry_points={
+        'console_scripts': ['abcd=abcd.cli:cli', 'abcdnew=abcd.frontends.shell:cli']
+    },
 )

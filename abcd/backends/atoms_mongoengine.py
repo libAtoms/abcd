@@ -422,10 +422,52 @@ class MongoDatabase(Database):
             }
         }
 
-    def plot_hist(self, prop, query=None, **kwargs):
-        data = self.property(prop, query)
-        _, _, ax = plt.hist(data, **kwargs)
-        return ax
+    def hist(self, name, query=None, **kwargs):
+        data = self.property(name, query)
+
+        if data and isinstance(data, list):
+            if isinstance(data[0], float):
+                return self._hist_float(name, data, **kwargs)
+            elif isinstance(data[0], str):
+                return self._hist_str(name, data)
+            else:
+                logger.info(f'{name}: Histogram for list of {type(data)} types are not supported!')
+        else:
+            logger.info(f'{name}: Histogram for {type(data)} types are not supported!')
+
+        return None
+
+    @staticmethod
+    def _hist_float(name, data, bins=10):
+        data = np.array(data)
+        hist, bin_edges = np.histogram(data, bins=bins)
+
+        return {
+            'type': 'hist_float',
+            'name': name,
+            'bins': bins,
+            'edges': bin_edges,
+            'counts': hist,
+            'min': data.min(),
+            'max': data.max(),
+            'median': data.mean(),
+            'std': data.std(),
+            'var': data.var()
+        }
+
+    @staticmethod
+    def _hist_str(name, data):
+        data = Counter(data)
+        labels, counts = data.keys(), data.values()
+
+        return {
+            'type': 'hist_str',
+            'name': name,
+            'total': sum(data.values()),
+            'unique': len(data.keys()),
+            'labels': labels,
+            'counts': counts
+        }
 
 
 if __name__ == '__main__':

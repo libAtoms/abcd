@@ -17,9 +17,10 @@ setup(
     extras_require={
         'mongo': ['mongoengine', 'blinker'],
         'http': ['requests'],
-        'server': ['flask', 'Flask-MongoEngine', 'Flask-Nav', 'gunicorn'],
+        'server-api': ['flask'],
+        'server-app': ['flask', 'Flask-Nav', 'Flask-MongoEngine', 'gunicorn'],
     },
     entry_points={
-        'console_scripts': ['abcd=abcd.cli:cli', 'abcdnew=abcd.frontends.shell:cli']
+        'console_scripts': ['abcd=abcd.frontends.shell:cli']
     },
 )

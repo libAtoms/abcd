@@ -10,6 +10,7 @@ class Style(metaclass=ABCMeta):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        # print(exc_type)
         pass
 
     @abstractmethod
@@ -25,15 +26,11 @@ class Style(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def hist(self, data, **kwargs):
+    def describe(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def hist_str(self, data, max_width=80):
-        pass
-
-    @abstractmethod
-    def hist_float(self, data, bins=10):
+    def hist(self, *args, **kwargs):
         pass
 
     @staticmethod

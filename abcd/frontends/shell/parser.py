@@ -9,8 +9,9 @@ class ArgumentParser(argparse.ArgumentParser):
     def __init__(self, callback_login, callback_download, callback_upload, callback_summary):
         super().__init__(description='Command line interface for ABCD database')
         self.add_argument('-v', '--verbose', help='Enable verbose mode', action='store_true')
-        self.add_argument('-c', '--show-config', help='Show all the available configs', action='store_true')
-        self.add_argument('-s', '--save_config', help='Generate a local config file', action='store_true')
+        self.add_argument('-s', '--style', help='style [simple, fancy]', default='simple')
+        # self.add_argument('-c', '--show-config', help='Show all the available configs', action='store_true')
+        # self.add_argument('-s', '--save_config', help='Generate a local config file', action='store_true')
 
         subparsers = self.add_subparsers(title='Commands', dest='command', parser_class=argparse.ArgumentParser)
 
@@ -21,7 +22,6 @@ class ArgumentParser(argparse.ArgumentParser):
 
     @staticmethod
     def build_login_parser(subparsers, callback):
-
         parser = subparsers.add_parser('login', help='login to the database')
         parser.add_argument('-n', '--name', help='name of the database', default='default')
         parser.add_argument(dest='url',
@@ -49,20 +49,6 @@ class ArgumentParser(argparse.ArgumentParser):
         parser.add_argument('-q', '--query', help='Filtering extra quantities')
         parser.add_argument('-p', '--props', help='Selecting properties for detailed description')
         parser.set_defaults(func=callback)
-
-    def parse_args(self, *args, **kwargs):
-
-        args = super().parse_args(*args, **kwargs)
-
-        if args.verbose:
-            logging.basicConfig(level=logging.INFO)
-            logger.info('Verbose mode is active')
-
-        if args.command is None:
-            print(self.format_help())
-            # self.exit()
-        else:
-            args.func(args)
 
 
 if __name__ == '__main__':

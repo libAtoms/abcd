@@ -423,6 +423,7 @@ class MongoDatabase(Database):
         }
 
     def hist(self, name, query=None, **kwargs):
+
         data = self.property(name, query)
 
         if data and isinstance(data, list):

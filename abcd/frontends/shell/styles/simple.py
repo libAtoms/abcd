@@ -47,7 +47,6 @@ class SimpleStyle(Style):
             pass
 
     def hist(self, data: dict, width_hist=16):
-
         if data['type'] == 'hist_float':
 
             ratio = width_hist / max(data['counts'])
@@ -57,6 +56,13 @@ class SimpleStyle(Style):
                 self.print(f'{"▉" * scale:<{width_hist}} {count:>{width_count}d}')
 
         elif data['type'] == 'hist_str':
+
+            width_count = len(str(max(data['counts'])))
+            ratio = width_hist / max(data['counts'])
+            for label, count in zip(data['labels'], data['counts']):
+                scale = int(ratio * count)
+                self.print(f'{"▉" * scale:<{width_hist}} {count:>{width_count}d} {label}')
+        elif data['type'] == 'dict':
 
             width_count = len(str(max(data['counts'])))
             ratio = width_hist / max(data['counts'])

@@ -141,7 +141,36 @@ class FancyStyle(Style):
                     disable_numparse=True,
                     tablefmt="psql"
                 )
+        elif data['type'] == 'hist_labels':
 
+            def get_width_hack(keys, values):
+                # generating a table just to measure its width
+                return len(tabulate(
+                    list([item, f'{count}'] for item, count in zip(data['labels'], data['counts'])),
+                    headers=('Name', 'Count'),
+                    colalign=("left", "right"),
+                    disable_numparse=True,
+                    tablefmt="psql"
+                ).split('\n', 1)[0])
+
+            table_width = get_width_hack(data['labels'], data['counts'])
+
+            if table_width > self.width:
+                self.print('Too small terminal!')
+            else:
+                max_width = self.width - table_width - 3
+
+                ratio = max_width / max(data['counts'])
+                scales = (int(ratio * value) for value in data['counts'])
+
+                self.table(
+                    list([item, f'{count}', '▉' * scale] for item, count, scale in
+                         zip(data['labels'], data['counts'], scales)),
+                    headers=('Name', 'Count', 'Histogram'),
+                    colalign=("left", "right", "left"),
+                    disable_numparse=True,
+                    tablefmt="psql"
+                )
         else:
             pass
 

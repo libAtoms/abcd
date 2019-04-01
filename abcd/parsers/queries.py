@@ -16,7 +16,7 @@ reserved = {
 class QueryLexer(object):
     # List of token names.   This is always required
     tokens = ('FLOAT', 'INT', 'NAME', 'STRING',
-              'EQ', 'LT', 'GT', 'LTE', 'GTE',
+              'EQ', 'RE', 'LT', 'GT', 'LTE', 'GTE',
               'LPAREN', 'RPAREN') + tuple(reserved.values())
 
     # tokens = ('FLOAT', 'INT', 'NAME', 'STRING',
@@ -34,6 +34,8 @@ class QueryLexer(object):
     t_OR = r'\|'
 
     t_EQ = r'=+'
+    t_RE = r'~+'
+
     t_LT, t_LTE = r'<', r'<='
     t_GT, t_GTE = r'>', r'>='
 
@@ -59,7 +61,7 @@ class QueryLexer(object):
     @staticmethod
     def t_newline(t):
         r'\n+'
-        t.lexer.lineno += len(  t.value)
+        t.lexer.lineno += len(t.value)
 
     # Error handling rule
     @staticmethod
@@ -78,7 +80,7 @@ class QueryParser(QueryLexer):
     """
     precedence = (
         ('left', 'AND', 'OR', 'IN', 'NIN'),
-        ('left', 'EQ', 'LT', 'GT', 'LTE', 'GTE'),
+        ('left', 'EQ', 'RE', 'LT', 'GT', 'LTE', 'GTE'),
     )
 
     def __init__(self, **kwargs):
@@ -151,6 +153,7 @@ class QueryParser(QueryLexer):
                       | expression IN expression
                       | expression NIN expression
                       | expression EQ expression
+                      | expression RE expression
                       | expression LT expression
                       | expression GT expression
                       | expression LTE expression
@@ -163,6 +166,7 @@ class QueryParser(QueryLexer):
     def p_expression_group(p):
         """expression : LPAREN expression RPAREN"""
         p[0] = p[2]
+
     #
     # # @staticmethod
     # # def p_number(p):

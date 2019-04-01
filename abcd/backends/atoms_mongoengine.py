@@ -1,12 +1,12 @@
 import types
 import logging
 import datetime
+import getpass
 
 import numpy as np
 from os import linesep
+from operator import itemgetter
 from collections import Counter
-
-import matplotlib.pyplot as plt
 
 from ase import Atoms
 from ase.io import iread
@@ -80,6 +80,9 @@ class MongoQuery(object):
 
     def visit_eq(self, field, value):
         return {field[1]: value[1]}
+
+    def visit_re(self, field, value):
+        return {field[1]: {'$regex': value[1]}}
 
     def visit_gt(self, field, value):
         return {field[1]: {'$gt': value[1]}}
@@ -241,6 +244,8 @@ class AtomsModel(DynamicDocument):
         info_keys = list(document.info.keys())
         n_atoms = len(document.arrays['numbers'])
 
+        document.info['username'] = getpass.getuser()
+
         document.derived = DerivedModel(
             elements=elements,
             arrays_keys=arrays_keys,
@@ -401,9 +406,10 @@ class MongoDatabase(Database):
     def print_info(self):
         """shows basic information about the connected database"""
 
-        out = linesep.join(['{:=^50}'.format(' ABCD MongoDB '),
-                            '{:>10}: {}'.format('type', 'mongodb'),
-                            linesep.join('{:>10}: {}'.format(k, v) for k, v in self.info().items())])
+        out = linesep.join(
+            ['{:=^50}'.format(' ABCD MongoDB '),
+             '{:>10}: {}'.format('type', 'mongodb'),
+             linesep.join('{:>10}: {}'.format(k, v) for k, v in self.info().items())])
 
         print(out)
 
@@ -430,7 +436,7 @@ class MongoDatabase(Database):
             if isinstance(data[0], float):
                 return self._hist_float(name, data, **kwargs)
             elif isinstance(data[0], str):
-                return self._hist_str(name, data)
+                return self._hist_str(name, data, **kwargs)
             else:
                 logger.info(f'{name}: Histogram for list of {type(data)} types are not supported!')
         else:
@@ -457,17 +463,26 @@ class MongoDatabase(Database):
         }
 
     @staticmethod
-    def _hist_str(name, data):
+    def _hist_str(name, data, bins=10, truncate=20):
+
+        if truncate:
+            # data = (item[:truncate] for item in data)
+            data = (item[:truncate] + '...' if len(item) > truncate else item for item in data)
+
         data = Counter(data)
-        labels, counts = data.keys(), data.values()
+
+        if bins:
+            labels, counts = zip(*sorted(data.items(), key=itemgetter(1, 0), reverse=True))
+        else:
+            labels, counts = zip(*data.items())
 
         return {
             'type': 'hist_str',
             'name': name,
             'total': sum(data.values()),
             'unique': len(data.keys()),
-            'labels': labels,
-            'counts': counts
+            'labels': labels[:bins],
+            'counts': counts[:bins]
         }
 
 

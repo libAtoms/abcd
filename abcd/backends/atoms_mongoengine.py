@@ -1,12 +1,12 @@
 import types
 import logging
 import datetime
+import getpass
 
 import numpy as np
 from os import linesep
+from operator import itemgetter
 from collections import Counter
-
-import matplotlib.pyplot as plt
 
 from ase import Atoms
 from ase.io import iread
@@ -80,6 +80,9 @@ class MongoQuery(object):
 
     def visit_eq(self, field, value):
         return {field[1]: value[1]}
+
+    def visit_re(self, field, value):
+        return {field[1]: {'$regex': value[1]}}
 
     def visit_gt(self, field, value):
         return {field[1]: {'$gt': value[1]}}
@@ -235,6 +238,8 @@ class AtomsModel(DynamicDocument):
 
     @classmethod
     def pre_save_post_validation(cls, sender, document, **kwargs):
+
+        document.info['username'] = getpass.getuser()
 
         elements = Counter(str(element) for element in document.arrays['numbers'])
         arrays_keys = list(document.arrays.keys())
@@ -401,9 +406,10 @@ class MongoDatabase(Database):
     def print_info(self):
         """shows basic information about the connected database"""
 
-        out = linesep.join(['{:=^50}'.format(' ABCD MongoDB '),
-                            '{:>10}: {}'.format('type', 'mongodb'),
-                            linesep.join('{:>10}: {}'.format(k, v) for k, v in self.info().items())])
+        out = linesep.join(
+            ['{:=^50}'.format(' ABCD MongoDB '),
+             '{:>10}: {}'.format('type', 'mongodb'),
+             linesep.join('{:>10}: {}'.format(k, v) for k, v in self.info().items())])
 
         print(out)
 
@@ -422,10 +428,62 @@ class MongoDatabase(Database):
             }
         }
 
-    def plot_hist(self, prop, query=None, **kwargs):
-        data = self.property(prop, query)
-        _, _, ax = plt.hist(data, **kwargs)
-        return ax
+    def hist(self, name, query=None, **kwargs):
+
+        data = self.property(name, query)
+
+        if data and isinstance(data, list):
+            if isinstance(data[0], float):
+                return self._hist_float(name, data, **kwargs)
+            elif isinstance(data[0], str):
+                return self._hist_str(name, data, **kwargs)
+            else:
+                logger.info(f'{name}: Histogram for list of {type(data)} types are not supported!')
+        else:
+            logger.info(f'{name}: Histogram for {type(data)} types are not supported!')
+
+        return None
+
+    @staticmethod
+    def _hist_float(name, data, bins=10):
+        data = np.array(data)
+        hist, bin_edges = np.histogram(data, bins=bins)
+
+        return {
+            'type': 'hist_float',
+            'name': name,
+            'bins': bins,
+            'edges': bin_edges,
+            'counts': hist,
+            'min': data.min(),
+            'max': data.max(),
+            'median': data.mean(),
+            'std': data.std(),
+            'var': data.var()
+        }
+
+    @staticmethod
+    def _hist_str(name, data, bins=10, truncate=20):
+
+        if truncate:
+            # data = (item[:truncate] for item in data)
+            data = (item[:truncate] + '...' if len(item) > truncate else item for item in data)
+
+        data = Counter(data)
+
+        if bins:
+            labels, counts = zip(*sorted(data.items(), key=itemgetter(1, 0), reverse=True))
+        else:
+            labels, counts = zip(*data.items())
+
+        return {
+            'type': 'hist_str',
+            'name': name,
+            'total': sum(data.values()),
+            'unique': len(data.keys()),
+            'labels': labels[:bins],
+            'counts': counts[:bins]
+        }
 
 
 if __name__ == '__main__':

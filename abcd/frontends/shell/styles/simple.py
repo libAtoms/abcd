@@ -30,102 +30,53 @@ class SimpleStyle(Style):
         title = self._trunc(title, self.width)
         print('', title, '-' * len(title), sep=os.linesep)
 
-    def hist(self, data, **kwargs):
-        try:
-            if isinstance(data, list):
-                if isinstance(data[0], float):
-                    self.hist_float(data, **kwargs)
-                elif isinstance(data[0], str):
-                    self.hist_str(data, **kwargs)
-                else:
-                    raise NotImplementedError(f'Histogram for list of {type(data)} types are not supported!')
-            else:
-                raise NotImplementedError(f'Histogram for {type(data)} types are not supported!')
-        except:
-            print(type(data))
-            print(data)
+    def describe(self, data):
+        if data['type'] == 'hist_float':
+
+            print(
+                f'{data["name"]}  count: {sum(data["counts"])} '
+                f'min: {data["min"]:.8g} med: {data["median"]:.8g} max: {data["max"]:.8g}  '
+                f'std: {data["std"]:.8g} var:{data["var"]:.8g}'
+            )
+
+        elif data['type'] == 'hist_str':
+
+            print(f'{data["name"]} count: {data["total"]} unique: {data["unique"]}')
+
+        else:
             pass
 
-    def hist_str(self, data, max_width=80):
-        data = Counter(data)
+    def hist(self, data: dict, width_hist=16):
+        if data['type'] == 'hist_float':
 
-        keys = data.keys()
-        values = data.values()
+            ratio = width_hist / max(data['counts'])
+            width_count = len(str(max(data['counts'])))
+            for count in data['counts']:
+                scale = int(ratio * count)
+                self.print(f'{"▉" * scale:<{width_hist}} {count:>{width_count}d}')
 
-        self.h2('Summary')
-        self.table(
-            ((f'{sum(values)}', f'{len(keys)}', f'{min(values)}', f'{max(values)}', f'{sum(values) / len(keys):.8g}'),),
-            headers=('total', '# of categories', 'min', 'max', 'mean'), disable_numparse=True, tablefmt="grid")
+        elif data['type'] == 'hist_str':
+            remain = data['total'] - sum(data['counts'])
+            if remain > 0:
+                data['counts'] = (*data['counts'], remain)
+                data['labels'] = (*data['labels'], '...')
 
-        self.h2('Histogram')
+            width_count = len(str(max(data['counts'])))
+            ratio = width_hist / max(data['counts'])
+            for label, count in zip(data['labels'], data['counts']):
+                scale = int(ratio * count)
+                self.print(f'{"▉" * scale:<{width_hist}} {count:>{width_count}d} {label}')
 
-        def get_width_hack(keys, values):
-            # generating a table just to measure its width
-            return len(tabulate(
-                list([item, f'{count}'] for item, count in zip(keys, values)),
-                headers=('Name', 'Count'),
-                colalign=("left", "right"),
-                disable_numparse=True,
-                tablefmt="psql"
-            ).split('\n', 1)[0])
+        elif data['type'] == 'hist_labels':
 
-        table_width = get_width_hack(keys, values)
+            width_count = len(str(max(data['counts'])))
+            ratio = width_hist / max(data['counts'])
+            for label, count in zip(data['labels'], data['counts']):
+                scale = int(ratio * count)
+                self.print(f'{"▉" * scale:<{width_hist}} {count:>{width_count}d} {label}')
 
-        if table_width > self.width:
-            self.print('Too small terminal!')
         else:
-            max_width = self.width - table_width - 3
-
-            ratio = max_width / max(values)
-            scales = (int(ratio * value) for value in values)
-
-            self.table(
-                list([item, f'{count}', '▉' * scale] for item, count, scale in zip(keys, values, scales)),
-                headers=('Name', 'Count', 'Histogram'),
-                colalign=("left", "right", "left"),
-                disable_numparse=True,
-                tablefmt="psql"
-            )
-
-    def hist_float(self, data, bins=10):
-        data = np.array(data)
-
-        self.h2('Summary')
-        self.table(
-            ((f'{len(data)}', f'{data.min():.8g}', f'{data.max():.8g}', f'{data.mean():.8g}', f'{data.std():.8g}',
-              f'{data.var():.8g}'),),
-            headers=('total', 'min', 'max', 'mean', 'std', 'var'), disable_numparse=True, tablefmt="grid")
-
-        self.h2('Histogram')
-
-        def get_width_hack(hist, bin_edges):
-            # generating a table just to measure its width
-            return len(tabulate(
-                list([f'{lower:.8g}', f'{upper:.8g}', f'{count}']
-                     for lower, upper, count in zip(bin_edges[:-1], bin_edges[1:], hist)),
-                headers=('Lower', 'Upper', 'Count'),
-                colalign=("decimal", "decimal", "right"),
-                disable_numparse=True,
-                tablefmt="psql"
-            ).split('\n', 1)[0])
-
-        hist, bin_edges = np.histogram(data, bins=bins)
-        table_width = get_width_hack(hist, bin_edges)
-
-        if table_width > self.width:
-            self.print('Too small terminal!')
-        else:
-            max_width = self.width - table_width - 3
-            scales = (max_width / hist.max() * hist).astype(int)
-
-            self.table(
-                list([f'{lower:.8g}', f'{upper:.8g}', f'{count}', '▉' * scale]
-                     for lower, upper, count, scale in zip(bin_edges[:-1], bin_edges[1:], hist, scales)),
-                headers=('Lower', 'Upper', 'Count', 'Histogram'),
-                colalign=("decimal", "decimal", "right", "left"),
-                disable_numparse=True,
-                tablefmt="psql"
-            )
+            pass
 
     @staticmethod
     def print(*args, **kwargs):

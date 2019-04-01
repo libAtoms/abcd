@@ -1,5 +1,6 @@
 import logging
 import argparse
+import getpass
 
 from abcd import ABCD
 from pathlib import Path
@@ -74,10 +75,12 @@ class Shell(object):
         self.args = args
         self.config = Config.load()
 
-        if args.style is 'simple':
+        if args.style == 'simple':
             self.style = SimpleStyle()
-        elif args.style is 'fancy':
+        elif args.style == 'fancy':
             self.style = FancyStyle()
+        else:
+            raise NotImplementedError(f'The style "{args.style}" is not implemented!')
 
         self.db = None
 
@@ -86,7 +89,7 @@ class Shell(object):
 
         if url is None:
             print('Please use abcd login first!')
-            self.parser.exit()
+            exit()
 
         self.db = ABCD(url=url)
 
@@ -95,7 +98,7 @@ class Shell(object):
         logger.info(f'login args: \n{args}')
 
         self.db = ABCD(url=args.url)
-        self._config.save({
+        self.config.save({
             'url': args.url
         })
 
@@ -145,7 +148,7 @@ class Shell(object):
                     counts.append(v['count'])
 
                 f.hist({
-                    'type': 'hist_str',
+                    'type': 'hist_labels',
                     'labels': labels,
                     'counts': counts
                 })
@@ -158,7 +161,7 @@ class Shell(object):
                     counts.append(v['count'])
 
                 f.hist({
-                    'type': 'hist_str',
+                    'type': 'hist_labels',
                     'labels': labels,
                     'counts': counts
                 })
@@ -186,21 +189,28 @@ class Shell(object):
 
             return
 
-        else:
-            def parse_properties(s):
-                import re
-                return re.split(r';\s*|,\s*|\s+', s)
+        def parse_properties(s):
+            import re
+            return re.split(r';\s*|,\s*|\s+', s)
 
-            properties = parse_properties(args.props)
+        properties = parse_properties(args.props)
 
-            with self.style as f:
-                for p in properties:
-                    data = self.db.hist(p, query=args.query)
+        with self.style as f:
+            for p in properties:
 
-                    f.title(p)
-                    if data:
-                        f.describe(data)
-                        f.hist(data)
+                data = self.db.hist('arrays.' + p, query=args.query)
+
+                if data:
+                    f.title('arrays.' + p)
+                    f.describe(data)
+                    f.hist(data)
+
+                data = self.db.hist('info.' + p, query=args.query)
+
+                if data:
+                    f.title('info.' + p)
+                    f.describe(data)
+                    f.hist(data)
 
 
 if __name__ == '__main__':
@@ -209,8 +219,9 @@ if __name__ == '__main__':
     cli(['-v', 'summary'])
     # cli(['summary', '-v'])  # wrong
     # cli(['summary', '-h'])  # ok
-    cli(['summary', '-p', '*'])
+    # cli(['summary', '-p', '*'])
     cli(['summary', '-p', 'info.config_name, info.energy'])
     cli(['summary', '-p', 'info.config_name, info.energy,info.energy;info.energy info.energy'])
     cli(['-s', 'fancy', 'summary', '-p', '*'])
+    cli(['summary', '-p', '*'])
     cli(['-s', 'fancy', 'summary'])

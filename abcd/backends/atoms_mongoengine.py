@@ -239,12 +239,12 @@ class AtomsModel(DynamicDocument):
     @classmethod
     def pre_save_post_validation(cls, sender, document, **kwargs):
 
+        document.info['username'] = getpass.getuser()
+
         elements = Counter(str(element) for element in document.arrays['numbers'])
         arrays_keys = list(document.arrays.keys())
         info_keys = list(document.info.keys())
         n_atoms = len(document.arrays['numbers'])
-
-        document.info['username'] = getpass.getuser()
 
         document.derived = DerivedModel(
             elements=elements,

@@ -237,12 +237,11 @@ class AtomsModel(DynamicDocument):
         arrays = atoms.arrays.copy()
         natoms = len(atoms)
 
-        arrays = {
+        db_arrays = {
             'numbers': arrays.pop('numbers').tolist(),
             'positions': arrays.pop('positions').tolist(),
-
         }
-        info = {
+        db_info = {
             'cell': atoms.cell.tolist(),
             'pbc': atoms.pbc.tolist(),
             'constraints': [],
@@ -252,38 +251,38 @@ class AtomsModel(DynamicDocument):
         for key, value in arrays.items():
 
             if isinstance(value, np.ndarray):
-                arrays[key] = value.tolist()
+                db_arrays[key] = value.tolist()
                 continue
 
-            arrays[key] = value
+            db_arrays[key] = value
 
         for key, value in atoms.info.items():
 
             if isinstance(value, np.ndarray):
-                info[key] = value.tolist()
+                db_info[key] = value.tolist()
                 continue
 
-            info[key] = value
+            db_info[key] = value
 
         if atoms.calc is not None:
-            info['calculator_name'] = atoms.calc.__class__.__name__
-            info['calculator_parameters'] = atoms.calc.todict()
+            db_info['calculator_name'] = atoms.calc.__class__.__name__
+            db_info['calculator_parameters'] = atoms.calc.todict()
 
             for key, value in atoms.calc.results.items():
 
                 if isinstance(value, np.ndarray):
                     if value.shape[0] == natoms:
-                        arrays[key] = value.tolist()
+                        db_arrays[key] = value.tolist()
                     else:
-                        info[key] = value.tolist()
+                        db_info[key] = value.tolist()
                     continue
 
-                info[key] = value
+                db_info[key] = value
 
         if extra_info is not None:
-            info.update(extra_info)
+            db_info.update(extra_info)
 
-        return cls(arrays=arrays, info=info)
+        return cls(arrays=db_arrays, info=db_info)
 
     @classmethod
     def pre_save_post_validation(cls, sender, document, **kwargs):

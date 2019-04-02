@@ -47,7 +47,7 @@ class SimpleStyle(Style):
         else:
             pass
 
-    def hist(self, data: dict, width_hist=16):
+    def hist(self, data: dict, width_hist=40):
         if data['type'] == 'hist_float':
 
             ratio = width_hist / max(data['counts'])

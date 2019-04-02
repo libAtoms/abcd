@@ -1,10 +1,10 @@
 from abc import ABCMeta, abstractmethod
-from enum import Enum, auto
+from enum import Enum
 
 
 class ConnectionType(Enum):
-    mongodb = auto()
-    http = auto()
+    mongodb = 1
+    http = 2
 
 
 class Database(object, metaclass=ABCMeta):

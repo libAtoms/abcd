@@ -13,7 +13,7 @@ class Config(dict):
 
     @classmethod
     def from_json(cls, filename):
-        with open(filename) as json_file:
+        with open(str(filename)) as json_file:
             obj = json.loads(json_file.read())
 
         return cls(obj)

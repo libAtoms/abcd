@@ -506,6 +506,7 @@ class MongoDatabase(Database):
             elif isinstance(data[0], str):
                 return self._hist_str(name, data, **kwargs)
             else:
+                print('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
                 logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
         else:
             logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))

@@ -16,6 +16,7 @@ from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, que
 
 from abcd.backends.abstract import Database
 from abcd.parsers.queries import QueryParser
+from abcd.parsers.arguments import key_val_str_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,13 @@ class MongoQuery(object):
             pass
 
     def visit_name(self, fields):
-        return {fields: {'$exists': True}}
+        # return {fields: {'$exists': True}}
+        return {
+            '$or': [
+                {'info.' + fields: {'$exists': True}},
+                {'arrays.' + fields: {'$exists': True}},
+            ]
+        }
 
     def visit_and(self, *args):
         return {'$and': [self.visit(arg) for arg in args]}
@@ -79,25 +86,67 @@ class MongoQuery(object):
         return {'$or': [self.visit(arg) for arg in args]}
 
     def visit_eq(self, field, value):
-        return {field[1]: value[1]}
+        # return {field[1]: value[1]}
+        return {
+            '$or': [
+                {'info.' + field[1]: value[1]},
+                {'arrays.' + field[1]: value[1]},
+            ]
+        }
 
     def visit_re(self, field, value):
-        return {field[1]: {'$regex': value[1]}}
+        # return {field[1]: {'$regex': value[1]}}
+        return {
+            '$or': [
+                {'info.' + field[1]: {'$regex': value[1]}},
+                {'arrays.' + field[1]: {'$regex': value[1]}},
+            ]
+        }
 
     def visit_gt(self, field, value):
-        return {field[1]: {'$gt': value[1]}}
+        # return {field[1]: {'$gt': value[1]}}
+        return {
+            '$or': [
+                {'info.' + field[1]: {'$gt': value[1]}},
+                {'arrays.' + field[1]: {'$gt': value[1]}},
+            ]
+        }
 
     def visit_gte(self, field, value):
-        return {field[1]: {'$gte': value[1]}}
+        # return {field[1]: {'$gte': value[1]}}
+        return {
+            '$or': [
+                {'info.' + field[1]: {'$gte': value[1]}},
+                {'arrays.' + field[1]: {'$gte': value[1]}},
+            ]
+        }
 
     def visit_lt(self, field, value):
-        return {field[1]: {'$lt': value[1]}}
+        # return {field[1]: {'$lt': value[1]}}
+        return {
+            '$or': [
+                {'info.' + field[1]: {'$lt': value[1]}},
+                {'arrays.' + field[1]: {'$lt': value[1]}},
+            ]
+        }
 
     def visit_lte(self, field, value):
-        return {field[1]: {'$lte': value[1]}}
+        # return {field[1]: {'$lte': value[1]}}
+        return {
+            '$or': [
+                {'info.' + field[1]: {'$lte': value[1]}},
+                {'arrays.' + field[1]: {'$lte': value[1]}},
+            ]
+        }
 
     def visit_in(self, field, *values):
-        return {field[1]: {'$in': [value[1] for value in values]}}
+        # return {field[1]: {'$in': [value[1] for value in values]}}
+        return {
+            '$or': [
+                {'info.' + field[1]: {'$in': [value[1] for value in values]}},
+                {'arrays.' + field[1]: {'$in': [value[1] for value in values]}},
+            ]
+        }
 
     def __enter__(self):
         return self
@@ -269,8 +318,15 @@ class AtomsModel(DynamicDocument):
             else:
                 logger.debug("Updated")
 
+    @classmethod
+    def pre_bulk_insert(cls, sender, documents, **kwargs):
+        for document in documents:
+            cls.pre_save_post_validation(sender, document, **kwargs)
+
 
 signals.pre_save_post_validation.connect(AtomsModel.pre_save_post_validation, sender=AtomsModel)
+signals.pre_bulk_insert.connect(AtomsModel.pre_bulk_insert, sender=AtomsModel)
+
 signals.post_save.connect(AtomsModel.post_save, sender=AtomsModel)
 
 
@@ -318,6 +374,10 @@ class MongoDatabase(Database):
         AtomsModel.drop_collection()
 
     def push(self, atoms, extra_info=None):
+
+        if extra_info and isinstance(extra_info, str):
+            extra_info = key_val_str_to_dict(extra_info)
+
         if isinstance(atoms, Atoms):
             AtomsModel.from_atoms(atoms, extra_info).save()
 
@@ -325,10 +385,18 @@ class MongoDatabase(Database):
             # NOTE: insert method is not able to handle generators
 
             # model._get_collection().insert_many(model.from_atoms(at).to_mongo() for at in atoms)
-            AtomsModel.objects.insert(list(AtomsModel.from_atoms(at) for at in atoms))
+            AtomsModel.objects.insert(list(AtomsModel.from_atoms(at, extra_info) for at in atoms))
 
     def upload(self, file, extra_info=None):
-        data = iread(file)
+
+        if extra_info:
+            extra_info = key_val_str_to_dict(extra_info)
+        else:
+            extra_info = {}
+
+        extra_info['filename'] = str(file)
+
+        data = iread(str(file))
         self.push(data, extra_info)
 
     def pull(self, query=None, properties=None):
@@ -496,6 +564,7 @@ if __name__ == '__main__':
 
     abcd.print_info()
 
+    abcd.push(iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(10)))
     # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
     #     # Hack to fix the representation of forces
     #     atoms.calc.results['forces'] = atoms.arrays['force']

@@ -66,7 +66,7 @@ class QueryLexer(object):
     # Error handling rule
     @staticmethod
     def t_error(t):
-        logger.warning(f'Illegal character \'{t.value[0]}\'')
+        logger.warning('Illegal character \'{}\''.format(t.value[0]))
         t.lexer.skip(1)
 
     def tokenize(self, data):
@@ -198,7 +198,7 @@ class QueryParser(QueryLexer):
     @staticmethod
     def p_error(p):
         if p:
-            logger.error(f'Syntax error at \'{p.value}\'')
+            logger.error('Syntax error at \'{}\''.format(p.value))
         else:
             logger.error("Syntax error at EOF")
 
@@ -227,5 +227,5 @@ if __name__ == '__main__':
     for query in queries:
         result = lexer.tokenize(query)
         print(query)
-        print(' '.join(f'{item.value} [{item.type}]' for item in result))
+        print(' '.join('{} [{}]'.format(item.value, item.type) for item in result))
         print(parser.parse(query))

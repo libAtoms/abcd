@@ -29,17 +29,17 @@ class Config(dict):
             # Load all the defaults
             if (Path.home() / '.abcd').is_file():
                 file = Path.home() / '.abcd'
-                logger.info(f'Using config file: {file}')
+                logger.info('Using config file: {}'.format(file))
                 files.append(file)
 
             if (Path.cwd() / '.abcd').is_file():
                 file = Path.cwd() / '.abcd'
-                logger.info(f'Using config file: {file}')
+                logger.info('Using config file: {}'.format(file))
                 files.append(file)
 
             if os.environ.get('ABCD_CONFIG') and Path(os.environ.get('ABCD_CONFIG')).is_file():
                 file = Path(os.environ.get('ABCD_CONFIG'))
-                logger.info(f'Using config file: {file}')
+                logger.info('Using config file: {}'.format(file))
                 files.append(file)
 
             if files:
@@ -59,7 +59,7 @@ class Config(dict):
             else:
                 raise FileNotFoundError()
 
-            logger.info(f'Using config file: {file}')
+            logger.info('Using config file: {}'.format(file))
 
             config = cls.from_json(file)
 
@@ -70,25 +70,10 @@ class Config(dict):
             else Path.cwd() / '.abcd' if local \
             else Path.home() / '.abcd'
 
-        logger.info(f'The saved config\'s file: {file}')
+        logger.info('The saved config\'s file: {}'.format(file))
 
         with open(str(file), 'w') as file:
             json.dump(self, file)
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} {dict.__repr__(self)}>'
-
-    def title(self, title, fill='='):
-        title = self._trunc(title, self.width - 4)
-        template = f'{{:{fill}^20}}'
-        return template.format(' ' + title + ' ')
-
-    def table(self, data, hearder=None, style=None):
-        template = '{}{}'
-        out = '\n'.join(
-            template.format(*d) for d in data
-        )
-        return out
-
-    def histogram(self):
-        pass
+        return '<{} {}>'.format(self.__class__.__name__, dict.__repr__(self))

@@ -1,3 +1,4 @@
+import json
 import logging
 import requests
 from os import linesep
@@ -7,6 +8,8 @@ import ase
 from abcd.backends.abstract import Database
 
 logger = logging.getLogger(__name__)
+
+DictEncoder = json.JSONEncoder
 
 
 class Atoms(ase.Atoms):
@@ -45,12 +48,12 @@ class HttpDatabase(Database):
         return results
 
     def get_atoms(self, id: str) -> Atoms:
-        data = requests.get(self.url + f'/calculation/{id}').json()
+        data = requests.get(self.url + '/calculation/{}'.format(id)).json()
         atoms = Atoms.from_dict(data)
         return atoms
 
     def __repr__(self):
-        return f'ABCD(type={self.connection_type.name}, url={self.url}, ...)'
+        return 'ABCD(type={}, url={}, ...)'.format(self.__class__.__name__, self.url)
 
     def _repr_html_(self):
         """jupyter notebook representation"""
@@ -78,6 +81,5 @@ class HttpDatabase(Database):
 
 
 if __name__ == '__main__':
-
     abcd = HttpDatabase(url='http://localhost:8080/api')
     abcd.print_info()

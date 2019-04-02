@@ -31,7 +31,7 @@ class FancyStyle(Style):
 
     def title(self, title):
         fill = '='
-        template = f'{{:{fill}^{self.width}}}'
+        template = '{{:{}^{}}}'.format(fill, self.width)
         title = self._trunc(title, self.width - 4)
         print('', template.format(' ' + title + ' '), sep=os.linesep)
 
@@ -52,25 +52,26 @@ class FancyStyle(Style):
     def describe(self, data):
         if data['type'] == 'hist_float':
 
-            self.title(f'Histogram: {data["name"]}')
-            self.h1(f'Property: {data["name"]}')
+            self.title('Histogram: {}'.format(data["name"]))
+            self.h1('Property: {}'.format(data["name"]))
 
             self.h2('Summary')
             self.table(
-                ((f'{sum(data["counts"])}', f'{data["min"]:.8g}', f'{data["max"]:.8g}', f'{data["median"]:.8g}',
-                  f'{data["std"]:.8g}',
-                  f'{data["var"]:.8g}'),),
+                (('{}'.format(sum(data["counts"])), '{:.8g}'.format(data["min"]), '{:.8g}'.format(data["max"]),
+                  '{:.8g}'.format(data["median"]),
+                  '{:.8g}'.format(data["std"]),
+                  '{:.8g}'.format(data["var"])),),
                 headers=('total', 'min', 'max', 'mean', 'std', 'var'), disable_numparse=True, tablefmt="grid")
 
         elif data['type'] == 'hist_str':
 
-            self.title(f'Histogram: {data["name"]}')
-            self.h1(f'Property: {data["name"]}')
+            self.title('Histogram: {}'.format(data["name"]))
+            self.h1('Property: {}'.format(data["name"]))
 
             self.h2('Summary')
             self.table(
-                ((f'{data["total"]}', f'{data["unique"]}', f'{min(data["counts"])}', f'{max(data["counts"])}',
-                  f'{data["total"] / data["unique"]:.8g}'),),
+                (('{}'.format(data["total"]), '{}'.format(data["unique"]), '{}'.format(min(data["counts"])),
+                  '{}'.format(max(data["counts"])), '{:.8g}'.format(data["total"] / data["unique"])),),
                 headers=('total', 'unique', 'min', 'max', 'mean'), disable_numparse=True, tablefmt="grid")
         else:
             pass
@@ -83,7 +84,7 @@ class FancyStyle(Style):
             def get_width_hack(hist, bin_edges):
                 # generating a table just to measure its width
                 return len(tabulate(
-                    list([f'{lower:.8g}', f'{upper:.8g}', f'{count}']
+                    list(['{:.8g}'.format(lower), '{:.8g}'.format(upper), '{}'.format(count)]
                          for lower, upper, count in zip(bin_edges[:-1], bin_edges[1:], hist)),
                     headers=('Lower', 'Upper', 'Count'),
                     colalign=("decimal", "decimal", "right"),
@@ -101,7 +102,7 @@ class FancyStyle(Style):
                 scales = (max_width / hist.max() * hist).astype(int)
 
                 self.table(
-                    list([f'{lower:.8g}', f'{upper:.8g}', f'{count}', '▉' * scale]
+                    list(['{:.8g}'.format(lower), '{:.8g}'.format(upper), '{}'.format(count), '▉' * scale]
                          for lower, upper, count, scale in zip(bin_edges[:-1], bin_edges[1:], hist, scales)),
                     headers=('Lower', 'Upper', 'Count', 'Histogram'),
                     colalign=("decimal", "decimal", "right", "left"),
@@ -116,7 +117,7 @@ class FancyStyle(Style):
             def get_width_hack(keys, values):
                 # generating a table just to measure its width
                 return len(tabulate(
-                    list([item, f'{count}'] for item, count in zip(data['labels'], data['counts'])),
+                    list([item, '{}'.format(count)] for item, count in zip(data['labels'], data['counts'])),
                     headers=('Name', 'Count'),
                     colalign=("left", "right"),
                     disable_numparse=True,
@@ -134,7 +135,7 @@ class FancyStyle(Style):
                 scales = (int(ratio * value) for value in data['counts'])
 
                 self.table(
-                    list([item, f'{count}', '▉' * scale] for item, count, scale in
+                    list([item, '{}'.format(count), '▉' * scale] for item, count, scale in
                          zip(data['labels'], data['counts'], scales)),
                     headers=('Name', 'Count', 'Histogram'),
                     colalign=("left", "right", "left"),
@@ -146,7 +147,7 @@ class FancyStyle(Style):
             def get_width_hack(keys, values):
                 # generating a table just to measure its width
                 return len(tabulate(
-                    list([item, f'{count}'] for item, count in zip(data['labels'], data['counts'])),
+                    list([item, '{}'.format(count)] for item, count in zip(data['labels'], data['counts'])),
                     headers=('Name', 'Count'),
                     colalign=("left", "right"),
                     disable_numparse=True,
@@ -164,7 +165,7 @@ class FancyStyle(Style):
                 scales = (int(ratio * value) for value in data['counts'])
 
                 self.table(
-                    list([item, f'{count}', '▉' * scale] for item, count, scale in
+                    list([item, '{}'.format(count), '▉' * scale] for item, count, scale in
                          zip(data['labels'], data['counts'], scales)),
                     headers=('Name', 'Count', 'Histogram'),
                     colalign=("left", "right", "left"),

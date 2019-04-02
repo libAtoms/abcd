@@ -33,7 +33,7 @@ class ABCD(object):
         elif r.scheme == 'http' or r.scheme == 'https':
             raise NotImplementedError('http not yet supported! soon...')
         else:
-            raise NotImplementedError(f'Unable to recognise the type of connection. (url: {url})')
+            raise NotImplementedError('Unable to recognise the type of connection. (url: {})'.format(url))
 
     @classmethod
     def from_config(cls, config):

@@ -31,7 +31,9 @@ class ArgumentParser(argparse.ArgumentParser):
                                   default='http://localhost')
 
         parser_download = subparsers.add_parser('download', help='download data from the database')
-        parser_download.add_argument(dest='format', choices=['xyz', 'json'])
+        parser_download.add_argument('-q', '--query', help='Filtering extra quantities')
+        # parser_download.add_argument(dest='format', choices=['xyz', 'json'], default='xyz')
+        parser_download.add_argument(dest='filename', help='name of the file to store the configurations')
 
         parser_upload = subparsers.add_parser('upload', help='upload any ase supported files to the database')
         # parser_upload.add_argument('-r', '--recursive', action='store_true')
@@ -105,8 +107,12 @@ class Shell(object):
     def download(self):
         args = self.args
         self.init_db()
-
         logger.info(f'download args: \n{args}')
+
+        from ase.io import write
+        filename = args.filename
+        query = args.query
+        write(filename, self.db.get_atoms(query=query))
 
     def upload(self):
         args = self.args

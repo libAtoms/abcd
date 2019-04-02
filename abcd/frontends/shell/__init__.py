@@ -35,7 +35,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
         parser_upload = subparsers.add_parser('upload', help='upload any ase supported files to the database')
         # parser_upload.add_argument('-r', '--recursive', action='store_true')
-        parser_upload.add_argument('-e', '--extra', help='Adding extra quantities', action='store_true')
+        parser_upload.add_argument('-e', '--extra', help='Adding extra quantities')
         parser_upload.add_argument(dest='path', help='file or folder which contains the xyz files')
 
         summary_parser = subparsers.add_parser('summary', help='Discovery mode')
@@ -110,7 +110,6 @@ class Shell(object):
 
     def upload(self):
         args = self.args
-
         logger.info(f'upload args: \n{args}')
         self.init_db()
 
@@ -118,8 +117,8 @@ class Shell(object):
 
         path = Path(args.path)
         if path.is_file():
-            self.db.upload()
-        if path.is_dir():
+            self.db.upload(path, extra_info)
+        elif path.is_dir():
             for file in path.glob('.xyz'):
                 logger.info(f'Uploaded file: {file}')
                 self.db.upload(file, extra_info)
@@ -139,32 +138,34 @@ class Shell(object):
             with self.style as f:
 
                 props = self.db.count_properties(query=args.query)
-                f.title('Properties')
-                f.h1('Arrays (per atom properties)')
+                if props['arrays']:
+                    f.title('Properties')
+                    f.h1('Arrays (per atom properties)')
 
-                labels, counts = [], []
-                for k, v in props['arrays'].items():
-                    labels.append(k)
-                    counts.append(v['count'])
+                    labels, counts = [], []
+                    for k, v in props['arrays'].items():
+                        labels.append(k)
+                        counts.append(v['count'])
 
-                f.hist({
-                    'type': 'hist_labels',
-                    'labels': labels,
-                    'counts': counts
-                })
+                    f.hist({
+                        'type': 'hist_labels',
+                        'labels': labels,
+                        'counts': counts
+                    })
 
-                f.h1('Infos (properties of the whole configuration)')
+                if props['info']:
+                    f.h1('Infos (properties of the whole configuration)')
 
-                labels, counts = [], []
-                for k, v in props['info'].items():
-                    labels.append(k)
-                    counts.append(v['count'])
+                    labels, counts = [], []
+                    for k, v in props['info'].items():
+                        labels.append(k)
+                        counts.append(v['count'])
 
-                f.hist({
-                    'type': 'hist_labels',
-                    'labels': labels,
-                    'counts': counts
-                })
+                    f.hist({
+                        'type': 'hist_labels',
+                        'labels': labels,
+                        'counts': counts
+                    })
             return
 
         elif args.props == '*':

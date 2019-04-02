@@ -59,7 +59,7 @@ class ArgumentParser(argparse.ArgumentParser):
         else:
             logging.basicConfig(level=logging.ERROR)
 
-        if namespace.command is 'login':
+        if namespace.command == 'login':
             Shell(namespace).login()
         elif namespace.command == 'download':
             Shell(namespace).download()
@@ -87,7 +87,8 @@ class Shell(object):
         self.db = None
 
     def init_db(self):
-        url = self.config['url']
+
+        url = self.config.get('url', None)
 
         if url is None:
             print('Please use abcd login first!')
@@ -100,9 +101,9 @@ class Shell(object):
         logger.info(f'login args: \n{args}')
 
         self.db = ABCD(url=args.url)
-        self.config.save({
-            'url': args.url
-        })
+
+        self.config['url'] = args.url
+        self.config.save()
 
     def download(self):
         args = self.args
@@ -112,7 +113,7 @@ class Shell(object):
         from ase.io import write
         filename = args.filename
         query = args.query
-        write(filename, self.db.get_atoms(query=query))
+        write(filename, list(self.db.get_atoms(query=query)))
 
     def upload(self):
         args = self.args
@@ -222,6 +223,8 @@ class Shell(object):
 
 if __name__ == '__main__':
     cli()
+    cli(['-v', 'summary', '-q', 'username=fekad virial dummy'])
+    exit()
     cli(['summary'])
     cli(['-v', 'summary'])
     # cli(['summary', '-v'])  # wrong

@@ -14,7 +14,7 @@ setup(
     },
     packages=find_packages(),
     # install_requires=['ase', 'click', 'ply'],
-    install_requires=['ase', 'click', 'ply','mongoengine', 'blinker'],
+    install_requires=['ase', 'click', 'ply','mongoengine', 'blinker', 'tabulate'],
     extras_require={
         'mongo': ['mongoengine', 'blinker'],
         'http': ['requests'],

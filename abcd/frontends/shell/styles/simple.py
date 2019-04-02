@@ -18,7 +18,7 @@ class SimpleStyle(Style):
         self.width = width
 
     def title(self, title):
-        # template = f'{{:=^{self.width}}}'
+        # template = '{{:=^{self.width}}}'
         # title = self._trunc(title, self.width - 4)
         # print('', template.format(' ' + title + ' '), sep=os.linesep)
         print('')
@@ -35,14 +35,14 @@ class SimpleStyle(Style):
         if data['type'] == 'hist_float':
 
             print(
-                f'{data["name"]}  count: {sum(data["counts"])} '
-                f'min: {data["min"]:.8g} med: {data["median"]:.8g} max: {data["max"]:.8g}  '
-                f'std: {data["std"]:.8g} var:{data["var"]:.8g}'
+                '{}  count: {} '.format(data["name"], sum(data["counts"])),
+                'min: {:.8g} med: {:.8g} max: {:.8g}  '.format(data["min"], data["median"], data["max"]),
+                'std: {:.8g} var:{:.8g}'.format(data["std"], data["var"])
             )
 
         elif data['type'] == 'hist_str':
 
-            print(f'{data["name"]} count: {data["total"]} unique: {data["unique"]}')
+            print('{} count: {} unique: {}'.format(data["name"], data["total"], data["unique"]))
 
         else:
             pass
@@ -54,7 +54,7 @@ class SimpleStyle(Style):
             width_count = len(str(max(data['counts'])))
             for count in data['counts']:
                 scale = int(ratio * count)
-                self.print(f'{"▉" * scale:<{width_hist}} {count:>{width_count}d}')
+                self.print('{:<{}} {:>{}d}'.format("▉" * scale, width_hist, count, width_count))
 
         elif data['type'] == 'hist_str':
             remain = data['total'] - sum(data['counts'])
@@ -66,7 +66,7 @@ class SimpleStyle(Style):
             ratio = width_hist / max(data['counts'])
             for label, count in zip(data['labels'], data['counts']):
                 scale = int(ratio * count)
-                self.print(f'{"▉" * scale:<{width_hist}} {count:>{width_count}d} {label}')
+                self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
 
         elif data['type'] == 'hist_labels':
 
@@ -74,7 +74,7 @@ class SimpleStyle(Style):
             ratio = width_hist / max(data['counts'])
             for label, count in zip(data['labels'], data['counts']):
                 scale = int(ratio * count)
-                self.print(f'{"▉" * scale:<{width_hist}} {count:>{width_count}d} {label}')
+                self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
 
         else:
             pass

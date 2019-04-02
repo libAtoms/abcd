@@ -47,7 +47,7 @@ class AtomsQuerySet(queryset.QuerySet):
         elif isinstance(query, str):
             return self.from_string(query)
         else:
-            raise NotImplementedError(f'Query string should be string or dictionary and not {type(query)}!')
+            raise NotImplementedError('Query string should be string or dictionary and not {}!'.format(type(query)))
 
 
 class MongoQuery(object):
@@ -58,7 +58,7 @@ class MongoQuery(object):
     def visit(self, syntax_tree):
         op, *args = syntax_tree
         try:
-            fun = self.__getattribute__(f'visit_{op.lower()}')
+            fun = self.__getattribute__('visit_' + op.lower())
             return fun(*args)
         except:
             pass
@@ -461,15 +461,16 @@ class MongoDatabase(Database):
     def __repr__(self):
         host, port = self.client.address
 
-        return f'{self.__class__.__name__}(' \
-            f'url={host}:{port}, ' \
-            f'db={self.db_name}, ' \
-            f'collection={self.collection_name})'
+        return '{}('.format(self.__class__.__name__) + \
+               'url={}:{}, '.format(host, port) + \
+               'db={}, '.format(self.db_name) + \
+               'collection={})'.format(self.collection_name)
 
     def _repr_html_(self):
         """Jupyter notebook representation"""
         return '<b>ABCD MongoDB database</b>'
 
+    # noinspection PyStringFormat
     def print_info(self):
         """shows basic information about the connected database"""
 
@@ -505,9 +506,9 @@ class MongoDatabase(Database):
             elif isinstance(data[0], str):
                 return self._hist_str(name, data, **kwargs)
             else:
-                logger.info(f'{name}: Histogram for list of {type(data)} types are not supported!')
+                logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
         else:
-            logger.info(f'{name}: Histogram for {type(data)} types are not supported!')
+            logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))
 
         return None
 

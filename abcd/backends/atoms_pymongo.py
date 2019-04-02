@@ -223,10 +223,10 @@ class MongoDatabase(Database):
     def __repr__(self):
         host, port = self.client.address
 
-        return f'{self.__class__.__name__}(' \
-            f'url={host}:{port}, ' \
-            f'db={self.db.name}, ' \
-            f'collection={self.collection.name})'
+        return '{}('.format(self.__class__.__name__) + \
+               'url={}:{}, '.format(host, port) + \
+               'db={}, '.format(self.db.name) + \
+               'collection={})'.format(self.collection.name)
 
     def _repr_html_(self):
         """Jupyter notebook representation"""

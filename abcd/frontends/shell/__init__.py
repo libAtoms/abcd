@@ -1,6 +1,5 @@
 import logging
 import argparse
-import getpass
 
 from abcd import ABCD
 from pathlib import Path
@@ -82,7 +81,7 @@ class Shell(object):
         elif args.style == 'fancy':
             self.style = FancyStyle()
         else:
-            raise NotImplementedError(f'The style "{args.style}" is not implemented!')
+            raise NotImplementedError('The style "{}" is not implemented!'.format(args.style))
 
         self.db = None
 
@@ -98,7 +97,7 @@ class Shell(object):
 
     def login(self):
         args = self.args
-        logger.info(f'login args: \n{args}')
+        logger.info('login args: \n{}'.format(args))
 
         self.db = ABCD(url=args.url)
 
@@ -108,7 +107,7 @@ class Shell(object):
     def download(self):
         args = self.args
         self.init_db()
-        logger.info(f'download args: \n{args}')
+        logger.info('download args: \n{}'.format(args))
 
         from ase.io import write
         filename = args.filename
@@ -117,7 +116,7 @@ class Shell(object):
 
     def upload(self):
         args = self.args
-        logger.info(f'upload args: \n{args}')
+        logger.info('upload args: \n{}'.format(args))
         self.init_db()
 
         extra_info = args.extra
@@ -127,10 +126,10 @@ class Shell(object):
             self.db.upload(path, extra_info)
         elif path.is_dir():
             for file in path.glob('.xyz'):
-                logger.info(f'Uploaded file: {file}')
+                logger.info('Uploaded file: {}'.format(file))
                 self.db.upload(file, extra_info)
             else:
-                logger.info(f'No file found: {path}')
+                logger.info('No file found: {}'.format(path))
                 raise FileNotFoundError()
         else:
             raise FileNotFoundError()
@@ -139,7 +138,7 @@ class Shell(object):
         self.init_db()
 
         args = self.args
-        logger.info(f'summary args: \n{args}')
+        logger.info('summary args: \n{}'.format(args))
 
         if args.props is None:
             with self.style as f:

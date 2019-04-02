@@ -18,9 +18,10 @@ class SimpleStyle(Style):
         self.width = width
 
     def title(self, title):
-        template = f'{{:=^{self.width}}}'
-        title = self._trunc(title, self.width - 4)
-        print('', template.format(' ' + title + ' '), sep=os.linesep)
+        # template = f'{{:=^{self.width}}}'
+        # title = self._trunc(title, self.width - 4)
+        # print('', template.format(' ' + title + ' '), sep=os.linesep)
+        print('')
 
     def h1(self, title):
         title = self._trunc(title, self.width)

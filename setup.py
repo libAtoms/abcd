@@ -13,7 +13,8 @@ setup(
         'Source Code': 'https://github.com/fekad/abcd',
     },
     packages=find_packages(),
-    install_requires=['ase', 'click', 'ply'],
+    # install_requires=['ase', 'click', 'ply'],
+    install_requires=['ase', 'click', 'ply','mongoengine', 'blinker'],
     extras_require={
         'mongo': ['mongoengine', 'blinker'],
         'http': ['requests'],

@@ -233,7 +233,6 @@ class AtomsModel(DynamicDocument):
 
         # if isinstance(atoms, list):
         #     return (cls.from_atoms(value, extra_info=None, **kwargs) for value in atoms)
-
         arrays = atoms.arrays.copy()
         natoms = len(atoms)
 
@@ -260,6 +259,12 @@ class AtomsModel(DynamicDocument):
 
             if isinstance(value, np.ndarray):
                 db_info[key] = value.tolist()
+                continue
+            elif isinstance(value, np.int64):
+                db_info[key] = int(value)
+                continue
+            elif isinstance(value, np.float64):
+                db_info[key] = float(value)
                 continue
 
             db_info[key] = value
@@ -554,51 +559,65 @@ class MongoDatabase(Database):
             'counts': counts[:bins]
         }
 
+#
+# def debug_issue19():
+#     from pathlib import Path
+#     from ase.io import read
+#
+#     file = Path('../../gp_iter6_sparse9k.xml.xyz')
+#     traj = read(file.as_posix(), index='170:172')
+#
+#     abcd = MongoDatabase()
+#     abcd.push(traj[1])
+#     abcd.push(traj)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
-    collection_name = 'atoms'
-    url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017'
-
-    abcd = MongoDatabase(collection='atoms', username='2ef35d3635e9dc5a922a6a42', password='ac6ce72e259f5ddcc8dd5178')
-
-    abcd.print_info()
-
-    abcd.push(iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(10)))
-    # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
-    #     # Hack to fix the representation of forces
-    #     atoms.calc.results['forces'] = atoms.arrays['force']
-    #
-    #     print(atoms)
-
-    # with switch_collection(AtomsModel, collection_name) as AtomsModel:
-    atoms = AtomsModel.objects.first().to_atoms()
-
-    saved = AtomsModel.from_atoms(atoms).save()
-
-    # Update
-    Databases(name=collection_name).save()
-
-    print(Databases.objects(name=collection_name).first())
-
-    print(abcd.query('arrays.positions'))
-
-    print(abcd.count_properties())
-
-    query = {
-        'info.config_type': 'bcc_bulk_54_high'
-    }
-    # query ='info.config_type=bcc_bulk_54_high'
-    print(abcd.count(query))
-
-    a = list(abcd.get_atoms())
-    print(type(a[0].arrays['forces']))
-# class ArraysModel(EmbeddedDocument):
-#     meta = {'strict': False}
-#     numbers = ListField(IntField())
-#     positions = ListField(ListField(FloatField()))
+    # debug_issue19()
 #
+#     collection_name = 'atoms'
+#     url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017'
 #
-# class InfoModel(EmbeddedDocument):
-#     meta = {'strict': False}
+#     abcd = MongoDatabase(collection='atoms', username='2ef35d3635e9dc5a922a6a42', password='ac6ce72e259f5ddcc8dd5178')
+#
+#     abcd.print_info()
+#
+#     abcd.push(iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(10)))
+#     # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
+#     #     # Hack to fix the representation of forces
+#     #     atoms.calc.results['forces'] = atoms.arrays['force']
+#     #
+#     #     print(atoms)
+#
+#     # with switch_collection(AtomsModel, collection_name) as AtomsModel:
+#     atoms = AtomsModel.objects.first().to_atoms()
+#
+#     saved = AtomsModel.from_atoms(atoms).save()
+#
+#     # Update
+#     Databases(name=collection_name).save()
+#
+#     print(Databases.objects(name=collection_name).first())
+#
+#     print(abcd.query('arrays.positions'))
+#
+#     print(abcd.count_properties())
+#
+#     query = {
+#         'info.config_type': 'bcc_bulk_54_high'
+#     }
+#     # query ='info.config_type=bcc_bulk_54_high'
+#     print(abcd.count(query))
+#
+#     a = list(abcd.get_atoms())
+#     print(type(a[0].arrays['forces']))
+# # class ArraysModel(EmbeddedDocument):
+# #     meta = {'strict': False}
+# #     numbers = ListField(IntField())
+# #     positions = ListField(ListField(FloatField()))
+# #
+# #
+# # class InfoModel(EmbeddedDocument):
+# #     meta = {'strict': False}

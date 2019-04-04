@@ -6,5 +6,5 @@ storage and discovery of atomistic data
 
 creating tables and views
 ```
-$ pip install git+https://github.com/fekad/abcd.git
+$ pip install git+https://github.com/libAtoms/abcd.git
 ```

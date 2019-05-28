@@ -42,6 +42,9 @@ class ArgumentParser(argparse.ArgumentParser):
         summary_parser = subparsers.add_parser('summary', help='Discovery mode')
         summary_parser.add_argument('-q', '--query', help='Filtering extra quantities')
         summary_parser.add_argument('-p', '--props', help='Selecting properties for detailed description')
+        summary_parser.add_argument('-a', '--all', help='Show everything without truncation', action='store_true')
+        summary_parser.add_argument('-n', '--bins', help='The number of bins for the histogram', default=10)
+        summary_parser.add_argument('-t', '--trunc', help='Length of string before truncation', default=20)
 
     def __call__(self, args=None):
 

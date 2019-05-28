@@ -45,8 +45,10 @@ class ArgumentParser(argparse.ArgumentParser):
         summary_parser.add_argument('-q', '--query', action='append', help='Filtering extra quantities')
         summary_parser.add_argument('-p', '--props', action='append',
                                     help='Selecting properties for detailed description')
-        summary_parser.add_argument('-a', '--all', help='Show everything without truncation', action='store_true')
-        summary_parser.add_argument('-n', '--bins', help='The number of bins for the histogram', default=10, type=int)
+        summary_parser.add_argument('-a', '--all',
+                                    help='Show everything without truncation of strings and limits of lines',
+                                    action='store_true')
+        summary_parser.add_argument('-n', '--bins', help='The number of bins of the histogram', default=10, type=int)
         summary_parser.add_argument('-t', '--trunc', help='Length of string before truncation', default=20, type=int)
 
         delete_parser = subparsers.add_parser('tags', help='Delete configurations from the databas')
@@ -180,9 +182,9 @@ class Shell(object):
                     f.h1('Arrays (per atom properties)')
 
                     labels, counts = [], []
-                    for k, v in props['arrays'].items():
+                    for k in sorted(props['arrays'], key=str.lower):
                         labels.append(k)
-                        counts.append(v['count'])
+                        counts.append(props['arrays'][k]['count'])
 
                     f.hist({
                         'type': 'hist_labels',
@@ -194,9 +196,9 @@ class Shell(object):
                     f.h1('Infos (properties of the whole configuration)')
 
                     labels, counts = [], []
-                    for k, v in props['info'].items():
+                    for k in sorted(props['info'], key=str.lower):
                         labels.append(k)
-                        counts.append(v['count'])
+                        counts.append(props['info'][k]['count'])
 
                     f.hist({
                         'type': 'hist_labels',

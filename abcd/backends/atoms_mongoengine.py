@@ -46,6 +46,8 @@ class AtomsQuerySet(queryset.QuerySet):
             return self(__raw__=query)
         elif isinstance(query, str):
             return self.from_string(query)
+        elif isinstance(query, list):
+            return self.from_string(' and '.join(query))
         else:
             raise NotImplementedError('Query string should be string or dictionary and not {}!'.format(type(query)))
 
@@ -505,7 +507,10 @@ class MongoDatabase(Database):
 
         data = self.property(name, query)
 
-        if data and isinstance(data, list):
+        if not data:
+            return None
+
+        elif data and isinstance(data, list):
             if isinstance(data[0], float):
                 return self._hist_float(name, data, **kwargs)
             elif isinstance(data[0], str):
@@ -513,10 +518,10 @@ class MongoDatabase(Database):
             else:
                 print('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
                 logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
+
         else:
             logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))
-
-        return None
+            return None
 
     @staticmethod
     def _hist_float(name, data, bins=10):

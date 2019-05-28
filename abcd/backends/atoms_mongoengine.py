@@ -512,7 +512,13 @@ class MongoDatabase(Database):
 
         elif data and isinstance(data, list):
             if isinstance(data[0], float):
-                return self._hist_float(name, data, **kwargs)
+                bins = kwargs.get('bins')
+
+                if bins:
+                    return self._hist_float(name, data, bins)
+
+                return self._hist_float(name, data)
+
             elif isinstance(data[0], str):
                 return self._hist_str(name, data, **kwargs)
             else:
@@ -525,6 +531,7 @@ class MongoDatabase(Database):
 
     @staticmethod
     def _hist_float(name, data, bins=10):
+
         data = np.array(data)
         hist, bin_edges = np.histogram(data, bins=bins)
 
@@ -563,6 +570,7 @@ class MongoDatabase(Database):
             'labels': labels[:bins],
             'counts': counts[:bins]
         }
+
 
 #
 # def debug_issue19():

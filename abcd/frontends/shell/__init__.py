@@ -46,8 +46,8 @@ class ArgumentParser(argparse.ArgumentParser):
         summary_parser.add_argument('-p', '--props', action='append',
                                     help='Selecting properties for detailed description')
         summary_parser.add_argument('-a', '--all', help='Show everything without truncation', action='store_true')
-        summary_parser.add_argument('-n', '--bins', help='The number of bins for the histogram', default=10)
-        summary_parser.add_argument('-t', '--trunc', help='Length of string before truncation', default=20)
+        summary_parser.add_argument('-n', '--bins', help='The number of bins for the histogram', default=10, type=int)
+        summary_parser.add_argument('-t', '--trunc', help='Length of string before truncation', default=20, type=int)
 
         delete_parser = subparsers.add_parser('tags', help='Delete configurations from the databas')
         delete_parser.add_argument('-q', '--query', help='Filtering extra quantities')
@@ -150,10 +150,15 @@ class Shell(object):
 
     def summary(self):
 
-        with self.style as f:
+        args = self.args
+        logger.info('summary args: \n{}'.format(self.args))
 
-            args = self.args
-            logger.info('summary args: \n{}'.format(self.args))
+        if self.args.all:
+            bins, truncate = None, None
+        else:
+            bins, truncate = self.args.bins, self.args.trunc
+
+        with self.style as f:
 
             if self.args.props is None:
                 props_list = None
@@ -204,7 +209,7 @@ class Shell(object):
 
                 for p in props['arrays']:
                     name = 'arrays.' + p
-                    data = self.db.hist(name, query=args.query)
+                    data = self.db.hist(name, query=args.query, bins=bins, truncate=truncate)
                     f.title(name)
                     if data:
                         f.describe(data)
@@ -212,7 +217,7 @@ class Shell(object):
 
                 for p in props['info']:
                     name = 'info.' + p
-                    data = self.db.hist(name, query=args.query)
+                    data = self.db.hist(name, query=args.query, bins=bins, truncate=truncate)
 
                     f.title(name)
                     if data:
@@ -220,14 +225,14 @@ class Shell(object):
                         f.hist(data)
             else:
                 for p in props_list:
-                    data = self.db.hist('arrays.' + p, query=args.query)
+                    data = self.db.hist('arrays.' + p, query=args.query, bins=bins, truncate=truncate)
 
                     if data:
                         f.title('arrays.' + p)
                         f.describe(data)
                         f.hist(data)
 
-                    data = self.db.hist('info.' + p, query=args.query)
+                    data = self.db.hist('info.' + p, query=args.query, bins=bins, truncate=truncate)
 
                     if data:
                         f.title('info.' + p)
@@ -250,5 +255,5 @@ if __name__ == '__main__':
     cli(['-s', 'fancy', 'summary', '-p', '*'])
     cli(['summary', '-p', '*'])
     cli(['-s', 'fancy', 'summary'])
-    cli(['-v', 'summary', '-p', 'config_type', '-p', 'haha', '-p' 'sdgsdg, dsgsdg,asd fgg', '-q', 'config_type~bcc', '-q', 'config_type~bcc'])
-
+    cli(['-v', 'summary', '-p', 'config_type', '-p', 'haha', '-p' 'sdgsdg, dsgsdg,asd fgg', '-q', 'config_type~bcc',
+         '-q', 'config_type~bcc'])

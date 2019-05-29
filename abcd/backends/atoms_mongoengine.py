@@ -163,8 +163,10 @@ class MongoQuery(object):
 
 class DerivedModel(EmbeddedDocument):
     username = fields.StringField()
-    n_atoms = fields.IntField()
+    natoms = fields.IntField()
     elements = fields.DictField(fields.IntField())
+    volume = fields.FloatField()
+    pressure = fields.FloatField()
 
     arrays_keys = fields.ListField(fields.StringField())
     info_keys = fields.ListField(fields.StringField())
@@ -299,15 +301,22 @@ class AtomsModel(DynamicDocument):
 
         document.info['username'] = getpass.getuser()
 
-        n_atoms = len(document.arrays['numbers'])
+        natoms = len(document.arrays['numbers'])
         elements = Counter(str(element) for element in document.arrays['numbers'])
 
         arrays_keys = list(document.arrays.keys())
         info_keys = list(document.info.keys())
-        derived_keys = ['elements', 'n_atoms', 'username', 'uploaded', 'modified']
+        derived_keys = ['natoms', 'elements', 'username', 'uploaded', 'modified']
+
+        cell = document.info.get('cell')
+        if cell:
+            derived_keys.append('volume')
+            virial = document.info.get('virial')
+            if virial:
+                derived_keys.append('pressure')
 
         document.derived = DerivedModel(
-            n_atoms=n_atoms,
+            natoms=natoms,
             elements=elements,
             arrays_keys=arrays_keys,
             info_keys=info_keys,
@@ -315,7 +324,19 @@ class AtomsModel(DynamicDocument):
             username=getpass.getuser()
         )
 
-        document.uploaded = datetime.datetime.utcnow()
+        cell = document.info.get('cell')
+        if cell:
+            volume = abs(np.linalg.det(cell))  # atoms.get_volume()
+            document.derived['volume'] = volume
+
+            virial = document.info.get('virial')
+            if virial:
+                # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
+                document.derived['pressure'] = -1 / 3 * np.trace(virial / volume)
+
+        if not document.uploaded:
+            document.uploaded = datetime.datetime.utcnow()
+
         document.modified = datetime.datetime.utcnow()
 
         logger.debug("Pre Save: %s" % document)

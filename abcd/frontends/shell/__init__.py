@@ -51,9 +51,9 @@ class ArgumentParser(argparse.ArgumentParser):
         summary_parser.add_argument('-n', '--bins', help='The number of bins of the histogram', default=10, type=int)
         summary_parser.add_argument('-t', '--trunc', help='Length of string before truncation', default=20, type=int)
 
-        delete_parser = subparsers.add_parser('tags', help='Delete configurations from the databas')
-        delete_parser.add_argument('-q', '--query', help='Filtering extra quantities')
-        delete_parser.add_argument('-y', '--yes', action='store_true', help='')
+        delete_parser = subparsers.add_parser('delete', help='Delete configurations from the database')
+        delete_parser.add_argument('-q', '--query', help='Filtering by a query')
+        delete_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
 
         tags_parser = subparsers.add_parser('tags', help='Add/remove tags')
         tags_parser.add_argument('-q', '--query', help='Filtering extra quantities')
@@ -86,6 +86,8 @@ class ArgumentParser(argparse.ArgumentParser):
             Shell(namespace).upload()
         elif namespace.command == 'summary':
             Shell(namespace).summary()
+        elif namespace.command == 'delete':
+            Shell(namespace).delete()
         else:
             print(self.format_help())
 
@@ -130,6 +132,17 @@ class Shell(object):
         filename = args.filename
         query = args.query
         write(filename, list(self.db.get_atoms(query=query)))
+
+    def delete(self):
+        args = self.args
+        logger.info('delete args: \n{}'.format(args))
+
+        if not args.yes:
+            print('Please use --yes for deleting {} configurations'.format(self.db.count(query=args.query)))
+            exit()
+
+        count = self.db.delete(query=args.query)
+        print('{} configuration has been deleted'.format(count))
 
     def upload(self):
         args = self.args

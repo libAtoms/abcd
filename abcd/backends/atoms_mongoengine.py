@@ -412,6 +412,9 @@ class MongoDatabase(Database):
             'number of confs': self.count()
         }
 
+    def delete(self, query=None):
+        return AtomsModel.objects.query(query).delete()
+
     def destroy(self):
         AtomsModel.drop_collection()
 

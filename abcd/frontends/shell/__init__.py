@@ -255,6 +255,13 @@ class Shell(object):
                         f.describe(data)
                         f.hist(data)
 
+                    data = self.db.hist('derived.' + p, query=args.query, bins=bins, truncate=truncate)
+
+                    if data:
+                        f.title('derived.' + p)
+                        f.describe(data)
+                        f.hist(data)
+
 
 if __name__ == '__main__':
     cli()

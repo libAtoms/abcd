@@ -71,6 +71,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + fields: {'$exists': True}},
                 {'arrays.' + fields: {'$exists': True}},
+                {'derived.' + fields: {'$exists': True}},
             ]
         }
 
@@ -93,6 +94,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: value[1]},
                 {'arrays.' + field[1]: value[1]},
+                {'derived.' + field[1]: value[1]},
             ]
         }
 
@@ -102,6 +104,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$regex': value[1]}},
                 {'arrays.' + field[1]: {'$regex': value[1]}},
+                {'derived.' + field[1]: {'$regex': value[1]}},
             ]
         }
 
@@ -111,6 +114,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$gt': value[1]}},
                 {'arrays.' + field[1]: {'$gt': value[1]}},
+                {'derived.' + field[1]: {'$gt': value[1]}},
             ]
         }
 
@@ -120,6 +124,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$gte': value[1]}},
                 {'arrays.' + field[1]: {'$gte': value[1]}},
+                {'derived.' + field[1]: {'$gte': value[1]}},
             ]
         }
 
@@ -129,6 +134,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$lt': value[1]}},
                 {'arrays.' + field[1]: {'$lt': value[1]}},
+                {'derived.' + field[1]: {'$lt': value[1]}},
             ]
         }
 
@@ -138,6 +144,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$lte': value[1]}},
                 {'arrays.' + field[1]: {'$lte': value[1]}},
+                {'derived.' + field[1]: {'$lte': value[1]}},
             ]
         }
 
@@ -147,6 +154,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$in': [value[1] for value in values]}},
                 {'arrays.' + field[1]: {'$in': [value[1] for value in values]}},
+                {'derived.' + field[1]: {'$in': [value[1] for value in values]}},
             ]
         }
 
@@ -609,7 +617,6 @@ class MongoDatabase(Database):
         }
 
 
-#
 # def debug_issue19():
 #     from pathlib import Path
 #     from ase.io import read
@@ -624,6 +631,13 @@ class MongoDatabase(Database):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+    #
+    # def exp(at):
+    #     at.info['pressure'] = -1/3 * np.trace(at.info['virial']/at.get_volume())
+    #
+    # {
+    #     'pressure': lambda at: -1/3 * np.trace(at.info['virial']/at.get_volume())
+    # }
 
     # debug_issue19()
 #

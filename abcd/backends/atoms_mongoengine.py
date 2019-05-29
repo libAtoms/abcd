@@ -162,10 +162,13 @@ class MongoQuery(object):
 
 
 class DerivedModel(EmbeddedDocument):
+    username = fields.StringField()
+    n_atoms = fields.IntField()
     elements = fields.DictField(fields.IntField())
+
     arrays_keys = fields.ListField(fields.StringField())
     info_keys = fields.ListField(fields.StringField())
-    n_atoms = fields.IntField()
+    derived_keys = fields.ListField(fields.StringField())
 
 
 class AtomsModel(DynamicDocument):
@@ -296,16 +299,20 @@ class AtomsModel(DynamicDocument):
 
         document.info['username'] = getpass.getuser()
 
+        n_atoms = len(document.arrays['numbers'])
         elements = Counter(str(element) for element in document.arrays['numbers'])
+
         arrays_keys = list(document.arrays.keys())
         info_keys = list(document.info.keys())
-        n_atoms = len(document.arrays['numbers'])
+        derived_keys = ['elements', 'n_atoms', 'username', 'uploaded', 'modified']
 
         document.derived = DerivedModel(
+            n_atoms=n_atoms,
             elements=elements,
             arrays_keys=arrays_keys,
             info_keys=info_keys,
-            n_atoms=n_atoms
+            derived_keys=derived_keys,
+            username=getpass.getuser()
         )
 
         document.uploaded = datetime.datetime.utcnow()
@@ -444,7 +451,8 @@ class MongoDatabase(Database):
 
         properties = {
             'info': {},
-            'arrays': {}
+            'arrays': {},
+            'derived': {}
         }
 
         pipeline = [
@@ -462,6 +470,14 @@ class MongoDatabase(Database):
 
         for value in AtomsModel.objects.query(query).aggregate(*pipeline):
             properties['arrays'][value['_id']] = {'count': value['count']}
+
+        pipeline = [
+            {'$unwind': '$derived.derived_keys'},
+            {'$group': {'_id': '$derived.derived_keys', 'count': {'$sum': 1}}}
+        ]
+
+        for value in AtomsModel.objects.query(query).aggregate(*pipeline):
+            properties['derived'][value['_id']] = {'count': value['count']}
 
         return properties
 

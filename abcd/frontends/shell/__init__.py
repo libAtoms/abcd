@@ -206,6 +206,20 @@ class Shell(object):
                         'counts': counts
                     })
 
+                if props['derived']:
+                    f.h1('Derived')
+
+                    labels, counts = [], []
+                    for k in sorted(props['derived'], key=str.lower):
+                        labels.append(k)
+                        counts.append(props['derived'][k]['count'])
+
+                    f.hist({
+                        'type': 'hist_labels',
+                        'labels': labels,
+                        'counts': counts
+                    })
+
             elif props_list == '*':
                 props = self.db.properties(query=args.query)
 

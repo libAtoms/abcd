@@ -55,12 +55,15 @@ class ArgumentParser(argparse.ArgumentParser):
         delete_parser.add_argument('-q', '--query', help='Filtering by a query')
         delete_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
 
-        tags_parser = subparsers.add_parser('tags', help='Add/remove tags')
-        tags_parser.add_argument('-q', '--query', help='Filtering extra quantities')
-        tags_parser.add_argument('-p', '--props', help='Selecting properties for detailed description')
+        tag_parser = subparsers.add_parser('tag', help='Add/remove tags')
+        tag_parser.add_argument('-q', '--query', help='Filtering by a query')
+        tag_parser.add_argument('--rename', help='')
+        tag_parser.add_argument('--delete', help='')
+        # tag_parser.add_argument('--overwrite', help='Allow to overwrite if old key exist')
+        tag_parser.add_argument('keys', help='keys(=value) data', nargs='+')
 
         cache_parser = subparsers.add_parser('cache', help='Caching data from remote databases')
-        cache_parser.add_argument('-q', '--query', help='Filtering extra quantities')
+        cache_parser.add_argument('-q', '--query', help='Filtering by a query')
         cache_parser.add_argument('-p', '--props', help='Selecting properties for detailed description')
 
     def __call__(self, args=None):
@@ -86,6 +89,8 @@ class ArgumentParser(argparse.ArgumentParser):
             Shell(namespace).upload()
         elif namespace.command == 'summary':
             Shell(namespace).summary()
+        elif namespace.command == 'tag':
+            Shell(namespace).tag()
         elif namespace.command == 'delete':
             Shell(namespace).delete()
         else:
@@ -275,6 +280,9 @@ class Shell(object):
                         f.describe(data)
                         f.hist(data)
 
+    def tag(self):
+        args = self.args
+        logger.info('tag args: \n{}'.format(self.args))
 
 if __name__ == '__main__':
     cli()

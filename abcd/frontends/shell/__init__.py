@@ -1,3 +1,4 @@
+import re
 import logging
 import argparse
 
@@ -19,6 +20,7 @@ class ArgumentParser(argparse.ArgumentParser):
     def __init__(self):
         super().__init__(description='Command line interface for ABCD database')
         self.add_argument('-v', '--verbose', help='Enable verbose mode', action='store_true')
+        # self.add_argument('--remote-access-query')  no upload, no cache
         self.add_argument('-s', '--style', help='style [simple, fancy]', default='simple')
 
         subparsers = self.add_subparsers(title='Commands', dest='command', parser_class=argparse.ArgumentParser)
@@ -30,7 +32,7 @@ class ArgumentParser(argparse.ArgumentParser):
                                   default='http://localhost')
 
         parser_download = subparsers.add_parser('download', help='download data from the database')
-        parser_download.add_argument('-q', '--query', help='Filtering extra quantities')
+        parser_download.add_argument('-q', '--query', action='append', help='Filtering extra quantities')
         # parser_download.add_argument(dest='format', choices=['xyz', 'json'], default='xyz')
         parser_download.add_argument(dest='filename', help='name of the file to store the configurations')
 
@@ -40,8 +42,29 @@ class ArgumentParser(argparse.ArgumentParser):
         parser_upload.add_argument(dest='path', help='file or folder which contains the xyz files')
 
         summary_parser = subparsers.add_parser('summary', help='Discovery mode')
-        summary_parser.add_argument('-q', '--query', help='Filtering extra quantities')
-        summary_parser.add_argument('-p', '--props', help='Selecting properties for detailed description')
+        summary_parser.add_argument('-q', '--query', action='append', help='Filtering extra quantities')
+        summary_parser.add_argument('-p', '--props', action='append',
+                                    help='Selecting properties for detailed description')
+        summary_parser.add_argument('-a', '--all',
+                                    help='Show everything without truncation of strings and limits of lines',
+                                    action='store_true')
+        summary_parser.add_argument('-n', '--bins', help='The number of bins of the histogram', default=10, type=int)
+        summary_parser.add_argument('-t', '--trunc', help='Length of string before truncation', default=20, type=int)
+
+        delete_parser = subparsers.add_parser('delete', help='Delete configurations from the database')
+        delete_parser.add_argument('-q', '--query', help='Filtering by a query')
+        delete_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
+
+        tag_parser = subparsers.add_parser('tag', help='Add/remove tags')
+        tag_parser.add_argument('-q', '--query', help='Filtering by a query')
+        tag_parser.add_argument('--rename', help='')
+        tag_parser.add_argument('--delete', help='')
+        # tag_parser.add_argument('--overwrite', help='Allow to overwrite if old key exist')
+        tag_parser.add_argument('keys', help='keys(=value) data', nargs='+')
+
+        cache_parser = subparsers.add_parser('cache', help='Caching data from remote databases')
+        cache_parser.add_argument('-q', '--query', help='Filtering by a query')
+        cache_parser.add_argument('-p', '--props', help='Selecting properties for detailed description')
 
     def __call__(self, args=None):
 
@@ -66,6 +89,10 @@ class ArgumentParser(argparse.ArgumentParser):
             Shell(namespace).upload()
         elif namespace.command == 'summary':
             Shell(namespace).summary()
+        elif namespace.command == 'tag':
+            Shell(namespace).tag()
+        elif namespace.command == 'delete':
+            Shell(namespace).delete()
         else:
             print(self.format_help())
 
@@ -83,17 +110,15 @@ class Shell(object):
         else:
             raise NotImplementedError('The style "{}" is not implemented!'.format(args.style))
 
-        self.db = None
+        if args.command == 'login':
+            self.db = None
+        else:
+            url = self.config.get('url', None)
 
-    def init_db(self):
-
-        url = self.config.get('url', None)
-
-        if url is None:
-            print('Please use abcd login first!')
-            exit()
-
-        self.db = ABCD(url=url)
+            if url is None:
+                print('Please use abcd login first!')
+                exit()
+            self.db = ABCD(url=url)
 
     def login(self):
         args = self.args
@@ -106,7 +131,6 @@ class Shell(object):
 
     def download(self):
         args = self.args
-        self.init_db()
         logger.info('download args: \n{}'.format(args))
 
         from ase.io import write
@@ -114,10 +138,20 @@ class Shell(object):
         query = args.query
         write(filename, list(self.db.get_atoms(query=query)))
 
+    def delete(self):
+        args = self.args
+        logger.info('delete args: \n{}'.format(args))
+
+        if not args.yes:
+            print('Please use --yes for deleting {} configurations'.format(self.db.count(query=args.query)))
+            exit()
+
+        count = self.db.delete(query=args.query)
+        print('{} configuration has been deleted'.format(count))
+
     def upload(self):
         args = self.args
         logger.info('upload args: \n{}'.format(args))
-        self.init_db()
 
         extra_info = args.extra
 
@@ -135,23 +169,40 @@ class Shell(object):
             raise FileNotFoundError()
 
     def summary(self):
-        self.init_db()
 
         args = self.args
-        logger.info('summary args: \n{}'.format(args))
+        logger.info('summary args: \n{}'.format(self.args))
 
-        if args.props is None:
-            with self.style as f:
+        if self.args.all:
+            bins, truncate = None, None
+        else:
+            bins, truncate = self.args.bins, self.args.trunc
 
+        with self.style as f:
+
+            if self.args.props is None:
+                props_list = None
+            else:
+                props_list = []
+                for prop in self.args.props:
+                    props_list.extend(re.split(r';\s*|,\s*|\s+', prop))
+
+                if '*' in props_list:
+                    props_list = '*'
+
+                logging.info('property list: {}'.format(props_list))
+
+            if props_list is None:
                 props = self.db.count_properties(query=args.query)
+
                 if props['arrays']:
                     f.title('Properties')
                     f.h1('Arrays (per atom properties)')
 
                     labels, counts = [], []
-                    for k, v in props['arrays'].items():
+                    for k in sorted(props['arrays'], key=str.lower):
                         labels.append(k)
-                        counts.append(v['count'])
+                        counts.append(props['arrays'][k]['count'])
 
                     f.hist({
                         'type': 'hist_labels',
@@ -163,23 +214,36 @@ class Shell(object):
                     f.h1('Infos (properties of the whole configuration)')
 
                     labels, counts = [], []
-                    for k, v in props['info'].items():
+                    for k in sorted(props['info'], key=str.lower):
                         labels.append(k)
-                        counts.append(v['count'])
+                        counts.append(props['info'][k]['count'])
 
                     f.hist({
                         'type': 'hist_labels',
                         'labels': labels,
                         'counts': counts
                     })
-            return
 
-        elif args.props == '*':
-            props = self.db.properties(query=args.query)
-            with self.style as f:
+                if props['derived']:
+                    f.h1('Derived')
+
+                    labels, counts = [], []
+                    for k in sorted(props['derived'], key=str.lower):
+                        labels.append(k)
+                        counts.append(props['derived'][k]['count'])
+
+                    f.hist({
+                        'type': 'hist_labels',
+                        'labels': labels,
+                        'counts': counts
+                    })
+
+            elif props_list == '*':
+                props = self.db.properties(query=args.query)
+
                 for p in props['arrays']:
                     name = 'arrays.' + p
-                    data = self.db.hist(name, query=args.query)
+                    data = self.db.hist(name, query=args.query, bins=bins, truncate=truncate)
                     f.title(name)
                     if data:
                         f.describe(data)
@@ -187,43 +251,44 @@ class Shell(object):
 
                 for p in props['info']:
                     name = 'info.' + p
-                    data = self.db.hist(name, query=args.query)
+                    data = self.db.hist(name, query=args.query, bins=bins, truncate=truncate)
 
                     f.title(name)
                     if data:
                         f.describe(data)
                         f.hist(data)
+            else:
+                for p in props_list:
+                    data = self.db.hist('arrays.' + p, query=args.query, bins=bins, truncate=truncate)
 
-            return
+                    if data:
+                        f.title('arrays.' + p)
+                        f.describe(data)
+                        f.hist(data)
 
-        def parse_properties(s):
-            import re
-            return re.split(r';\s*|,\s*|\s+', s)
+                    data = self.db.hist('info.' + p, query=args.query, bins=bins, truncate=truncate)
 
-        properties = parse_properties(args.props)
+                    if data:
+                        f.title('info.' + p)
+                        f.describe(data)
+                        f.hist(data)
 
-        with self.style as f:
-            for p in properties:
+                    data = self.db.hist('derived.' + p, query=args.query, bins=bins, truncate=truncate)
 
-                data = self.db.hist('arrays.' + p, query=args.query)
+                    if data:
+                        f.title('derived.' + p)
+                        f.describe(data)
+                        f.hist(data)
 
-                if data:
-                    f.title('arrays.' + p)
-                    f.describe(data)
-                    f.hist(data)
-
-                data = self.db.hist('info.' + p, query=args.query)
-
-                if data:
-                    f.title('info.' + p)
-                    f.describe(data)
-                    f.hist(data)
-
+    def tag(self):
+        args = self.args
+        logger.info('tag args: \n{}'.format(self.args))
 
 if __name__ == '__main__':
     cli()
-    cli(['-v', 'summary', '-q', 'username=fekad virial dummy'])
-    exit()
+    # cli(['-v', 'summary', '-q', 'username=fekad virial dummy'])
+    # cli(['-v', 'summary', '-q', 'username=fekad virial dummy', '-q', 'virial dummy'])
+    # exit()
     cli(['summary'])
     cli(['-v', 'summary'])
     # cli(['summary', '-v'])  # wrong
@@ -234,3 +299,5 @@ if __name__ == '__main__':
     cli(['-s', 'fancy', 'summary', '-p', '*'])
     cli(['summary', '-p', '*'])
     cli(['-s', 'fancy', 'summary'])
+    cli(['-v', 'summary', '-p', 'config_type', '-p', 'haha', '-p' 'sdgsdg, dsgsdg,asd fgg', '-q', 'config_type~bcc',
+         '-q', 'config_type~bcc'])

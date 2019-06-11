@@ -46,6 +46,8 @@ class AtomsQuerySet(queryset.QuerySet):
             return self(__raw__=query)
         elif isinstance(query, str):
             return self.from_string(query)
+        elif isinstance(query, list):
+            return self.from_string(' and '.join(query))
         else:
             raise NotImplementedError('Query string should be string or dictionary and not {}!'.format(type(query)))
 
@@ -69,6 +71,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + fields: {'$exists': True}},
                 {'arrays.' + fields: {'$exists': True}},
+                {'derived.' + fields: {'$exists': True}},
             ]
         }
 
@@ -91,6 +94,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: value[1]},
                 {'arrays.' + field[1]: value[1]},
+                {'derived.' + field[1]: value[1]},
             ]
         }
 
@@ -100,6 +104,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$regex': value[1]}},
                 {'arrays.' + field[1]: {'$regex': value[1]}},
+                {'derived.' + field[1]: {'$regex': value[1]}},
             ]
         }
 
@@ -109,6 +114,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$gt': value[1]}},
                 {'arrays.' + field[1]: {'$gt': value[1]}},
+                {'derived.' + field[1]: {'$gt': value[1]}},
             ]
         }
 
@@ -118,6 +124,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$gte': value[1]}},
                 {'arrays.' + field[1]: {'$gte': value[1]}},
+                {'derived.' + field[1]: {'$gte': value[1]}},
             ]
         }
 
@@ -127,6 +134,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$lt': value[1]}},
                 {'arrays.' + field[1]: {'$lt': value[1]}},
+                {'derived.' + field[1]: {'$lt': value[1]}},
             ]
         }
 
@@ -136,6 +144,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$lte': value[1]}},
                 {'arrays.' + field[1]: {'$lte': value[1]}},
+                {'derived.' + field[1]: {'$lte': value[1]}},
             ]
         }
 
@@ -145,6 +154,7 @@ class MongoQuery(object):
             '$or': [
                 {'info.' + field[1]: {'$in': [value[1] for value in values]}},
                 {'arrays.' + field[1]: {'$in': [value[1] for value in values]}},
+                {'derived.' + field[1]: {'$in': [value[1] for value in values]}},
             ]
         }
 
@@ -160,10 +170,15 @@ class MongoQuery(object):
 
 
 class DerivedModel(EmbeddedDocument):
+    username = fields.StringField()
+    natoms = fields.IntField()
     elements = fields.DictField(fields.IntField())
+    volume = fields.FloatField()
+    pressure = fields.FloatField()
+
     arrays_keys = fields.ListField(fields.StringField())
     info_keys = fields.ListField(fields.StringField())
-    n_atoms = fields.IntField()
+    derived_keys = fields.ListField(fields.StringField())
 
 
 class AtomsModel(DynamicDocument):
@@ -294,19 +309,42 @@ class AtomsModel(DynamicDocument):
 
         document.info['username'] = getpass.getuser()
 
+        natoms = len(document.arrays['numbers'])
         elements = Counter(str(element) for element in document.arrays['numbers'])
+
         arrays_keys = list(document.arrays.keys())
         info_keys = list(document.info.keys())
-        n_atoms = len(document.arrays['numbers'])
+        derived_keys = ['natoms', 'elements', 'username', 'uploaded', 'modified']
+
+        cell = document.info.get('cell')
+        if cell:
+            derived_keys.append('volume')
+            virial = document.info.get('virial')
+            if virial:
+                derived_keys.append('pressure')
 
         document.derived = DerivedModel(
+            natoms=natoms,
             elements=elements,
             arrays_keys=arrays_keys,
             info_keys=info_keys,
-            n_atoms=n_atoms
+            derived_keys=derived_keys,
+            username=getpass.getuser()
         )
 
-        document.uploaded = datetime.datetime.utcnow()
+        cell = document.info.get('cell')
+        if cell:
+            volume = abs(np.linalg.det(cell))  # atoms.get_volume()
+            document.derived['volume'] = volume
+
+            virial = document.info.get('virial')
+            if virial:
+                # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
+                document.derived['pressure'] = -1 / 3 * np.trace(virial / volume)
+
+        if not document.uploaded:
+            document.uploaded = datetime.datetime.utcnow()
+
         document.modified = datetime.datetime.utcnow()
 
         logger.debug("Pre Save: %s" % document)
@@ -373,6 +411,9 @@ class MongoDatabase(Database):
             'collection': self.collection_name,
             'number of confs': self.count()
         }
+
+    def delete(self, query=None):
+        return AtomsModel.objects.query(query).delete()
 
     def destroy(self):
         AtomsModel.drop_collection()
@@ -442,7 +483,8 @@ class MongoDatabase(Database):
 
         properties = {
             'info': {},
-            'arrays': {}
+            'arrays': {},
+            'derived': {}
         }
 
         pipeline = [
@@ -460,6 +502,14 @@ class MongoDatabase(Database):
 
         for value in AtomsModel.objects.query(query).aggregate(*pipeline):
             properties['arrays'][value['_id']] = {'count': value['count']}
+
+        pipeline = [
+            {'$unwind': '$derived.derived_keys'},
+            {'$group': {'_id': '$derived.derived_keys', 'count': {'$sum': 1}}}
+        ]
+
+        for value in AtomsModel.objects.query(query).aggregate(*pipeline):
+            properties['derived'][value['_id']] = {'count': value['count']}
 
         return properties
 
@@ -505,21 +555,31 @@ class MongoDatabase(Database):
 
         data = self.property(name, query)
 
-        if data and isinstance(data, list):
+        if not data:
+            return None
+
+        elif data and isinstance(data, list):
             if isinstance(data[0], float):
-                return self._hist_float(name, data, **kwargs)
+                bins = kwargs.get('bins')
+
+                if bins:
+                    return self._hist_float(name, data, bins)
+
+                return self._hist_float(name, data)
+
             elif isinstance(data[0], str):
                 return self._hist_str(name, data, **kwargs)
             else:
                 print('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
                 logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
+
         else:
             logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))
-
-        return None
+            return None
 
     @staticmethod
     def _hist_float(name, data, bins=10):
+
         data = np.array(data)
         hist, bin_edges = np.histogram(data, bins=bins)
 
@@ -559,7 +619,7 @@ class MongoDatabase(Database):
             'counts': counts[:bins]
         }
 
-#
+
 # def debug_issue19():
 #     from pathlib import Path
 #     from ase.io import read
@@ -574,6 +634,13 @@ class MongoDatabase(Database):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+    #
+    # def exp(at):
+    #     at.info['pressure'] = -1/3 * np.trace(at.info['virial']/at.get_volume())
+    #
+    # {
+    #     'pressure': lambda at: -1/3 * np.trace(at.info['virial']/at.get_volume())
+    # }
 
     # debug_issue19()
 #

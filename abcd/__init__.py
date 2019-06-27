@@ -1,6 +1,12 @@
 import logging
-from urllib import parse
 from abcd import backends
+
+# Python 2 and 3:
+# from urllib import parse
+try:
+    from urllib import parse
+except ImportError:
+    import urlparse as parse
 
 logger = logging.getLogger(__name__)
 

@@ -28,7 +28,15 @@ class ABCD(object):
             db = db if db else 'abcd'
 
             # return super().__new__(backends.MongoDatabase, db=db, **conn_settings, **kwargs)
-            return backends.MongoDatabase(db=db, **conn_settings, **kwargs)
+            # Python2 hack
+            def merge_two_dicts(x, y):
+                z = x.copy()  # start with x's keys and values
+                z.update(y)  # modifies z with y's keys and values & returns None
+                return z
+
+            new_kwargs = merge_two_dicts(conn_settings, kwargs)
+
+            return backends.MongoDatabase(db=db, **new_kwargs)
 
         elif r.scheme == 'http' or r.scheme == 'https':
             raise NotImplementedError('http not yet supported! soon...')

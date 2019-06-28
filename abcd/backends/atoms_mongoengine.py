@@ -513,6 +513,9 @@ class MongoDatabase(Database):
 
         return properties
 
+    # def rename_properties(self, name, new_name, query=None, overwrite=False):
+    #     print(name, new_name, query, overwrite)
+
     def __repr__(self):
         host, port = self.client.address
 
@@ -560,15 +563,16 @@ class MongoDatabase(Database):
 
         elif data and isinstance(data, list):
             if isinstance(data[0], float):
-                bins = kwargs.get('bins')
+                bins = kwargs.get('bins', 10)
+                return self._hist_float(name, data, bins)
 
-                if bins:
-                    return self._hist_float(name, data, bins)
-
-                return self._hist_float(name, data)
+            elif isinstance(data[0], int):
+                bins = kwargs.get('bins', 10)
+                return self._hist_int(name, data, bins)
 
             elif isinstance(data[0], str):
                 return self._hist_str(name, data, **kwargs)
+
             else:
                 print('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
                 logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
@@ -585,6 +589,25 @@ class MongoDatabase(Database):
 
         return {
             'type': 'hist_float',
+            'name': name,
+            'bins': bins,
+            'edges': bin_edges,
+            'counts': hist,
+            'min': data.min(),
+            'max': data.max(),
+            'median': data.mean(),
+            'std': data.std(),
+            'var': data.var()
+        }
+
+    @staticmethod
+    def _hist_int(name, data, bins=10):
+
+        data = np.array(data)
+        hist, bin_edges = np.histogram(data, bins=bins)
+
+        return {
+            'type': 'hist_int',
             'name': name,
             'bins': bins,
             'edges': bin_edges,

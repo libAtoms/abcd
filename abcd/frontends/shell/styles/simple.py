@@ -33,15 +33,17 @@ class SimpleStyle(Style):
 
     def describe(self, data):
         if data['type'] == 'hist_float':
+            print('{}  count: {} '.format(data["name"], sum(data["counts"])),
+                  'min: {:.8g} med: {:.8g} max: {:.8g}  '.format(data["min"], data["median"], data["max"]),
+                  'std: {:.8g} var:{:.8g}'.format(data["std"], data["var"])
+                  )
 
-            print(
-                '{}  count: {} '.format(data["name"], sum(data["counts"])),
-                'min: {:.8g} med: {:.8g} max: {:.8g}  '.format(data["min"], data["median"], data["max"]),
-                'std: {:.8g} var:{:.8g}'.format(data["std"], data["var"])
-            )
+        elif data['type'] == 'hist_int':
+            print('{}  count: {} '.format(data["name"], sum(data["counts"])),
+                  'min: {:d} med: {:d} max: {:d}  '.format(int(data["min"]), int(data["median"]), int(data["max"]))
+                  )
 
         elif data['type'] == 'hist_str':
-
             print('{} count: {} unique: {}'.format(data["name"], data["total"], data["unique"]))
 
         else:
@@ -56,8 +58,23 @@ class SimpleStyle(Style):
 
             for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
                 scale = int(ratio * count)
-                self.print(
-                    '{:<{}} {:>{}d} {:.2f} - {:.2f}'.format("▉" * scale, width_hist, count, width_count, lower, upper))
+                self.print('{:<{}} {:>{}d} {:.2f} - {:.2f}'.format(
+                    "▉" * scale, width_hist,
+                    count, width_count,
+                    lower, upper))
+
+        elif data['type'] == 'hist_int':
+            bin_edges = data['edges']
+
+            ratio = width_hist / max(data['counts'])
+            width_count = len(str(max(data['counts'])))
+
+            for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
+                scale = int(ratio * count)
+                self.print('{:<{}} {:>{}d} {:d} - {:d}'.format(
+                    "▉" * scale, width_hist,
+                    count, width_count,
+                    int(lower), int(upper)))
 
         elif data['type'] == 'hist_str':
             remain = data['total'] - sum(data['counts'])

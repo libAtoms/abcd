@@ -26,7 +26,7 @@ class Config(dict):
         elif (Path.home() / '.abcd').is_file():
             file = Path.home() / '.abcd'
         else:
-            raise FileNotFoundError()
+            return cls()
 
         logger.info('Using config file: {}'.format(file))
 

@@ -60,8 +60,8 @@ class ArgumentParser(argparse.ArgumentParser):
 
         key_add_parser = subparsers.add_parser('key-add', help='Adding new key value pairs for a given query')
         key_add_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
-        key_add_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
-        key_add_parser.add_argument('keys', help='keys(=value) data', nargs='+')
+        key_add_parser.add_argument('-y', '--yes', action='store_true', help='Overwrite?')
+        key_add_parser.add_argument('keys', help='keys(=value) pairs', nargs='+')
 
         key_rename_parser = subparsers.add_parser('key-rename', help='Rename a specific keys for a given query')
         key_rename_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
@@ -73,6 +73,10 @@ class ArgumentParser(argparse.ArgumentParser):
         key_delete_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
         key_delete_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
         key_delete_parser.add_argument('keys', help='keys(=value) data', nargs='+')
+
+        exec_parser = subparsers.add_parser('exec', help='Running custom python code')
+        exec_parser.add_argument('-q', '--query', help='Filtering by a query')
+        exec_parser.add_argument('python_code', help='Selecting properties for detailed description')
 
         cache_parser = subparsers.add_parser('cache', help='Caching data from remote databases')
         cache_parser.add_argument('-q', '--query', help='Filtering by a query')
@@ -105,6 +109,14 @@ class ArgumentParser(argparse.ArgumentParser):
             Shell(namespace).tag()
         elif namespace.command == 'delete':
             Shell(namespace).delete()
+        elif namespace.command == 'key-add':
+            Shell(namespace).key_add()
+        elif namespace.command == 'key-rename':
+            Shell(namespace).key_rename()
+        elif namespace.command == 'key-delete':
+            Shell(namespace).key_delete()
+        elif namespace.command == 'exec':
+            Shell(namespace).exec()
         else:
             print(self.format_help())
 
@@ -318,7 +330,19 @@ class Shell(object):
                         f.describe(data)
                         f.hist(data)
 
-    def tag(self):
+    def key_add(self):
+        args = self.args
+        logger.info('tag args: \n{}'.format(self.args))
+
+    def key_rename(self):
+        args = self.args
+        logger.info('tag args: \n{}'.format(self.args))
+
+    def key_delete(self):
+        args = self.args
+        logger.info('tag args: \n{}'.format(self.args))
+
+    def exec(self):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
 

@@ -58,7 +58,7 @@ class SimpleStyle(Style):
 
             for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
                 scale = int(ratio * count)
-                self.print('{:<{}} {:>{}d} {:.2f} - {:.2f}'.format(
+                self.print('{:<{}} {:>{}d} [{:.2f}, {:.2f})'.format(
                     "▉" * scale, width_hist,
                     count, width_count,
                     lower, upper))
@@ -71,10 +71,10 @@ class SimpleStyle(Style):
 
             for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
                 scale = int(ratio * count)
-                self.print('{:<{}} {:>{}d} {:d} - {:d}'.format(
+                self.print('{:<{}} {:>{}d} [{:d}, {:d})'.format(
                     "▉" * scale, width_hist,
                     count, width_count,
-                    int(lower), int(upper)))
+                    np.ceil(lower).astype(int), np.floor(upper).astype(int)))
 
         elif data['type'] == 'hist_str':
             remain = data['total'] - sum(data['counts'])

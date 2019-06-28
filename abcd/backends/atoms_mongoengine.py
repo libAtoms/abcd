@@ -612,6 +612,11 @@ class MongoDatabase(Database):
     def _hist_int(name, data, bins=10):
 
         data = np.array(data)
+        delta = max(data) - min(data) + 1
+
+        if bins > delta:
+            bins = delta
+
         hist, bin_edges = np.histogram(data, bins=bins)
 
         return {

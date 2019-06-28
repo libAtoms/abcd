@@ -24,6 +24,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument('-v', '--verbose', help='Enable verbose mode', action='store_true')
         # self.add_argument('--remote-access-query')  no upload, no cache
         self.add_argument('-s', '--style', help='style [simple, fancy]', default='simple')
+        self.add_argument('-q', '--query', dest='default_query', action='append', help='Filtering extra quantities')
 
         subparsers = self.add_subparsers(title='Commands', dest='command', parser_class=argparse.ArgumentParser)
 
@@ -151,18 +152,26 @@ class Shell(object):
 
         from ase.io import write
         filename = args.filename
-        query = args.query
+
+        query = []
+        query += args.default_query if args.default_query else []
+        query += args.query if args.query else []
+
         write(filename, list(self.db.get_atoms(query=query)))
 
     def delete(self):
         args = self.args
         logger.info('delete args: \n{}'.format(args))
 
+        query = []
+        query += args.default_query if args.default_query else []
+        query += args.query if args.query else []
+
         if not args.yes:
-            print('Please use --yes for deleting {} configurations'.format(self.db.count(query=args.query)))
+            print('Please use --yes for deleting {} configurations'.format(self.db.count(query=query)))
             exit()
 
-        count = self.db.delete(query=args.query)
+        count = self.db.delete(query=query)
         print('{} configuration has been deleted'.format(count))
 
     def upload(self):
@@ -185,8 +194,12 @@ class Shell(object):
             raise FileNotFoundError()
 
     def summary(self):
-
         args = self.args
+
+        query = []
+        query += args.default_query if args.default_query else []
+        query += args.query if args.query else []
+
         logger.info('summary args: \n{}'.format(self.args))
 
         if self.args.all:
@@ -209,7 +222,7 @@ class Shell(object):
                 logging.info('property list: {}'.format(props_list))
 
             if props_list is None:
-                props = self.db.count_properties(query=args.query)
+                props = self.db.count_properties(query=query)
 
                 if props['arrays']:
                     f.title('Properties')
@@ -255,11 +268,11 @@ class Shell(object):
                     })
 
             elif props_list == '*':
-                props = self.db.properties(query=args.query)
+                props = self.db.properties(query=query)
 
                 for p in props['arrays']:
                     name = 'arrays.' + p
-                    data = self.db.hist(name, query=args.query, bins=bins, truncate=truncate)
+                    data = self.db.hist(name, query=query, bins=bins, truncate=truncate)
                     f.title(name)
                     if data:
                         f.describe(data)
@@ -267,7 +280,7 @@ class Shell(object):
 
                 for p in props['info']:
                     name = 'info.' + p
-                    data = self.db.hist(name, query=args.query, bins=bins, truncate=truncate)
+                    data = self.db.hist(name, query=query, bins=bins, truncate=truncate)
 
                     f.title(name)
                     if data:
@@ -275,21 +288,21 @@ class Shell(object):
                         f.hist(data)
             else:
                 for p in props_list:
-                    data = self.db.hist('arrays.' + p, query=args.query, bins=bins, truncate=truncate)
+                    data = self.db.hist('arrays.' + p, query=query, bins=bins, truncate=truncate)
 
                     if data:
                         f.title('arrays.' + p)
                         f.describe(data)
                         f.hist(data)
 
-                    data = self.db.hist('info.' + p, query=args.query, bins=bins, truncate=truncate)
+                    data = self.db.hist('info.' + p, query=query, bins=bins, truncate=truncate)
 
                     if data:
                         f.title('info.' + p)
                         f.describe(data)
                         f.hist(data)
 
-                    data = self.db.hist('derived.' + p, query=args.query, bins=bins, truncate=truncate)
+                    data = self.db.hist('derived.' + p, query=query, bins=bins, truncate=truncate)
 
                     if data:
                         f.title('derived.' + p)

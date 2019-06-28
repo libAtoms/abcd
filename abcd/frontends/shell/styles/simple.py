@@ -49,12 +49,15 @@ class SimpleStyle(Style):
 
     def hist(self, data: dict, width_hist=40):
         if data['type'] == 'hist_float':
+            bin_edges = data['edges']
 
             ratio = width_hist / max(data['counts'])
             width_count = len(str(max(data['counts'])))
-            for count in data['counts']:
+
+            for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
                 scale = int(ratio * count)
-                self.print('{:<{}} {:>{}d}'.format("▉" * scale, width_hist, count, width_count))
+                self.print(
+                    '{:<{}} {:>{}d} {:.2f} - {:.2f}'.format("▉" * scale, width_hist, count, width_count, lower, upper))
 
         elif data['type'] == 'hist_str':
             remain = data['total'] - sum(data['counts'])

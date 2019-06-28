@@ -52,11 +52,11 @@ class ArgumentParser(argparse.ArgumentParser):
         summary_parser.add_argument('-t', '--trunc', help='Length of string before truncation', default=20, type=int)
 
         delete_parser = subparsers.add_parser('delete', help='Delete configurations from the database')
-        delete_parser.add_argument('-q', '--query', help='Filtering by a query')
+        delete_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
         delete_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
 
         tag_parser = subparsers.add_parser('tag', help='Add/remove tags')
-        tag_parser.add_argument('-q', '--query', help='Filtering by a query')
+        tag_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
         tag_parser.add_argument('--rename', help='')
         tag_parser.add_argument('--delete', help='')
         # tag_parser.add_argument('--overwrite', help='Allow to overwrite if old key exist')
@@ -283,6 +283,7 @@ class Shell(object):
     def tag(self):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
+
 
 if __name__ == '__main__':
     cli()

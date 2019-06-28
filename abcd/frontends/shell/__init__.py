@@ -58,12 +58,21 @@ class ArgumentParser(argparse.ArgumentParser):
         delete_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
         delete_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
 
-        tag_parser = subparsers.add_parser('tag', help='Add/remove tags')
-        tag_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
-        tag_parser.add_argument('--rename', help='')
-        tag_parser.add_argument('--delete', help='')
-        # tag_parser.add_argument('--overwrite', help='Allow to overwrite if old key exist')
-        tag_parser.add_argument('keys', help='keys(=value) data', nargs='+')
+        key_add_parser = subparsers.add_parser('key-add', help='Adding new key value pairs for a given query')
+        key_add_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
+        key_add_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
+        key_add_parser.add_argument('keys', help='keys(=value) data', nargs='+')
+
+        key_rename_parser = subparsers.add_parser('key-rename', help='Rename a specific keys for a given query')
+        key_rename_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
+        key_rename_parser.add_argument('-y', '--yes', action='store_true', help='Overwrite?')
+        key_rename_parser.add_argument('old_keys', help='name of the old key')
+        key_rename_parser.add_argument('new_keys', help='new name of the key')
+
+        key_delete_parser = subparsers.add_parser('key-delete', help='Delete all the keys for a given query')
+        key_delete_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
+        key_delete_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
+        key_delete_parser.add_argument('keys', help='keys(=value) data', nargs='+')
 
         cache_parser = subparsers.add_parser('cache', help='Caching data from remote databases')
         cache_parser.add_argument('-q', '--query', help='Filtering by a query')

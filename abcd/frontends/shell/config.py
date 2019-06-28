@@ -19,55 +19,23 @@ class Config(dict):
         return cls(obj)
 
     @classmethod
-    def load(cls, cumulative=True):
+    def load(cls):
 
-        # TODO: Precedences: Should it be cumulative(updated) of exclusive?
-        if cumulative:
-            config = cls()
-            files = []
-
-            # Load all the defaults
-            if (Path.home() / '.abcd').is_file():
-                file = Path.home() / '.abcd'
-                logger.info('Using config file: {}'.format(file))
-                files.append(file)
-
-            if (Path.cwd() / '.abcd').is_file():
-                file = Path.cwd() / '.abcd'
-                logger.info('Using config file: {}'.format(file))
-                files.append(file)
-
-            if os.environ.get('ABCD_CONFIG') and Path(os.environ.get('ABCD_CONFIG')).is_file():
-                file = Path(os.environ.get('ABCD_CONFIG'))
-                logger.info('Using config file: {}'.format(file))
-                files.append(file)
-
-            if files:
-                for file in files:
-                    config.update(cls.from_json(file))
-            else:
-                logger.warning('No config found!')
-                # raise FileNotFoundError()
-
+        if os.environ.get('ABCD_CONFIG') and Path(os.environ.get('ABCD_CONFIG')).is_file():
+            file = Path(os.environ.get('ABCD_CONFIG'))
+        elif (Path.home() / '.abcd').is_file():
+            file = Path.home() / '.abcd'
         else:
-            if os.environ.get('ABCD_CONFIG') and Path(os.environ.get('ABCD_CONFIG')).is_file():
-                file = Path(os.environ.get('ABCD_CONFIG'))
-            elif (Path.cwd() / '.abcd').is_file():
-                file = Path.cwd() / '.abcd'
-            elif (Path.home() / '.abcd').is_file():
-                file = Path.home() / '.abcd'
-            else:
-                raise FileNotFoundError()
+            raise FileNotFoundError()
 
-            logger.info('Using config file: {}'.format(file))
+        logger.info('Using config file: {}'.format(file))
 
-            config = cls.from_json(file)
+        config = cls.from_json(file)
 
         return config
 
-    def save(self, local=True):
+    def save(self):
         file = Path(os.environ.get('ABCD_CONFIG')) if os.environ.get('ABCD_CONFIG') \
-            else Path.cwd() / '.abcd' if local \
             else Path.home() / '.abcd'
 
         logger.info('The saved config\'s file: {}'.format(file))

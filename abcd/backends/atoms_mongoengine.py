@@ -435,7 +435,7 @@ class MongoDatabase(Database):
     def upload(self, file, extra_info=None):
 
         if extra_info:
-            extra_info = key_val_str_to_dict(extra_info)
+            extra_info = key_val_str_to_dict(' '.join(extra_info))
         else:
             extra_info = {}
 

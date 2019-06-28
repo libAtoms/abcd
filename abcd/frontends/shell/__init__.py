@@ -38,7 +38,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
         parser_upload = subparsers.add_parser('upload', help='upload any ase supported files to the database')
         # parser_upload.add_argument('-r', '--recursive', action='store_true')
-        parser_upload.add_argument('-e', '--extra', help='Adding extra quantities')
+        parser_upload.add_argument('-e', '--extra', action='append', help='Adding extra quantities')
         parser_upload.add_argument(dest='path', help='file or folder which contains the xyz files')
 
         summary_parser = subparsers.add_parser('summary', help='Discovery mode')

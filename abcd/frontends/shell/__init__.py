@@ -8,6 +8,8 @@ from pathlib import Path
 from abcd.frontends.shell.config import Config
 from abcd.frontends.shell.styles import SimpleStyle, FancyStyle
 
+from abcd.backends.abstract import URLError, AuthenticationError
+
 logger = logging.getLogger(__name__)
 
 
@@ -124,7 +126,21 @@ class Shell(object):
         args = self.args
         logger.info('login args: \n{}'.format(args))
 
-        self.db = ABCD(url=args.url)
+        try:
+            self.db = ABCD(url=args.url)
+        except URLError:
+            print('Wrong connection: Please check the parameters of th url!')
+            exit(1)
+        except AuthenticationError:
+            print('Authentication failed.')
+            exit(1)
+
+        print('Successfully connected to the database!')
+        print(" type:       {type}\n"
+              " hostname:   {host}\n"
+              " port:       {port}\n"
+              " database:   {db}\n"
+              " # of confs: {number of confs}".format(**self.db.info()))
 
         self.config['url'] = args.url
         self.config.save()

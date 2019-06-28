@@ -7,6 +7,14 @@ class ConnectionType(Enum):
     http = 2
 
 
+class URLError(Exception):
+    pass
+
+
+class AuthenticationError(Exception):
+    pass
+
+
 class Database(object, metaclass=ABCMeta):
 
     @abstractmethod

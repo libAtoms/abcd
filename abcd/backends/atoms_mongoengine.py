@@ -13,8 +13,9 @@ from ase.io import iread
 from ase.calculators.singlepoint import SinglePointCalculator
 
 from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals, connect
+import pymongo.errors
 
-from abcd.backends.abstract import Database
+from abcd.backends.abstract import Database, URLError, AuthenticationError
 from abcd.parsers.queries import QueryParser
 from abcd.parsers.arguments import key_val_str_to_dict
 
@@ -388,10 +389,16 @@ class MongoDatabase(Database):
                  **kwargs):
         super().__init__()
 
-        self.client = connect(db, **kwargs)
+        try:
+            self.client = connect(db, **kwargs)
 
-        if username:
-            self.client[authentication_source].authenticate(name=username, password=password)
+            if username:
+                self.client[authentication_source].authenticate(name=username, password=password)
+
+        except pymongo.errors.ServerSelectionTimeoutError:
+            raise URLError() from None
+        except pymongo.errors.OperationFailure:
+            raise AuthenticationError() from None
 
         self.db_name = db
         self.collection_name = collection
@@ -409,7 +416,8 @@ class MongoDatabase(Database):
             'port': port,
             'db': self.db_name,
             'collection': self.collection_name,
-            'number of confs': self.count()
+            'number of confs': self.count(),
+            'type': 'mongodb'
         }
 
     def delete(self, query=None):

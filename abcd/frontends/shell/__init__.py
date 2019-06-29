@@ -243,6 +243,10 @@ class Shell(object):
                 logging.info('property list: {}'.format(props_list))
 
             if props_list is None:
+
+                total = self.db.count(query)
+                print('Total number of configurations: {}'.format(total))
+
                 props = self.db.count_properties(query=query)
 
                 if props['arrays']:

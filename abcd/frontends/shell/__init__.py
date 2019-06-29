@@ -75,11 +75,12 @@ class ArgumentParser(argparse.ArgumentParser):
         key_delete_parser.add_argument('keys', help='keys(=value) data', nargs='+')
 
         exec_parser = subparsers.add_parser('exec', help='Running custom python code')
-        exec_parser.add_argument('-q', '--query', help='Filtering by a query')
+        exec_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
+        exec_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual execution.')
         exec_parser.add_argument('python_code', help='Selecting properties for detailed description')
 
         cache_parser = subparsers.add_parser('cache', help='Caching data from remote databases')
-        cache_parser.add_argument('-q', '--query', help='Filtering by a query')
+        cache_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
         cache_parser.add_argument('-p', '--props', help='Selecting properties for detailed description')
 
     def __call__(self, args=None):
@@ -349,6 +350,16 @@ class Shell(object):
     def exec(self):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
+
+        query = []
+        query += args.default_query if args.default_query else []
+        query += args.query if args.query else []
+
+        if not args.yes:
+            print('Please use --yes for executing code on {} configurations'.format(self.db.count(query=query)))
+            exit()
+
+        self.db.exec(args.python_code, query)
 
 
 if __name__ == '__main__':

@@ -655,6 +655,10 @@ class MongoDatabase(Database):
             'counts': counts[:bins]
         }
 
+    def exec(self, code, query=None):
+        for item in AtomsModel.objects.query(query):
+            exec(code)
+
 
 # def debug_issue19():
 #     from pathlib import Path
@@ -670,6 +674,11 @@ class MongoDatabase(Database):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+
+    # url = 'mongodb://mongoadmin:secret@localhost:27017/abcd'
+    abcd = MongoDatabase(db='abcd', username='mongoadmin', password='secret')
+    # abcd.exec('print(item.info["energy"])', query='natoms=123')
+
     #
     # def exp(at):
     #     at.info['pressure'] = -1/3 * np.trace(at.info['virial']/at.get_volume())

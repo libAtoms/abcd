@@ -10,6 +10,8 @@ from abcd.frontends.shell.styles import SimpleStyle, FancyStyle
 
 from abcd.backends.abstract import URLError, AuthenticationError
 
+from abcd.parsers.arguments import key_val_str_to_dict
+
 logger = logging.getLogger(__name__)
 
 
@@ -339,13 +341,50 @@ class Shell(object):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
 
+        query = []
+        query += args.default_query if args.default_query else []
+        query += args.query if args.query else []
+
+        data = key_val_str_to_dict(' '.join(args.keys))
+
+        if self.db.count(query=query + [' or '.join(data.keys())]):
+            print('The new key already exist for the given query! '
+                  'Please make sure that the target key name don\'t exist')
+            exit()
+
+        self.db.add_property(data, query=query)
+
     def key_rename(self):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
 
+        query = []
+        query += args.default_query if args.default_query else []
+        query += args.query if args.query else []
+
+        if self.db.count(query=query + [args.old_keys, args.new_keys]):
+            print('The new key already exist for the given query! '
+                  'Please make sure that the target key name don\'t exist')
+            exit()
+
+        self.db.rename_property(args.old_keys, args.new_keys, query=query)
+
     def key_delete(self):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
+
+        query = []
+        query += args.default_query if args.default_query else []
+        query += args.query if args.query else []
+
+        query += args.keys
+
+        if not args.yes:
+            print('Please use --yes for deleting keys from {} configurations'.format(self.db.count(query=query)))
+            exit()
+
+        for k in args.keys:
+            self.db.delete_property(k, query=query)
 
     def exec(self):
         args = self.args

@@ -22,6 +22,19 @@ from abcd.parsers.arguments import key_val_str_to_dict
 logger = logging.getLogger(__name__)
 
 
+def query_to_dict(query):
+    if query is None:
+        query = {}
+    elif isinstance(query, str):
+        with MongoQuery() as parser:
+            query = parser(query)
+    elif isinstance(query, list):
+        with MongoQuery() as parser:
+            query = parser(' and '.join(query))
+
+    return query
+
+
 class AtomsQuerySet(queryset.QuerySet):
     """Extension of mongoengine's QuerySet object.
     This class contains helper methods to directly access the Atoms objects
@@ -70,6 +83,7 @@ class MongoQuery(object):
         # return {fields: {'$exists': True}}
         return {
             '$or': [
+                {fields: {'$exists': True}},
                 {'info.' + fields: {'$exists': True}},
                 {'arrays.' + fields: {'$exists': True}},
                 {'derived.' + fields: {'$exists': True}},
@@ -521,8 +535,55 @@ class MongoDatabase(Database):
 
         return properties
 
-    # def rename_properties(self, name, new_name, query=None, overwrite=False):
-    #     print(name, new_name, query, overwrite)
+    def add_property(self, data, query=None):
+        logger.info('add: data={}, query={}'.format(data, query))
+        db = AtomsModel._get_collection()
+
+        info_data = {'info.' + key: value for key, value in data.items()}
+
+        db.update_many(
+            query_to_dict(query),
+            {'$push': {'derived.info_keys': {'$each': list(data.keys())}},
+             '$set': info_data})
+
+    def rename_property(self, name, new_name, query=None):
+        logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))
+
+        db = AtomsModel._get_collection()
+
+        db.update_many(
+            query_to_dict(query + ['info.{}'.format(name)]),
+            {'$push': {'derived.info_keys': new_name}})
+
+        db.update_many(
+            query_to_dict(query + ['info.{}'.format(name)]),
+            {
+                '$pull': {'derived.info_keys': name},
+                '$rename': {'info.{}'.format(name): 'info.{}'.format(new_name)}})
+
+        db.update_many(
+            query_to_dict(query + ['arrays.{}'.format(name)]),
+            {'$push': {'derived.arrays_keys': new_name}})
+
+        db.update_many(
+            query_to_dict(query + ['arrays.{}'.format(name)]),
+            {'$pull': {'derived.arrays_keys': name},
+             '$rename': {'arrays.{}'.format(name): 'arrays.{}'.format(new_name)}})
+
+    def delete_property(self, name, query=None):
+        logger.info('delete: query={}, porperty={}'.format(name, query))
+
+        db = AtomsModel._get_collection()
+
+        db.update_many(
+            query_to_dict(query + ['info.{}'.format(name)]),
+            {'$pull': {'derived.info_keys': name},
+             '$unset': {'info.{}'.format(name): ''}})
+
+        db.update_many(
+            query_to_dict(query + ['arrays.{}'.format(name)]),
+            {'$pull': {'derived.arrays_keys': name},
+             '$unset': {'arrays.{}'.format(name): ''}})
 
     def __repr__(self):
         host, port = self.client.address
@@ -660,18 +721,6 @@ class MongoDatabase(Database):
             exec(code)
 
 
-# def debug_issue19():
-#     from pathlib import Path
-#     from ase.io import read
-#
-#     file = Path('../../gp_iter6_sparse9k.xml.xyz')
-#     traj = read(file.as_posix(), index='170:172')
-#
-#     abcd = MongoDatabase()
-#     abcd.push(traj[1])
-#     abcd.push(traj)
-
-
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
@@ -679,7 +728,11 @@ if __name__ == '__main__':
     abcd = MongoDatabase(db='abcd', username='mongoadmin', password='secret')
     # abcd.exec('print(item.info["energy"])', query='natoms=123')
 
-    #
+    for item in AtomsModel.objects.limit(10):
+        pass
+    # db = AtomsModel._get_collection()
+    # db.update_many({}, {'$rename': {'arrays.forces': 'array.fff'}})
+
     # def exp(at):
     #     at.info['pressure'] = -1/3 * np.trace(at.info['virial']/at.get_volume())
     #

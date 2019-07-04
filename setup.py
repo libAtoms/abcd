@@ -22,6 +22,6 @@ setup(
         'server-app': ['flask', 'Flask-Nav', 'Flask-MongoEngine', 'gunicorn'],
     },
     entry_points={
-        'console_scripts': ['abcd=abcd.frontends.shell:cli']
+        'console_scripts': ['abcd=abcd.frontends.cli:main']
     },
 )

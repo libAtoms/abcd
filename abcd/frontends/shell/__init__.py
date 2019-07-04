@@ -28,6 +28,9 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument('-s', '--style', help='style [simple, fancy]', default='simple')
         self.add_argument('-q', '--query', dest='default_query', action='append', help='Filtering extra quantities')
 
+        self.add_argument('--read-only', help='Disables all the functions which would modify the database',
+                          action='store_true')
+
         subparsers = self.add_subparsers(title='Commands', dest='command', parser_class=argparse.ArgumentParser)
 
         parser_login = subparsers.add_parser('login', help='login to the database')
@@ -108,8 +111,6 @@ class ArgumentParser(argparse.ArgumentParser):
             Shell(namespace).upload()
         elif namespace.command == 'summary':
             Shell(namespace).summary()
-        elif namespace.command == 'tag':
-            Shell(namespace).tag()
         elif namespace.command == 'delete':
             Shell(namespace).delete()
         elif namespace.command == 'key-add':
@@ -187,6 +188,10 @@ class Shell(object):
         args = self.args
         logger.info('delete args: \n{}'.format(args))
 
+        if args.read_only:
+            print('In read only mode, you can\'t modify the data in the database')
+            exit()
+
         query = []
         query += args.default_query if args.default_query else []
         query += args.query if args.query else []
@@ -201,6 +206,10 @@ class Shell(object):
     def upload(self):
         args = self.args
         logger.info('upload args: \n{}'.format(args))
+
+        if args.read_only:
+            print('In read only mode, you can\'t modify the data in the database')
+            exit()
 
         extra_info = args.extra
 
@@ -341,6 +350,10 @@ class Shell(object):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
 
+        if args.read_only:
+            print('In read only mode, you can\'t modify the data in the database')
+            exit()
+
         query = []
         query += args.default_query if args.default_query else []
         query += args.query if args.query else []
@@ -358,6 +371,10 @@ class Shell(object):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
 
+        if args.read_only:
+            print('In read only mode, you can\'t modify the data in the database')
+            exit()
+
         query = []
         query += args.default_query if args.default_query else []
         query += args.query if args.query else []
@@ -372,6 +389,10 @@ class Shell(object):
     def key_delete(self):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
+
+        if args.read_only:
+            print('In read only mode, you can\'t modify the data in the database')
+            exit()
 
         query = []
         query += args.default_query if args.default_query else []
@@ -389,6 +410,10 @@ class Shell(object):
     def exec(self):
         args = self.args
         logger.info('tag args: \n{}'.format(self.args))
+
+        if args.read_only:
+            print('In read only mode, you can\'t modify the data in the database')
+            exit()
 
         query = []
         query += args.default_query if args.default_query else []

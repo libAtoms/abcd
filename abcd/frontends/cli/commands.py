@@ -216,7 +216,7 @@ def key_rename(*, db, query, old_keys, new_keys, **kwargs):
     if db.count(query=query + [old_keys, new_keys]):
         print('The new key already exist for the given query! '
               'Please make sure that the target key name don\'t exist')
-        exit()
+        exit(1)
 
     db.rename_property(old_keys, new_keys, query=query)
 
@@ -229,7 +229,7 @@ def key_delete(*, db, query, yes, keys, **kwargs):
 
     if not yes:
         print('Please use --yes for deleting keys from {} configurations'.format(db.count(query=query)))
-        exit()
+        exit(1)
 
     for k in keys:
         db.delete_property(k, query=query)

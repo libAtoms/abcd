@@ -79,6 +79,7 @@ class ArgumentParser(argparse.ArgumentParser):
         exec_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual execution.')
         exec_parser.add_argument('python_code', help='Selecting properties for detailed description')
 
+
 def main(args=None):
     parser = ArgumentParser()
     kwargs = parser.parse_args(args).__dict__

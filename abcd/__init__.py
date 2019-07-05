@@ -46,8 +46,7 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.INFO)
 
-    # url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/abcd'
-    url = 'mongodb://localhost:27017'
+    url = 'mongodb://mongoadmin:secret@localhost:27017'
     abcd = ABCD(url, collection='atoms')
     abcd.print_info()
 
@@ -55,38 +54,5 @@ if __name__ == '__main__':
         # Hack to fix the representation of forces
         atoms.calc.results['forces'] = atoms.arrays['force']
 
+        abcd.push(atoms)
         print(atoms)
-
-    abcd.query('aa>22 bb')
-    # todo: query_str2_query_dict
-
-    # db = ABCD(url='http://localhost:5000/api')
-    #
-    # query = {
-    #     'elements': ['Cu']
-    # }
-    # results = db.search(query)
-    #
-    # # Fetch all results (returns with an Atoms object
-    # for id in results:
-    #     atoms = db.get_atoms(id)
-    #     print(atoms)
-    #
-    #     local_db = [db.get_atoms(id) for id in results]
-    # #
-    # # context manager for the database
-    # with ABCD(url='http://localhost:5000/api') as db:
-    #     results = db.search('formula=Fe3O1;elements=[Fe,*];n_atoms=10,pbc;metadata.collection=iron')
-    #     local_db = [db.get_atoms(id) for id in results]
-
-    # with ABCD(url='http://localhost:5000/api') as db:
-    #     results = db.search('formula=Fe3O1;elements=[Fe,*];n_atoms=10,pbc;metadata.collection=iron')
-    #     local_db = [db.get_atoms(id) for id in results]
-
-    # connection = ABCD()
-    # for atoms in traj:
-    #     hash_value = connection.push(atoms)
-    #     print(hash_value)
-
-    # with ABCD(url='http://localhost:5000/api') as db:
-    #     db.push(atoms)

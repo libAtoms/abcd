@@ -718,6 +718,7 @@ class MongoDatabase(Database):
 
     def exec(self, code, query=None):
         for item in AtomsModel.objects.query(query):
+            # TODO: map all of the available variables
             exec(code)
 
 
@@ -726,63 +727,3 @@ if __name__ == '__main__':
 
     # url = 'mongodb://mongoadmin:secret@localhost:27017/abcd'
     abcd = MongoDatabase(db='abcd', username='mongoadmin', password='secret')
-    # abcd.exec('print(item.info["energy"])', query='natoms=123')
-
-    for item in AtomsModel.objects.limit(10):
-        pass
-    # db = AtomsModel._get_collection()
-    # db.update_many({}, {'$rename': {'arrays.forces': 'array.fff'}})
-
-    # def exp(at):
-    #     at.info['pressure'] = -1/3 * np.trace(at.info['virial']/at.get_volume())
-    #
-    # {
-    #     'pressure': lambda at: -1/3 * np.trace(at.info['virial']/at.get_volume())
-    # }
-
-    # debug_issue19()
-#
-#     collection_name = 'atoms'
-#     url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017'
-#
-#     abcd = MongoDatabase(collection='atoms', username='2ef35d3635e9dc5a922a6a42', password='ac6ce72e259f5ddcc8dd5178')
-#
-#     abcd.print_info()
-#
-#     abcd.push(iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(10)))
-#     # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
-#     #     # Hack to fix the representation of forces
-#     #     atoms.calc.results['forces'] = atoms.arrays['force']
-#     #
-#     #     print(atoms)
-#
-#     # with switch_collection(AtomsModel, collection_name) as AtomsModel:
-#     atoms = AtomsModel.objects.first().to_atoms()
-#
-#     saved = AtomsModel.from_atoms(atoms).save()
-#
-#     # Update
-#     Databases(name=collection_name).save()
-#
-#     print(Databases.objects(name=collection_name).first())
-#
-#     print(abcd.query('arrays.positions'))
-#
-#     print(abcd.count_properties())
-#
-#     query = {
-#         'info.config_type': 'bcc_bulk_54_high'
-#     }
-#     # query ='info.config_type=bcc_bulk_54_high'
-#     print(abcd.count(query))
-#
-#     a = list(abcd.get_atoms())
-#     print(type(a[0].arrays['forces']))
-# # class ArraysModel(EmbeddedDocument):
-# #     meta = {'strict': False}
-# #     numbers = ListField(IntField())
-# #     positions = ListField(ListField(FloatField()))
-# #
-# #
-# # class InfoModel(EmbeddedDocument):
-# #     meta = {'strict': False}

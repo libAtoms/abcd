@@ -30,8 +30,25 @@ class ABCD(object):
 
             return backends.MongoDatabase(db=db, **conn_settings, **kwargs)
 
+        elif r.scheme == 'pymongo':
+
+            conn_settings = {
+                'host': r.hostname,
+                'port': r.port,
+                'username': r.username,
+                'password': r.password,
+                'authentication_source': 'admin',
+            }
+
+            db = r.path.split('/')[1] if r.path else None
+            db = db if db else 'abcd'
+
+            return backends.PyMongoDB(db=db, **conn_settings, **kwargs)
+
         elif r.scheme == 'http' or r.scheme == 'https':
             raise NotImplementedError('http not yet supported! soon...')
+        elif r.scheme == 'ssh':
+            raise NotImplementedError('ssh not yet supported! soon...')
         else:
             raise NotImplementedError('Unable to recognise the type of connection. (url: {})'.format(url))
 

@@ -37,7 +37,7 @@ class ABCD(object):
                 'port': r.port,
                 'username': r.username,
                 'password': r.password,
-                'authentication_source': 'admin',
+                'authSource': 'admin',
             }
 
             db = r.path.split('/')[1] if r.path else None

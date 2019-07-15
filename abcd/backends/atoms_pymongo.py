@@ -13,6 +13,7 @@ import numpy as np
 from pymongo import MongoClient
 
 from abcd.backends.abstract import Database
+from abcd.parsers.arguments import key_val_str_to_dict
 
 
 class PropertyNotImplementedError(NotImplementedError):
@@ -119,12 +120,17 @@ class AtomsModel(dict):
 class MongoDatabase(Database):
     """Wrapper to make database operations easy"""
 
-    def __init__(self, url='mongodb://localhost:27017/', db='abcd', collection='atoms', **kwargs):
+    def __init__(self, host='localhost', port=27017,
+                 db_name='abcd', collection_name='atoms',
+                 username=None, password=None, authSource='admin', **kwargs):
         super().__init__()
 
-        self.client = MongoClient(url, **kwargs)
-        self.db = self.client[db]
-        self.collection = self.db[collection]
+        self.client = MongoClient(
+            host=host, port=port, username=username, password=password,
+            authSource=authSource, **kwargs)
+
+        self.db = self.client[db_name]
+        self.collection = self.db[collection_name]
 
     def info(self):
         host, port = self.client.address
@@ -134,26 +140,34 @@ class MongoDatabase(Database):
             'port': port,
             'db': self.db.name,
             'collection': self.collection.name,
-            'number of confs': self.collection.count()
+            'number of confs': self.collection.count(),
+            'type': 'mongodb (pymongo)'
         }
 
     def destroy(self):
-        self.collection.remove()
+        self.collection.drop()
 
     def push(self, atoms: Union[Atoms, Iterable], extra_info=None):
 
+        if extra_info and isinstance(extra_info, str):
+            extra_info = key_val_str_to_dict(extra_info)
+
         if isinstance(atoms, Atoms):
-            data = AtomsModel.from_atoms(atoms)
-            if extra_info is not None:
-                data['info'].update(extra_info)
+            data = AtomsModel.from_atoms(atoms, extra_info)
             self.collection.insert_one(data)
 
         if isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-            self.collection.insert_many(AtomsModel.from_atoms(at) for at in atoms)
+            self.collection.insert_many(AtomsModel.from_atoms(at, extra_info) for at in atoms)
 
-    def upload(self, file):
-        data = iread(file)
-        self.push(data)
+    def upload(self, file, extra_info=None):
+        if extra_info:
+            extra_info = key_val_str_to_dict(' '.join(extra_info))
+        else:
+            extra_info = {}
+
+        extra_info['filename'] = str(file)
+        data = iread(str(file))
+        self.push(data, extra_info)
 
     def pull(self, query=None, properties=None):
         # atoms = json.loads(message)
@@ -255,7 +269,7 @@ if __name__ == '__main__':
     # from server.styles.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
 
     print('hello')
-    db = MongoDatabase('mongodb://localhost:27017/')
+    db = MongoDatabase(username='mongoadmin', password='secret')
     print(db.info())
 
     # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):

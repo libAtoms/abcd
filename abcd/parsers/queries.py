@@ -53,7 +53,7 @@ class QueryLexer(object):
 
     @staticmethod
     def t_name(t):
-        r'[a-zA-Z_][a-zA-Z0-9_.]*'
+        r'[a-zA-Z_.^\[\]][a-zA-Z0-9_.*^\[\]]*[$]?'
         t.type = reserved.get(t.value, 'NAME')  # Check for reserved words
         return t
 

@@ -12,16 +12,17 @@ def login(*, config, name, url, **kwargs):
 
     try:
         db = ABCD(url=url)
+        info = db.info()
+
+        config['url'] = url
+        config.save()
 
         print('Successfully connected to the database!')
         print(" type:       {type}\n"
               " hostname:   {host}\n"
               " port:       {port}\n"
               " database:   {db}\n"
-              " # of confs: {number of confs}".format(**db.info()))
-
-        config['url'] = url
-        config.save()
+              " # of confs: {number of confs}".format(**info))
 
     except URLError:
         print('Wrong connection: Please check the parameters of th url!')

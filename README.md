@@ -18,3 +18,9 @@ docker run -d --rm --name abcd-mongodb -v <path-on-your-machine-to-store-databas
 ```
 
 will download and install a docker and run a database in it. 
+
+To connect to a mongodb running on the mac from inside the docker that runs abcd, use 
+
+```
+abcd login mongodb://docker.for.mac.localhost
+```

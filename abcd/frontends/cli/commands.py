@@ -80,6 +80,7 @@ def upload(*, db, path, extra_info, **kwargs):
 @init_style
 def summary(*, db, query, print_all, bins, truncate, style, props, **kwargs):
     logger.info('summary\n kwargs: {}'.format(kwargs))
+    logger.info('query: {}'.format(query))
 
     if print_all:
         bins, truncate = None, None

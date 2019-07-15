@@ -41,8 +41,10 @@ class AtomsQuerySet(queryset.QuerySet):
     """
 
     def from_string(self, query):
+        logger.info('query string: {}'.format(query))
         with MongoQuery() as parser:
             query = parser(query)
+            logger.info('pared query: {}'.format(query))
         return self.from_dict(query)
 
     def from_dict(self, query):
@@ -181,6 +183,7 @@ class MongoQuery(object):
 
     def __call__(self, string):
         ast = self.parser.parse(string)
+        logger.info('parsed ast: {}'.format(ast))
         return self.visit(ast) if ast is not None else {}
 
 

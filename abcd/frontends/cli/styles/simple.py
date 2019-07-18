@@ -58,7 +58,7 @@ class SimpleStyle(Style):
 
             for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
                 scale = int(ratio * count)
-                self.print('{:<{}} {:>{}d} [{:.2f}, {:.2f})'.format(
+                self.print('{:<{}} {:>{}d} [{:.4e}, {:.4e})'.format(
                     "▉" * scale, width_hist,
                     count, width_count,
                     lower, upper))

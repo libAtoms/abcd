@@ -1,17 +1,15 @@
 import logging
-from abcd import backends
 
 from urllib import parse
 
 logger = logging.getLogger(__name__)
 
 
-class ABCD(object):
+class ABCD:
     """Factory method"""
 
     def __new__(cls, url, **kwargs):
         # Factory method
-
         r = parse.urlparse(url)
         logger.info(r)
 
@@ -28,7 +26,8 @@ class ABCD(object):
             db = r.path.split('/')[1] if r.path else None
             db = db if db else 'abcd'
 
-            return backends.MongoDatabase(db=db, **conn_settings, **kwargs)
+            from abcd.backends.atoms_mongoengine import MongoDatabase
+            return MongoDatabase(db=db, **conn_settings, **kwargs)
 
         elif r.scheme == 'pymongo':
 
@@ -43,7 +42,8 @@ class ABCD(object):
             db = r.path.split('/')[1] if r.path else None
             db = db if db else 'abcd'
 
-            return backends.PyMongoDB(db=db, **conn_settings, **kwargs)
+            from abcd.backends.atoms_pymongo import MongoDatabase
+            return MongoDatabase(db=db, **conn_settings, **kwargs)
 
         elif r.scheme == 'http' or r.scheme == 'https':
             raise NotImplementedError('http not yet supported! soon...')

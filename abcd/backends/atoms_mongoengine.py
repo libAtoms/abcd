@@ -699,6 +699,8 @@ class MongoDatabase(Database):
     @staticmethod
     def _hist_str(name, data, bins=10, truncate=20):
 
+        n_unique = len(set(data))
+
         if truncate:
             # data = (item[:truncate] for item in data)
             data = (item[:truncate] + '...' if len(item) > truncate else item for item in data)
@@ -714,7 +716,7 @@ class MongoDatabase(Database):
             'type': 'hist_str',
             'name': name,
             'total': sum(data.values()),
-            'unique': len(data.keys()),
+            'unique': n_unique,
             'labels': labels[:bins],
             'counts': counts[:bins]
         }

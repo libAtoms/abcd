@@ -1,123 +1,18 @@
-from os import linesep
-
 import types
 from typing import Union, Iterable
-from collections import Counter
-
-from ase import Atoms
-from ase.io import iread
-from ase.calculators.singlepoint import SinglePointCalculator
-
-import numpy as np
+from os import linesep
 
 from pymongo import MongoClient
 
-from abcd.backends.abstract import Database
+from ase import Atoms
+from ase.io import iread
+
+from abcd import ABCD
+from abcd.model import AtomsModel
 from abcd.parsers.arguments import key_val_str_to_dict
 
 
-class PropertyNotImplementedError(NotImplementedError):
-    """Raised if a calculator does not implement the requested property."""
-
-
-class AtomsModel(dict):
-
-    @classmethod
-    def from_atoms(cls, atoms: Atoms, extra_info=None, **kwargs):
-        dct = cls()
-
-        """ASE's original implementation"""
-        arrays = atoms.arrays.copy()
-        n_atoms = len(atoms)
-        dct = {
-            'arrays': {
-                'numbers': arrays.pop('numbers').tolist(),
-                'positions': arrays.pop('positions').tolist(),
-
-            },
-            'info': {
-                'cell': atoms.cell.tolist(),
-                'pbc': atoms.pbc.tolist(),
-                'constraints': [],
-            },
-        }
-
-        for key, value in arrays.items():
-
-            if isinstance(value, np.ndarray):
-                dct['arrays'][key] = value.tolist()
-                continue
-
-            dct['arrays'][key] = value
-
-        for key, value in atoms.info.items():
-
-            if isinstance(value, np.ndarray):
-                dct['info'][key] = value.tolist()
-                continue
-
-            dct['info'][key] = value
-
-        if atoms.calc is not None:
-            dct['info']['calculator_name'] = atoms.calc.__class__.__name__
-            dct['info']['calculator_parameters'] = atoms.calc.todict()
-
-            for key, value in atoms.calc.results.items():
-
-                if isinstance(value, np.ndarray):
-                    if value.shape[0] == n_atoms:
-                        dct['arrays'][key] = value.tolist()
-                    else:
-                        dct['info'][key] = value.tolist()
-
-                    continue
-
-                dct['info'][key] = value
-
-        # if atoms.constraints:
-        #     dct['constraints'] = [c.todict() for c in atoms.constraints]
-
-        if extra_info is not None:
-            dct['info'].update(extra_info)
-
-        dct['derived'] = {
-            'elements': Counter(atoms.get_chemical_symbols()),
-            'arrays_keys': list(dct['arrays'].keys()),
-            'info_keys': list(dct['info'].keys())
-        }
-
-        return dct
-
-    def to_atoms(self):
-        data = self
-
-        cell = data['info'].pop('cell', None)
-        pbc = data['info'].pop('pbc', None)
-
-        numbers = data['arrays'].pop('numbers', None)
-        positions = data['arrays'].pop('positions', None)
-
-        atoms = Atoms(numbers=numbers,
-                      cell=cell,
-                      pbc=pbc,
-                      positions=positions)
-
-        if 'calculator_name' in data['info']:
-            calculator_name = data['info'].pop('calculator_name')
-            params = data['info'].pop('calculator_parameters', {})
-            results = data.pop('results', {})
-            # TODO: Proper initialisation fo Calculators
-            # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
-
-            atoms.calc = SinglePointCalculator(atoms, **params, **results)
-
-        atoms.arrays.update(data['arrays'])
-        atoms.info.update(data['info'])
-
-        return atoms
-
-
-class MongoDatabase(Database):
+class MongoDatabase(ABCD):
     """Wrapper to make database operations easy"""
 
     def __init__(self, host='localhost', port=27017,
@@ -125,9 +20,11 @@ class MongoDatabase(Database):
                  username=None, password=None, authSource='admin', **kwargs):
         super().__init__()
 
+        print(host, port, db_name, collection_name, username, password, authSource, kwargs)
+
         self.client = MongoClient(
             host=host, port=port, username=username, password=password,
-            authSource=authSource, **kwargs)
+            authSource=authSource)
 
         self.db = self.client[db_name]
         self.collection = self.db[collection_name]

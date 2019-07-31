@@ -1,6 +1,6 @@
 import logging
 
-from abcd import ABCD
+from abcd import from_url
 
 from abcd.frontends.cli.config import Config
 from abcd.frontends.cli.styles import SimpleStyle, FancyStyle
@@ -42,7 +42,7 @@ def init_db(func):
             print('Please use abcd login first!')
             exit(1)
 
-        db = ABCD(url=url)
+        db = from_url(url=url)
 
         default_query = kwargs.pop('default_query', [])
         query = kwargs.pop('query', [])

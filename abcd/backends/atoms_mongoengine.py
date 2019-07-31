@@ -15,7 +15,8 @@ from ase.calculators.singlepoint import SinglePointCalculator
 from mongoengine import Document, DynamicDocument, EmbeddedDocument, fields, queryset, signals, connect
 import pymongo.errors
 
-from abcd.backends.abstract import Database, URLError, AuthenticationError
+from abcd import ABCD
+from abcd.errors import URLError, AuthenticationError
 from abcd.parsers.queries import QueryParser
 from abcd.parsers.arguments import key_val_str_to_dict
 
@@ -398,7 +399,7 @@ class Databases(Document):
     tags = fields.ListField(fields.StringField(max_length=30))
 
 
-class MongoDatabase(Database):
+class MongoDatabase(ABCD):
     """Wrapper to make database operations easy"""
 
     def __init__(self, db='abcd', collection='atoms',
@@ -424,6 +425,8 @@ class MongoDatabase(Database):
         self._collection = self._db[collection]
 
         self.queryparser = MongoQuery()
+
+        raise NotImplementedError('Deprecated')
 
     def info(self):
         host, port = self.client.address

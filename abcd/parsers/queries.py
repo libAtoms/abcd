@@ -205,8 +205,14 @@ class QueryParser(QueryLexer):
     def parse(self, s):
         if not s:
             return None
-
-        return self.parser.parse(s)
+        elif isinstance(s, dict):
+            return s
+        elif isinstance(s, str):
+            return self.parser.parse(s)
+        elif isinstance(s, list):
+            return self.parser.parse(' and '.join(s))
+        else:
+            raise NotImplementedError('Query string should be string or dictionary and not {}!'.format(type(query)))
 
 
 if __name__ == '__main__':
@@ -231,3 +237,5 @@ if __name__ == '__main__':
         print(query)
         print(' '.join('{} [{}]'.format(item.value, item.type) for item in result))
         print(parser.parse(query))
+
+    print(parser.parse(['aa bb > 23', 'aa and (bb > 23.54 or (22 in cc and dd))']))

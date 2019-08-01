@@ -620,14 +620,14 @@ class MongoDatabase(ABCD):
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    def stats(self, prop, query=None, **kwargs):
-        data = self.property(prop, query)
-        return {
-            prop: {
-                'min': min(data),
-                'max': max(data),
-            }
-        }
+    # def stats(self, prop, query=None, **kwargs):
+    #     data = self.property(prop, query)
+    #     return {
+    #         prop: {
+    #             'min': min(data),
+    #             'max': max(data),
+    #         }
+    #     }
 
     def hist(self, name, query=None, **kwargs):
 

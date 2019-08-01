@@ -20,6 +20,94 @@ from pymongo import MongoClient
 logger = logging.getLogger(__name__)
 
 
+# TODO: queryset (string -> ast ->  dict (mongo))
+# TODO: simplifing this:
+# if query is None:
+#     query = {}
+# else:
+#     query = MongoQuery()(query)
+# TODO: histogramas separate class
+# TODO: derived properties when save ()
+#     def pre_save_post_validation(cls, sender, document, **kwargs):
+#
+#         document.info['username'] = getpass.getuser()
+#
+#         natoms = len(document.arrays['numbers'])
+#         elements = Counter(str(element) for element in document.arrays['numbers'])
+#
+#         arrays_keys = list(document.arrays.keys())
+#         info_keys = list(document.info.keys())
+#         derived_keys = ['natoms', 'elements', 'username', 'uploaded', 'modified']
+#
+#         cell = document.info.get('cell')
+#         if cell:
+#             derived_keys.append('volume')
+#             virial = document.info.get('virial')
+#             if virial:
+#                 derived_keys.append('pressure')
+#
+#         document.derived = DerivedModel(
+#             natoms=natoms,
+#             elements=elements,
+#             arrays_keys=arrays_keys,
+#             info_keys=info_keys,
+#             derived_keys=derived_keys,
+#             username=getpass.getuser()
+#         )
+#
+#         cell = document.info.get('cell')
+#         if cell:
+#             volume = abs(np.linalg.det(cell))  # atoms.get_volume()
+#             document.derived['volume'] = volume
+#
+#             virial = document.info.get('virial')
+#             if virial:
+#                 # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
+#                 document.derived['pressure'] = -1 / 3 * np.trace(virial / volume)
+#
+#         if not document.uploaded:
+#             document.uploaded = datetime.datetime.utcnow()
+#
+#         document.modified = datetime.datetime.utcnow()
+#
+#         logger.debug("Pre Save: %s" % document)
+#
+#     @classmethod
+#     def post_save(cls, sender, document, **kwargs):
+#
+#         logger.debug("Post Save: %s" % document)
+#
+#         if 'created' in kwargs:
+#             if kwargs['created']:
+#                 logger.debug("Created")
+#             else:
+#                 logger.debug("Updated")
+#
+#     @classmethod
+#     def pre_bulk_insert(cls, sender, documents, **kwargs):
+#         for document in documents:
+#             cls.pre_save_post_validation(sender, document, **kwargs)
+#
+#
+# signals.pre_save_post_validation.connect(AtomsModel.pre_save_post_validation, sender=AtomsModel)
+# signals.pre_bulk_insert.connect(AtomsModel.pre_bulk_insert, sender=AtomsModel)
+#
+# signals.post_save.connect(AtomsModel.post_save, sender=AtomsModel)
+
+
+def query_to_dict(query):
+    if query is None:
+        query = {}
+    elif isinstance(query, str):
+        with MongoQuery() as parser:
+            query = parser(query)
+    elif isinstance(query, list):
+        with MongoQuery() as parser:
+            query = parser(' and '.join(query))
+
+    return query
+
+
 class MongoQuery(object):
 
     def __init__(self):
@@ -168,6 +256,15 @@ class MongoDatabase(ABCD):
             'type': 'mongodb'
         }
 
+    def delete(self, query=None):
+
+        if query is None:
+            query = {}
+        else:
+            query = MongoQuery()(query)
+
+        return self.collection.delete_many(query)
+
     def destroy(self):
         self.collection.drop()
 
@@ -184,24 +281,16 @@ class MongoDatabase(ABCD):
             self.collection.insert_many(AtomsModel.from_atoms(at, extra_info) for at in atoms)
 
     def upload(self, file, extra_info=None):
+
         if extra_info:
             extra_info = key_val_str_to_dict(' '.join(extra_info))
         else:
             extra_info = {}
 
         extra_info['filename'] = str(file)
+
         data = iread(str(file))
         self.push(data, extra_info)
-
-    def pull(self, query=None, properties=None):
-        # atoms = json.loads(message)
-        raise NotImplementedError
-
-    def query(self, query):
-        raise NotImplementedError
-
-    def search(self, query: str):
-        raise NotImplementedError
 
     def get_atoms(self, query):
         for dct in self.db.atoms.find(query):
@@ -217,22 +306,8 @@ class MongoDatabase(ABCD):
 
         return self.db.atoms.count_documents(query)
 
-    def get_property(self, name, query=None):
-
-        if query is None:
-            query = {}
-        else:
-            query = MongoQuery()(query)
-
-        pipeline = [
-            {'$match': query},
-            {'$match': {'{}'.format(name): {"$exists": True}}},
-            {'$project': {'_id': False, 'data': '${}'.format(name)}}
-        ]
-
-        return [val['data'] for val in self.collection.aggregate(pipeline)]
-
     def property(self, name, query=None):
+
         if not query:
             query = {}
         else:
@@ -312,6 +387,56 @@ class MongoDatabase(ABCD):
             properties['derived'][val['_id']] = {'count': val['count']}
 
         return properties
+
+    def add_property(self, data, query=None):
+        logger.info('add: data={}, query={}'.format(data, query))
+        db = self.collection
+
+        info_data = {'info.' + key: value for key, value in data.items()}
+
+        db.update_many(
+            query_to_dict(query),
+            {'$push': {'derived.info_keys': {'$each': list(data.keys())}},
+             '$set': info_data})
+
+    def rename_property(self, name, new_name, query=None):
+        logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))
+
+        db = self.collection
+
+        db.update_many(
+            query_to_dict(query + ['info.{}'.format(name)]),
+            {'$push': {'derived.info_keys': new_name}})
+
+        db.update_many(
+            query_to_dict(query + ['info.{}'.format(name)]),
+            {
+                '$pull': {'derived.info_keys': name},
+                '$rename': {'info.{}'.format(name): 'info.{}'.format(new_name)}})
+
+        db.update_many(
+            query_to_dict(query + ['arrays.{}'.format(name)]),
+            {'$push': {'derived.arrays_keys': new_name}})
+
+        db.update_many(
+            query_to_dict(query + ['arrays.{}'.format(name)]),
+            {'$pull': {'derived.arrays_keys': name},
+             '$rename': {'arrays.{}'.format(name): 'arrays.{}'.format(new_name)}})
+
+    def delete_property(self, name, query=None):
+        logger.info('delete: query={}, porperty={}'.format(name, query))
+
+        db = self.collection
+
+        db.update_many(
+            query_to_dict(query + ['info.{}'.format(name)]),
+            {'$pull': {'derived.info_keys': name},
+             '$unset': {'info.{}'.format(name): ''}})
+
+        db.update_many(
+            query_to_dict(query + ['arrays.{}'.format(name)]),
+            {'$pull': {'derived.arrays_keys': name},
+             '$unset': {'arrays.{}'.format(name): ''}})
 
     def hist(self, name, query=None, **kwargs):
 

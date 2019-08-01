@@ -1,13 +1,14 @@
-abcd client
-===========
+Usage
+=====
 
 
-Usage for Python
+Command line tool
+-----------------
+
+
+Python interface
 ----------------
 
 
 
-
-Command Line
-------------
 

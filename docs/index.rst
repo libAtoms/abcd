@@ -14,10 +14,13 @@ Goal:
 - flexible (server-client application, flask blueprints)
 - scalable database (nosql like mongodb)
 
-Quickstart/Basic usage
-----------------------
+Quick start/Basic usage
+-----------------------
+Installation:
 
 ``python setup.py install``
+
+usage:
 
 ::
 

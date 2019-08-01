@@ -1,11 +1,14 @@
-abcd server
-===========
+Installation
+============
 
-Intallation/Delpoyment
-----------------------
+Using docker
+------------
 
 
-Database
---------
+Local installation
+------------------
 
+
+Installation with remote access
+-------------------------------
 

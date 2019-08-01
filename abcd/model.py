@@ -1,8 +1,11 @@
+import logging
 from collections import Counter
 
 import numpy as np
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
+
+logger = logging.getLogger(__name__)
 
 
 class AtomsModel(dict):

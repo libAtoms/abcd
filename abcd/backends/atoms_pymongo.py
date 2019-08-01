@@ -88,19 +88,6 @@ logger = logging.getLogger(__name__)
 # signals.post_save.connect(AtomsModel.post_save, sender=AtomsModel)
 
 
-# def query_to_dict(query):
-#     if query is None:
-#         query = {}
-#     elif isinstance(query, str):
-#         with MongoQuery() as parser:
-#             query = parser(query)
-#     elif isinstance(query, list):
-#         with MongoQuery() as parser:
-#             query = parser(' and '.join(query))
-#
-#     return query
-
-
 class MongoQuery(object):
 
     def __init__(self):
@@ -217,7 +204,8 @@ class MongoQuery(object):
     def __call__(self, string):
         ast = self.parser.parse(string)
         logger.info('parsed ast: {}'.format(ast))
-        return self.visit(ast) if ast is not None else {}
+
+        return self.visit(ast) if ast else {}
 
 
 parser = MongoQuery()

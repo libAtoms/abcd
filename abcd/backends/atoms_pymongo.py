@@ -20,13 +20,6 @@ from pymongo import MongoClient
 logger = logging.getLogger(__name__)
 
 
-# TODO: queryset (string -> ast ->  dict (mongo))
-# TODO: simplifing this:
-# if query is None:
-#     query = {}
-# else:
-#     query = MongoQuery()(query)
-# TODO: histogramas separate class
 # TODO: derived properties when save ()
 #     def pre_save_post_validation(cls, sender, document, **kwargs):
 #
@@ -95,17 +88,17 @@ logger = logging.getLogger(__name__)
 # signals.post_save.connect(AtomsModel.post_save, sender=AtomsModel)
 
 
-def query_to_dict(query):
-    if query is None:
-        query = {}
-    elif isinstance(query, str):
-        with MongoQuery() as parser:
-            query = parser(query)
-    elif isinstance(query, list):
-        with MongoQuery() as parser:
-            query = parser(' and '.join(query))
-
-    return query
+# def query_to_dict(query):
+#     if query is None:
+#         query = {}
+#     elif isinstance(query, str):
+#         with MongoQuery() as parser:
+#             query = parser(query)
+#     elif isinstance(query, list):
+#         with MongoQuery() as parser:
+#             query = parser(' and '.join(query))
+#
+#     return query
 
 
 class MongoQuery(object):
@@ -227,6 +220,20 @@ class MongoQuery(object):
         return self.visit(ast) if ast is not None else {}
 
 
+parser = MongoQuery()
+
+
+def parse_query(func):
+    def wrapper(*args, query=None, **kwargs):
+        print(func)
+        print((args, query, kwargs))
+        query = parser(query)
+
+        func(*args, **kwargs, query=query)
+
+    return wrapper
+
+
 class MongoDatabase(ABCD):
     """Wrapper to make database operations easy"""
 
@@ -257,12 +264,7 @@ class MongoDatabase(ABCD):
         }
 
     def delete(self, query=None):
-
-        if query is None:
-            query = {}
-        else:
-            query = MongoQuery()(query)
-
+        query = parser(query)
         return self.collection.delete_many(query)
 
     def destroy(self):
@@ -292,26 +294,22 @@ class MongoDatabase(ABCD):
         data = iread(str(file))
         self.push(data, extra_info)
 
-    def get_atoms(self, query):
+    def get_atoms(self, query=None):
+        query = parser(query)
         for dct in self.db.atoms.find(query):
             yield AtomsModel(dct).to_atoms()
 
     def count(self, query=None):
+        query = parser(query)
         logger.info('query; {}'.format(query))
 
         if not query:
             return self.collection.count()
 
-        query = MongoQuery()(query)
-
         return self.db.atoms.count_documents(query)
 
     def property(self, name, query=None):
-
-        if not query:
-            query = {}
-        else:
-            query = MongoQuery()(query)
+        query = parser(query)
 
         pipeline = [
             {'$match': query},
@@ -322,12 +320,8 @@ class MongoDatabase(ABCD):
         return [val['data'] for val in self.db.atoms.aggregate(pipeline)]
 
     def properties(self, query=None):
+        query = parser(query)
         properties = {}
-
-        if not query:
-            query = {}
-        else:
-            query = MongoQuery()(query)
 
         pipeline = [
             {'$match': query},
@@ -346,11 +340,7 @@ class MongoDatabase(ABCD):
         return properties
 
     def count_properties(self, query=None):
-
-        if not query:
-            query = {}
-        else:
-            query = MongoQuery()(query)
+        query = parser(query)
 
         properties = {
             'info': {},
@@ -390,148 +380,53 @@ class MongoDatabase(ABCD):
 
     def add_property(self, data, query=None):
         logger.info('add: data={}, query={}'.format(data, query))
-        db = self.collection
 
         info_data = {'info.' + key: value for key, value in data.items()}
 
-        db.update_many(
-            query_to_dict(query),
+        self.collection.update_many(
+            parser(query),
             {'$push': {'derived.info_keys': {'$each': list(data.keys())}},
              '$set': info_data})
 
     def rename_property(self, name, new_name, query=None):
         logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))
 
-        db = self.collection
-
-        db.update_many(
-            query_to_dict(query + ['info.{}'.format(name)]),
+        self.collection.update_many(
+            parser(query + ['info.{}'.format(name)]),
             {'$push': {'derived.info_keys': new_name}})
 
-        db.update_many(
-            query_to_dict(query + ['info.{}'.format(name)]),
+        self.collection.update_many(
+            parser(query + ['info.{}'.format(name)]),
             {
                 '$pull': {'derived.info_keys': name},
                 '$rename': {'info.{}'.format(name): 'info.{}'.format(new_name)}})
 
-        db.update_many(
-            query_to_dict(query + ['arrays.{}'.format(name)]),
+        self.collection.update_many(
+            parser(query + ['arrays.{}'.format(name)]),
             {'$push': {'derived.arrays_keys': new_name}})
 
-        db.update_many(
-            query_to_dict(query + ['arrays.{}'.format(name)]),
+        self.collection.update_many(
+            parser(query + ['arrays.{}'.format(name)]),
             {'$pull': {'derived.arrays_keys': name},
              '$rename': {'arrays.{}'.format(name): 'arrays.{}'.format(new_name)}})
 
     def delete_property(self, name, query=None):
         logger.info('delete: query={}, porperty={}'.format(name, query))
 
-        db = self.collection
-
-        db.update_many(
-            query_to_dict(query + ['info.{}'.format(name)]),
+        self.collection.update_many(
+            parser(query + ['info.{}'.format(name)]),
             {'$pull': {'derived.info_keys': name},
              '$unset': {'info.{}'.format(name): ''}})
 
-        db.update_many(
-            query_to_dict(query + ['arrays.{}'.format(name)]),
+        self.collection.update_many(
+            parser(query + ['arrays.{}'.format(name)]),
             {'$pull': {'derived.arrays_keys': name},
              '$unset': {'arrays.{}'.format(name): ''}})
 
     def hist(self, name, query=None, **kwargs):
 
         data = self.property(name, query)
-
-        if not data:
-            return None
-
-        elif data and isinstance(data, list):
-            if isinstance(data[0], float):
-                bins = kwargs.get('bins', 10)
-                return self._hist_float(name, data, bins)
-
-            elif isinstance(data[0], int):
-                bins = kwargs.get('bins', 10)
-                return self._hist_int(name, data, bins)
-
-            elif isinstance(data[0], str):
-                return self._hist_str(name, data, **kwargs)
-
-            else:
-                print('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
-                logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
-
-        else:
-            logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))
-            return None
-
-    @staticmethod
-    def _hist_float(name, data, bins=10):
-
-        data = np.array(data)
-        hist, bin_edges = np.histogram(data, bins=bins)
-
-        return {
-            'type': 'hist_float',
-            'name': name,
-            'bins': bins,
-            'edges': bin_edges,
-            'counts': hist,
-            'min': data.min(),
-            'max': data.max(),
-            'median': data.mean(),
-            'std': data.std(),
-            'var': data.var()
-        }
-
-    @staticmethod
-    def _hist_int(name, data, bins=10):
-
-        data = np.array(data)
-        delta = max(data) - min(data) + 1
-
-        if bins > delta:
-            bins = delta
-
-        hist, bin_edges = np.histogram(data, bins=bins)
-
-        return {
-            'type': 'hist_int',
-            'name': name,
-            'bins': bins,
-            'edges': bin_edges,
-            'counts': hist,
-            'min': data.min(),
-            'max': data.max(),
-            'median': data.mean(),
-            'std': data.std(),
-            'var': data.var()
-        }
-
-    @staticmethod
-    def _hist_str(name, data, bins=10, truncate=20):
-
-        n_unique = len(set(data))
-
-        if truncate:
-            # data = (item[:truncate] for item in data)
-            data = (item[:truncate] + '...' if len(item) > truncate else item for item in data)
-
-        data = Counter(data)
-
-        if bins:
-            labels, counts = zip(*sorted(data.items(), key=itemgetter(1, 0), reverse=True))
-        else:
-            labels, counts = zip(*data.items())
-
-        return {
-            'type': 'hist_str',
-            'name': name,
-            'total': sum(data.values()),
-            'unique': n_unique,
-            'labels': labels[:bins],
-            'counts': counts[:bins]
-        }
+        return histogram(name, data, **kwargs)
 
     def exec(self, code, query=None):
         for item in self.db.atoms.find(query):
@@ -564,6 +459,96 @@ class MongoDatabase(ABCD):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
+
+
+def histogram(name, data, **kwargs):
+    if not data:
+        return None
+
+    elif data and isinstance(data, list):
+        if isinstance(data[0], float):
+            bins = kwargs.get('bins', 10)
+            return _hist_float(name, data, bins)
+
+        elif isinstance(data[0], int):
+            bins = kwargs.get('bins', 10)
+            return _hist_int(name, data, bins)
+
+        elif isinstance(data[0], str):
+            return _hist_str(name, data, **kwargs)
+
+        else:
+            print('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
+            logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
+
+    else:
+        logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))
+        return None
+
+
+def _hist_float(name, data, bins=10):
+    data = np.array(data)
+    hist, bin_edges = np.histogram(data, bins=bins)
+
+    return {
+        'type': 'hist_float',
+        'name': name,
+        'bins': bins,
+        'edges': bin_edges,
+        'counts': hist,
+        'min': data.min(),
+        'max': data.max(),
+        'median': data.mean(),
+        'std': data.std(),
+        'var': data.var()
+    }
+
+
+def _hist_int(name, data, bins=10):
+    data = np.array(data)
+    delta = max(data) - min(data) + 1
+
+    if bins > delta:
+        bins = delta
+
+    hist, bin_edges = np.histogram(data, bins=bins)
+
+    return {
+        'type': 'hist_int',
+        'name': name,
+        'bins': bins,
+        'edges': bin_edges,
+        'counts': hist,
+        'min': data.min(),
+        'max': data.max(),
+        'median': data.mean(),
+        'std': data.std(),
+        'var': data.var()
+    }
+
+
+def _hist_str(name, data, bins=10, truncate=20):
+    n_unique = len(set(data))
+
+    if truncate:
+        # data = (item[:truncate] for item in data)
+        data = (item[:truncate] + '...' if len(item) > truncate else item for item in data)
+
+    data = Counter(data)
+
+    if bins:
+        labels, counts = zip(*sorted(data.items(), key=itemgetter(1, 0), reverse=True))
+    else:
+        labels, counts = zip(*data.items())
+
+    return {
+        'type': 'hist_str',
+        'name': name,
+        'total': sum(data.values()),
+        'unique': n_unique,
+        'labels': labels[:bins],
+        'counts': counts[:bins]
+    }
 
 
 if __name__ == '__main__':

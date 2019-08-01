@@ -204,7 +204,7 @@ class QueryParser(QueryLexer):
 
     def parse(self, s):
         if not s:
-            return None
+            return {}
         elif isinstance(s, dict):
             return s
         elif isinstance(s, str):

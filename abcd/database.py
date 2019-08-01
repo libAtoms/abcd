@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 logger = logging.getLogger(__name__)
 
 
-class ABCD(metaclass=ABCMeta):
+class AbstractABCD(metaclass=ABCMeta):
     """Factory method"""
 
     @abstractmethod

@@ -1,6 +1,5 @@
 import logging
 from urllib import parse
-from abc import ABCMeta, abstractmethod
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -11,81 +10,41 @@ class ConnectionType(Enum):
     http = 2
 
 
-def from_config(config):
-    # Factory method
-    url = config['url']
-    return from_url(url)
+class ABCD(object):
+    @classmethod
+    def from_config(cls, config):
+        # Factory method
+        url = config['url']
+        return ABCD.from_url(url)
 
+    @classmethod
+    def from_url(cls, url, **kwargs):
+        # Factory method
+        r = parse.urlparse(url)
+        logger.info(r)
 
-def from_url(url, **kwargs):
-    # Factory method
-    r = parse.urlparse(url)
-    logger.info(r)
+        if r.scheme == 'mongodb':
 
-    if r.scheme == 'mongodb':
+            conn_settings = {
+                'host': r.hostname,
+                'port': r.port,
+                'username': r.username,
+                'password': r.password,
+                'authSource': 'admin',
+            }
 
-        conn_settings = {
-            'host': r.hostname,
-            'port': r.port,
-            'username': r.username,
-            'password': r.password,
-            'authSource': 'admin',
-        }
+            db = r.path.split('/')[1] if r.path else None
+            db = db if db else 'abcd'
 
-        db = r.path.split('/')[1] if r.path else None
-        db = db if db else 'abcd'
+            from abcd.backends.atoms_pymongo import MongoDatabase
+            return MongoDatabase(db_name=db, **conn_settings, **kwargs)
 
-        from abcd.backends.atoms_pymongo import MongoDatabase
-        return MongoDatabase(db_name=db, **conn_settings, **kwargs)
-
-    elif r.scheme == 'http' or r.scheme == 'https':
-        raise NotImplementedError('http not yet supported! soon...')
-    elif r.scheme == 'ssh':
-        raise NotImplementedError('ssh not yet supported! soon...')
-    else:
-        raise NotImplementedError('Unable to recognise the type of connection. (url: {})'.format(url))
-
-
-class ABCD(metaclass=ABCMeta):
-    """Factory method"""
-
-    @abstractmethod
-    def __init__(self):
-        pass
-
-    def info(self):
-        pass
-
-    def push(self, atoms):
-        pass
-
-    def pull(self, query=None, properties=None):
-        pass
-
-    def query(self, query_string):
-        pass
-
-    def destroy(self):
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-
-    def __repr__(self):
-        pass
-
-    def _repr_html_(self):
-        pass
-
-    def print_info(self):
-        pass
-
-
-class QuerySet(metaclass=ABCMeta):
-    pass
+        elif r.scheme == 'http' or r.scheme == 'https':
+            raise NotImplementedError('http not yet supported! soon...')
+        elif r.scheme == 'ssh':
+            raise NotImplementedError('ssh not yet supported! soon...')
+        else:
+            raise NotImplementedError('Unable to recognise the type of connection. (url: {})'.format(url))
 
 
 if __name__ == '__main__':
@@ -93,7 +52,7 @@ if __name__ == '__main__':
 
     # url = 'mongodb://mongoadmin:secret@localhost:27017'
     url = 'mongodb://mongoadmin:secret@localhost:27017/abcd_new'
-    abcd = from_url(url)
+    abcd = ABCD.from_url(url)
     abcd.print_info()
 
     # from ase.io import iread

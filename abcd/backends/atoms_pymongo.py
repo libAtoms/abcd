@@ -10,14 +10,24 @@ from collections import Counter
 from ase import Atoms
 from ase.io import iread
 
-from abcd import ABCD
-from abcd.model import AtomsModel
+from abcd.model import AbstractModel
+from abcd.database import AbstractABCD
+from abcd.queryset import AbstractQuerySet
+
 from abcd.parsers.queries import QueryParser
 from abcd.parsers.arguments import key_val_str_to_dict
 
 from pymongo import MongoClient
 
 logger = logging.getLogger(__name__)
+
+
+class AtomsModel(AbstractModel):
+    pass
+
+
+class QuerySet(AbstractQuerySet):
+    pass
 
 
 # TODO: derived properties when save ()
@@ -81,12 +91,6 @@ logger = logging.getLogger(__name__)
 #         for document in documents:
 #             cls.pre_save_post_validation(sender, document, **kwargs)
 #
-#
-# signals.pre_save_post_validation.connect(AtomsModel.pre_save_post_validation, sender=AtomsModel)
-# signals.pre_bulk_insert.connect(AtomsModel.pre_bulk_insert, sender=AtomsModel)
-#
-# signals.post_save.connect(AtomsModel.post_save, sender=AtomsModel)
-
 
 class MongoQuery(object):
 
@@ -98,7 +102,7 @@ class MongoQuery(object):
         try:
             fun = self.__getattribute__('visit_' + op.lower())
             return fun(*args)
-        except:
+        except KeyError:
             pass
 
     def visit_name(self, fields):
@@ -222,7 +226,7 @@ def parse_query(func):
     return wrapper
 
 
-class MongoDatabase(ABCD):
+class MongoDatabase(AbstractABCD):
     """Wrapper to make database operations easy"""
 
     def __init__(self, host='localhost', port=27017,

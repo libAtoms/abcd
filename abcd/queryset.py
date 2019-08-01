@@ -4,5 +4,5 @@ from abc import ABCMeta
 logger = logging.getLogger(__name__)
 
 
-class QuerySet(metaclass=ABCMeta):
+class AbstractQuerySet(metaclass=ABCMeta):
     pass

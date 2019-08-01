@@ -8,7 +8,7 @@ from ase.calculators.singlepoint import SinglePointCalculator
 logger = logging.getLogger(__name__)
 
 
-class AtomsModel(dict):
+class AbstractModel(dict):
 
     @classmethod
     def from_atoms(cls, atoms: Atoms, extra_info=None, **kwargs):

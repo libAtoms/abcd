@@ -4,8 +4,10 @@ from abcd import ABCD
 
 from abcd.frontends.cli.config import Config
 from abcd.frontends.cli.styles import SimpleStyle, FancyStyle
+from abcd.parsers.queries import QueryParser
 
 logger = logging.getLogger(__name__)
+parser = QueryParser()
 
 
 def init_style(func):
@@ -44,10 +46,14 @@ def init_db(func):
 
         db = ABCD.from_url(url=url)
 
+        # TODO: clean this part
+        # TODO: resturn with a new object (ASTDict)
         default_query = kwargs.pop('default_query', [])
         query = kwargs.pop('query', [])
         q = default_query if default_query else []
         q += query if query else []
+
+        q = parser.parse(q)
 
         func(*args, db=db, query=q, **kwargs)
 

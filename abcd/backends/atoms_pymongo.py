@@ -14,7 +14,6 @@ from abcd.model import AbstractModel
 from abcd.database import AbstractABCD
 from abcd.queryset import AbstractQuerySet
 
-from abcd.parsers.queries import QueryParser
 from abcd.parsers.arguments import key_val_str_to_dict
 
 from pymongo import MongoClient
@@ -23,10 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 class AtomsModel(AbstractModel):
-    pass
-
-
-class QuerySet(AbstractQuerySet):
     pass
 
 
@@ -92,10 +87,10 @@ class QuerySet(AbstractQuerySet):
 #             cls.pre_save_post_validation(sender, document, **kwargs)
 #
 
-class MongoQuery(object):
+class MongoQuery(AbstractQuerySet):
 
     def __init__(self):
-        self.parser = QueryParser()
+        pass
 
     def visit(self, syntax_tree):
         op, *args = syntax_tree
@@ -205,10 +200,8 @@ class MongoQuery(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    def __call__(self, string):
-        ast = self.parser.parse(string)
+    def __call__(self, ast):
         logger.info('parsed ast: {}'.format(ast))
-
         return self.visit(ast) if ast else {}
 
 

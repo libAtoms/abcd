@@ -2,8 +2,8 @@ import logging
 
 from abcd import ABCD
 
-from abcd.frontends.cli.config import Config
-from abcd.frontends.cli.styles import SimpleStyle, FancyStyle
+from abcd.frontends.commandline.config import Config
+from abcd.frontends.commandline.styles import SimpleStyle, FancyStyle
 from abcd.parsers.queries import QueryParser
 
 logger = logging.getLogger(__name__)

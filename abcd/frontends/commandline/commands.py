@@ -1,5 +1,5 @@
 import logging
-from abcd.frontends.cli.decorators import init_style, init_db, init_config, check_readonly
+from abcd.frontends.commandline.decorators import init_style, init_db, init_config, check_readonly
 
 logger = logging.getLogger(__name__)
 

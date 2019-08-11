@@ -1,6 +1,6 @@
 import logging
 from argparse import ArgumentParser
-from abcd.frontends.cli import commands
+from abcd.frontends.commandline import commands
 
 logger = logging.getLogger(__name__)
 

@@ -23,6 +23,6 @@ setup(
     },
     test_require=['mongomock'],
     entry_points={
-        'console_scripts': ['abcd=abcd.frontends.cli:main']
+        'console_scripts': ['abcd=abcd.frontends.commandline:main']
     },
 )

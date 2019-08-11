@@ -51,11 +51,20 @@ grammar = r"""
 
 
 class TreeToAST(Transformer):
-    pass
+    def start(self, s):
+        return s[1:-1].replace('\\"', '"')
 
 
-# parser = Lark(grammar, parser='lalr', lexer='contextual', transformer=TreeToAST(), debug=False)
-parser = Lark(grammar, debug=False)
+class Parser:
+    parser = Lark(grammar)
+
+    # parser = Lark(grammar, parser='lalr', lexer='contextual', transformer=TreeToAST(), debug=False)
+
+    def parse(self, string):
+        return self.parser.parse(string)
+
+
+parser = Parser()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

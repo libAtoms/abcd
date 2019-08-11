@@ -4,10 +4,9 @@ from abcd import ABCD
 
 from abcd.frontends.commandline.config import Config
 from abcd.frontends.commandline.styles import SimpleStyle, FancyStyle
-from abcd.parsers.queries import QueryParser
+from abcd.parsers.queries import parser
 
 logger = logging.getLogger(__name__)
-parser = QueryParser()
 
 
 def init_style(func):
@@ -53,7 +52,8 @@ def init_db(func):
         q = default_query if default_query else []
         q += query if query else []
 
-        q = parser.parse(q)
+        if q:
+            q = parser.parse(q)
 
         func(*args, db=db, query=q, **kwargs)
 

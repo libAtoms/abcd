@@ -14,7 +14,7 @@ from abcd.model import AbstractModel
 from abcd.database import AbstractABCD
 from abcd.queryset import AbstractQuerySet
 
-from abcd.parsers.arguments import key_val_str_to_dict
+from abcd.parsers.extras_fallback import key_val_str_to_dict
 
 from pymongo import MongoClient
 

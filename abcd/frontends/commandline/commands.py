@@ -7,11 +7,11 @@ logger = logging.getLogger(__name__)
 @init_config
 def login(*, config, name, url, **kwargs):
     logger.info('login args: \nconfig:{}, name:{}, url:{}, kwargs:{}'.format(config, name, url, kwargs))
-    from abcd import from_url
+    from abcd import ABCD
     from abcd.errors import URLError, AuthenticationError
 
     try:
-        db = from_url(url=url)
+        db = ABCD.from_url(url=url)
         info = db.info()
 
         config['url'] = url

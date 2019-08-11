@@ -4,39 +4,11 @@ from lark.exceptions import LarkError
 
 logger = logging.getLogger(__name__)
 
-grammar = r"""
-    start: expression
-    expression: [expression CONJUNCTION] term
-    term: [term CONJUNCTION] atom | "(" [term CONJUNCTION] term ")"
-
-    atom: [NOT] comparison 
-
-    comparison: VALUE OPERATOR VALUE | VALUE OPERATOR "'" combined "'"
-
-    OPERATOR: /<=?|>=?|!?=/
-
-    combined: (VALUE ",")* VALUE
-
-    VALUE: CNAME | SIGNED_FLOAT | SIGNED_INT | ESCAPED_STRING
-
-    CONJUNCTION: AND | OR 
-    AND: /and/i 
-    OR: /or/i 
-    NOT: /not/i
-
-    %import common.CNAME
-    %import common.SIGNED_FLOAT
-    %import common.SIGNED_INT
-    %import common.ESCAPED_STRING
-    %import common.WS_INLINE
-    %ignore WS_INLINE
-"""
-
 # https://github.com/lark-parser/lark/blob/master/examples/calc.py
 # https://github.com/Materials-Consortia/optimade-python-tools/tree/master/optimade/grammar
 
 grammar = r"""
-    start: expression 
+    start: expression |
     //expression: [ NOT ] NAME  [ OPERATOR value ] [ conjunction expression ]
     expression: [ NOT ] ( NAME | sum ) [ OPERATOR ( value | sum ) ] [ conjunction expression ] 
               | [ NOT ] ( value | sum ) [ REVERSED ( NAME | sum ) ] [ conjunction expression ]
@@ -111,3 +83,6 @@ if __name__ == '__main__':
     for query in queries:
         print(query)
         print(parser.parse(query).pretty())
+
+    # if '':
+    print(parser.parse(''))

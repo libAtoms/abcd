@@ -1,10 +1,6 @@
 import unittest
 
 
-# from collections import namedtuple
-# TestPair = namedtuple('TestPair', ['string', 'expected'])
-
-
 class ParsingExtras(unittest.TestCase):
     """Testing extra argument parser """
 
@@ -151,34 +147,54 @@ class ParsingExtras(unittest.TestCase):
 
 class ParsingQueries(unittest.TestCase):
 
-    def test_regexp(self):
-        s = (
-            'formula~.*H',
-        )
-        pass
+    def setUp(self):
+        from abcd.parsers.queries import parser
+        self.parser = parser
 
     def test_operators(self):
+        """Operators"""
         s = (
-            'aa & bb > 23 & bb > 23 & bb > 23 ',
-            'aa bb > 23 ',
-            'aa & bb > 23.54 | (22 in cc & dd)',
-            'aa and bb > 23.54 or (22 in cc and dd)',
-            'aa and (bb > 23.54 or (22 in cc and dd))',
-            'variable = "some string"',
+            ('single', {}),
+            ('operator_gt > 23 ', {}),
+            ('string = "some string"', {}),
+            ('regexp ~ ".*H"', {}),
         )
-        pass
+        for string, expected in s:
+            with self.subTest(string=string):
+                self.parser.parse(string)
 
-    def test_array(self):
+    def test_combination(self):
+        """Combinations"""
         s = (
-            'aa = [True True True]',
+            ('aa & not bb', {}),
+            ('aa & bb > 23.54 | cc & dd', {}),
+            ('aa and bb > 23 and bb > 23 and bb > 23 ', {}),
+            ('aa and bb > 23.54 or 22 in cc and dd', {}),
         )
-        pass
+        for string, expected in s:
+            with self.subTest(string=string):
+                self.parser.parse(string)
 
-    # @unittest.expectedFailure
-    # @unittest.skip("known issues / future features ")
+    def test_expressions(self):
+        """Complex expressions and functions"""
+        s = (
+            ('expression = (bb/3-1)*cc', {}),
+            ('energy/n_atoms > 3', {}),
+            ('all(aa) > 3', {}),
+            ('any(aa) > 3', {}),
+        )
+        for string, expected in s:
+            with self.subTest(string=string):
+                self.parser.parse(string)
+
+    @unittest.skip("known issues / future features ")
     def test_missing(self):
         s = (
-            'aa-bb > 23 ',
+            ('1=3', {}),
+            ('aa = [True True True]', {}),
+            ('aa & bb > 23.54 | (22 in cc & dd)', {}),
+            ('aa and bb > 23.54 or (22 in cc and dd)', {}),
+            ('aa and (bb > 23.54 or (22 in cc and dd))', {}),
         )
 
 

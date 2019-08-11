@@ -1,6 +1,5 @@
 import re
 import numpy as np
-from ase.utils import basestring
 
 UNPROCESSED_KEYS = ['uid']
 
@@ -97,7 +96,7 @@ def key_val_str_to_dict(string, sep=None):
 
             # Parse boolean values: 'T' -> True, 'F' -> False,
             #                       'T T F' -> [True, True, False]
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 str_to_bool = {'T': True, 'F': False}
 
                 try:
@@ -116,7 +115,6 @@ def key_val_str_to_dict(string, sep=None):
 
 
 if __name__ == '__main__':
-
     # Complex properties line. Keys and values that break with a regex parser.
     # see https://gitlab.com/ase/ase/issues/53 for more info
 

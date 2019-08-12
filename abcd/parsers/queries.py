@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 grammar = r"""
     ?start: expression | 
-    ?expression: (negation | single_expression | reversed_expression | grouped_expression) [ relation expression ] 
+    ?expression: (negation | single_expression | reversed_expression | grouped_expression) [ relation expression | expression ] 
 
     single_expression:   ( NAME | function ) [ operators value ]
     reversed_expression: value reversed_operators NAME  
@@ -57,8 +57,9 @@ grammar = r"""
     all: "all" "(" NAME ")" 
     any: "any" "(" NAME ")"
 
-     
-    %import common.CNAME          -> NAME
+    NAME : /(?!and\b)/ CNAME
+
+    %import common.CNAME          
     %import common.SIGNED_FLOAT   -> FLOAT
     %import common.SIGNED_INT     -> INT
     %import common.ESCAPED_STRING -> STRING
@@ -85,12 +86,16 @@ class TreeToAST(Transformer):
 
     def single_expression(self, items):
 
+        # without any operator and value
+        # items: [name]
         if len(items) == 1:
             return {str(items[0]): {'EXISTS': True}}
 
         if len(items) != 3:
             raise NotImplementedError
 
+        # with operator and value
+        # items: [name operator value]
         return {str(items[0]): {items[1].type: items[2]}}
 
     def reversed_expression(self, items):
@@ -98,6 +103,8 @@ class TreeToAST(Transformer):
         if len(items) != 3:
             raise NotImplementedError
 
+        # with operator and value
+        # items: [value operator name]
         return {str(items[2]): {items[1].type: items[0]}}
 
     def grouped_expression(self, items):
@@ -107,10 +114,17 @@ class TreeToAST(Transformer):
         return {k: {s[0].type: v} for k, v in s[1].items()}
 
     def expression(self, items):
+        logger.debug('in:  {}'.format(items))
+
+        # without using explicit relation key (AND)
+        if len(items) == 2:
+            logger.debug('out: {}'.format({'AND': [items[0], items[1]]}))
+            return {'AND': [items[0], items[1]]}
 
         if len(items) != 3:
             raise NotImplementedError
 
+        logger.debug('out: {}'.format({items[1].type: [items[0], items[2]]}))
         return {items[1].type: [items[0], items[2]]}
 
 
@@ -127,6 +141,7 @@ parser = Parser()
 transformer = TreeToAST()
 
 if __name__ == '__main__':
+    # logging.basicConfig(level=logging.DEBUG)
     logging.basicConfig(level=logging.INFO)
 
     queries = (
@@ -139,11 +154,15 @@ if __name__ == '__main__':
         'regexp ~ ".*H"',
         'aa & not bb',
         'aa & bb > 23.54 | cc & dd',
-        'aa and bb > 23 and bb > 23 and bb > 23 ',
-        'aa and bb > 23.54 or 22 in cc and dd',
-        'aa & bb > 23.54 | (22 in cc & dd)',
-        'aa and bb > 23.54 or (22 in cc and dd)',
-        'aa and not (bb > 23.54 or (22 in cc and dd))',
+        'aa bb > 22 cc > 33 dd > 44 ',
+        'aa and bb > 22 and cc > 33 and dd > 44 ',
+        '((aa and bb > 22) and cc > 33) and dd > 44 ',
+        '(aa and bb > 22) and (cc > 33 and dd > 44) ',
+        '(aa and bb > 22 and cc > 33 and dd > 44) ',
+        # 'aa and bb > 23.54 or 22 in cc and dd',
+        # 'aa & bb > 23.54 | (22 in cc & dd)',
+        # 'aa and bb > 23.54 or (22 in cc and dd)',
+        # 'aa and not (bb > 23.54 or (22 in cc and dd))',
         # # 'expression = (bb/3-1)*cc',
         # # 'energy/n_atoms > 3',
         # '1=3',
@@ -154,12 +173,12 @@ if __name__ == '__main__':
     )
 
     for query in queries:
-        # print(query)
+        logger.info(query)
 
         # print(parser.parse(query).pretty())
         try:
             tree = parser.parse(query)
-            # print('=> tree:', tree)
-            print('==> ast:', transformer.transform(tree))
+            logger.debug('=> tree: {}'.format(tree))
+            logger.info('==> ast: {}'.format(transformer.transform(tree)))
         except LarkError:
             raise NotImplementedError

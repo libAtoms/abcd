@@ -1,5 +1,9 @@
 import logging
-from abcd.frontends.commandline.decorators import init_style, init_db, init_config, check_readonly
+
+import os
+import numpy as np
+
+from abcd.frontends.commandline.decorators import init_db, init_config, check_readonly
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +81,7 @@ def upload(*, db, path, extra_info, **kwargs):
 
 @init_config
 @init_db
-@init_style
-def summary(*, db, query, print_all, bins, truncate, style, props, **kwargs):
+def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
     logger.info('summary\n kwargs: {}'.format(kwargs))
     logger.info('query: {}'.format(query))
 
@@ -100,106 +103,107 @@ def summary(*, db, query, print_all, bins, truncate, style, props, **kwargs):
 
         logging.info('property list: {}'.format(props_list))
 
-    with style as f:
+    f = SimpleStyle()
+    if props_list is None:
 
-        if props_list is None:
+        total = db.count(query)
+        props = db.count_properties(query=query)
 
-            total = db.count(query)
-            print('Total number of configurations: {}'.format(total))
+        print('Total number of configurations: {}'.format(total))
 
-            props = db.count_properties(query=query)
+        if props['arrays']:
+            f.title('Properties')
+            f.h1('Arrays (per atom properties)')
 
-            if props['arrays']:
-                f.title('Properties')
-                f.h1('Arrays (per atom properties)')
+            labels, counts = [], []
+            for k in sorted(props['arrays'], key=str.lower):
+                labels.append(k)
+                counts.append(props['arrays'][k]['count'])
 
-                labels, counts = [], []
-                for k in sorted(props['arrays'], key=str.lower):
-                    labels.append(k)
-                    counts.append(props['arrays'][k]['count'])
+            f.hist({
+                'type': 'hist_labels',
+                'labels': labels,
+                'counts': counts
+            })
 
-                f.hist({
-                    'type': 'hist_labels',
-                    'labels': labels,
-                    'counts': counts
-                })
+        if props['info']:
+            f.h1('Infos (properties of the whole configuration)')
 
-            if props['info']:
-                f.h1('Infos (properties of the whole configuration)')
+            labels, counts = [], []
+            for k in sorted(props['info'], key=str.lower):
+                labels.append(k)
+                counts.append(props['info'][k]['count'])
 
-                labels, counts = [], []
-                for k in sorted(props['info'], key=str.lower):
-                    labels.append(k)
-                    counts.append(props['info'][k]['count'])
+            f.hist({
+                'type': 'hist_labels',
+                'labels': labels,
+                'counts': counts
+            })
 
-                f.hist({
-                    'type': 'hist_labels',
-                    'labels': labels,
-                    'counts': counts
-                })
+        if props['derived']:
+            f.h1('Derived')
 
-            if props['derived']:
-                f.h1('Derived')
+            labels, counts = [], []
+            for k in sorted(props['derived'], key=str.lower):
+                labels.append(k)
+                counts.append(props['derived'][k]['count'])
 
-                labels, counts = [], []
-                for k in sorted(props['derived'], key=str.lower):
-                    labels.append(k)
-                    counts.append(props['derived'][k]['count'])
+            f.hist({
+                'type': 'hist_labels',
+                'labels': labels,
+                'counts': counts
+            })
 
-                f.hist({
-                    'type': 'hist_labels',
-                    'labels': labels,
-                    'counts': counts
-                })
+    elif props_list == '*':
+        props = db.properties(query=query)
 
-        elif props_list == '*':
-            props = db.properties(query=query)
+        for p in props['arrays']:
+            name = 'arrays.' + p
+            data = db.hist(name, query=query, bins=bins, truncate=truncate)
 
-            for p in props['arrays']:
-                name = 'arrays.' + p
-                data = db.hist(name, query=query, bins=bins, truncate=truncate)
-                f.title(name)
-                if data:
-                    f.describe(data)
-                    f.hist(data)
+            f.title(name)
+            if data:
+                f.describe(data)
+                f.hist(data)
 
-            for p in props['info']:
-                name = 'info.' + p
-                data = db.hist(name, query=query, bins=bins, truncate=truncate)
+        for p in props['info']:
+            name = 'info.' + p
+            data = db.hist(name, query=query, bins=bins, truncate=truncate)
 
-                f.title(name)
-                if data:
-                    f.describe(data)
-                    f.hist(data)
-        else:
-            for p in props_list:
-                data = db.hist('arrays.' + p, query=query, bins=bins, truncate=truncate)
+            f.title(name)
+            if data:
+                f.describe(data)
+                f.hist(data)
 
-                if data:
-                    f.title('arrays.' + p)
-                    f.describe(data)
-                    f.hist(data)
+    else:
+        for p in props_list:
+            data = db.hist('arrays.' + p, query=query, bins=bins, truncate=truncate)
 
-                data = db.hist('info.' + p, query=query, bins=bins, truncate=truncate)
+            if data:
+                f.title('arrays.' + p)
+                f.describe(data)
+                f.hist(data)
 
-                if data:
-                    f.title('info.' + p)
-                    f.describe(data)
-                    f.hist(data)
+            data = db.hist('info.' + p, query=query, bins=bins, truncate=truncate)
 
-                data = db.hist('derived.' + p, query=query, bins=bins, truncate=truncate)
+            if data:
+                f.title('info.' + p)
+                f.describe(data)
+                f.hist(data)
 
-                if data:
-                    f.title('derived.' + p)
-                    f.describe(data)
-                    f.hist(data)
+            data = db.hist('derived.' + p, query=query, bins=bins, truncate=truncate)
+
+            if data:
+                f.title('derived.' + p)
+                f.describe(data)
+                f.hist(data)
 
 
 @check_readonly
 @init_config
 @init_db
 def key_add(*, db, query, keys, **kwargs):
-    from abcd.parsers.arguments import key_val_str_to_dict
+    from abcd.parsers.extras_fallback import key_val_str_to_dict
 
     data = key_val_str_to_dict(' '.join(keys))
 
@@ -246,3 +250,100 @@ def execute(*, db, query, yes, python_code, **kwargs):
         exit(1)
 
     db.exec(python_code, query)
+
+
+class SimpleStyle(object):
+    partialBlocks = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]  # char=pb
+
+    def __init__(self, width=80):
+        self.width = width
+
+    def title(self, title):
+        # template = '{{:=^{self.width}}}'
+        # title = self._trunc(title, self.width - 4)
+        # print('', template.format(' ' + title + ' '), sep=os.linesep)
+        print('')
+
+    def h1(self, title):
+        title = self._trunc(title, self.width)
+        print('', title, '=' * len(title), sep=os.linesep)
+
+    def h2(self, title):
+        title = self._trunc(title, self.width)
+        print('', title, '-' * len(title), sep=os.linesep)
+
+    def describe(self, data):
+        if data['type'] == 'hist_float':
+            print('{}  count: {} '.format(data["name"], sum(data["counts"])),
+                  'min: {:.8g} med: {:.8g} max: {:.8g}  '.format(data["min"], data["median"], data["max"]),
+                  'std: {:.8g} var:{:.8g}'.format(data["std"], data["var"])
+                  )
+
+        elif data['type'] == 'hist_int':
+            print('{}  count: {} '.format(data["name"], sum(data["counts"])),
+                  'min: {:d} med: {:d} max: {:d}  '.format(int(data["min"]), int(data["median"]), int(data["max"]))
+                  )
+
+        elif data['type'] == 'hist_str':
+            print('{} count: {} unique: {}'.format(data["name"], data["total"], data["unique"]))
+
+        else:
+            pass
+
+    def hist(self, data: dict, width_hist=40):
+        if data['type'] == 'hist_float':
+            bin_edges = data['edges']
+
+            ratio = width_hist / max(data['counts'])
+            width_count = len(str(max(data['counts'])))
+
+            for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
+                scale = int(ratio * count)
+                self.print('{:<{}} {:>{}d} [{:.4e}, {:.4e})'.format(
+                    "▉" * scale, width_hist,
+                    count, width_count,
+                    lower, upper))
+
+        elif data['type'] == 'hist_int':
+            bin_edges = data['edges']
+
+            ratio = width_hist / max(data['counts'])
+            width_count = len(str(max(data['counts'])))
+
+            for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
+                scale = int(ratio * count)
+                self.print('{:<{}} {:>{}d} [{:d}, {:d})'.format(
+                    "▉" * scale, width_hist,
+                    count, width_count,
+                    np.ceil(lower).astype(int), np.floor(upper).astype(int)))
+
+        elif data['type'] == 'hist_str':
+            remain = data['total'] - sum(data['counts'])
+            if remain > 0:
+                data['counts'] = (*data['counts'], remain)
+                data['labels'] = (*data['labels'], '...')
+
+            width_count = len(str(max(data['counts'])))
+            ratio = width_hist / max(data['counts'])
+            for label, count in zip(data['labels'], data['counts']):
+                scale = int(ratio * count)
+                self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
+
+        elif data['type'] == 'hist_labels':
+
+            width_count = len(str(max(data['counts'])))
+            ratio = width_hist / max(data['counts'])
+            for label, count in zip(data['labels'], data['counts']):
+                scale = int(ratio * count)
+                self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
+
+        else:
+            pass
+
+    @staticmethod
+    def print(*args, **kwargs):
+        print(*args, **kwargs)
+
+    def _trunc(self, text, width=None):
+        width = width if width else self.width
+        return text if len(text) < width else text[:width - 3] + '...'

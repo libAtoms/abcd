@@ -3,27 +3,9 @@ import logging
 from abcd import ABCD
 
 from abcd.frontends.commandline.config import Config
-from abcd.frontends.commandline.styles import SimpleStyle, FancyStyle
 from abcd.parsers.queries import parser
 
 logger = logging.getLogger(__name__)
-
-
-def init_style(func):
-    def wrapper(*args, **kwargs):
-
-        style_str = kwargs.pop('style')
-        if style_str == 'simple':
-            style = SimpleStyle()
-        elif style_str == 'fancy':
-            style = FancyStyle()
-        else:
-            print('The style "{}" is not implemented!'.format(style_str))
-            exit(1)
-
-        func(*args, style=style, **kwargs)
-
-    return wrapper
 
 
 def init_config(func):

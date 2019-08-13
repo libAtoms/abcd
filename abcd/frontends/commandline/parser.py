@@ -6,7 +6,6 @@ logger = logging.getLogger(__name__)
 
 parser = ArgumentParser(description='Command line interface for ABCD database')
 parser.add_argument('-v', '--verbose', help='Enable verbose mode', action='store_true')
-parser.add_argument('-s', '--style', help='style [simple, fancy]', default='simple')
 parser.add_argument('-q', '--query', dest='default_query', action='append', help='Filtering extra quantities')
 
 parser.add_argument('--read-only', help='Disables all the functions which would modify the database',

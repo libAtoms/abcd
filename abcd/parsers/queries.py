@@ -1,6 +1,7 @@
 import logging
 from lark import Lark, Transformer, v_args
 from lark.exceptions import LarkError
+from abcd.queryset import Query
 
 logger = logging.getLogger(__name__)
 
@@ -8,7 +9,7 @@ logger = logging.getLogger(__name__)
 # https://github.com/Materials-Consortia/optimade-python-tools/tree/master/optimade/grammar
 
 grammar = r"""
-    ?start: expression | 
+    start: expression | 
     ?expression: (negation | single_expression | reversed_expression | grouped_expression) [ relation expression | expression ] 
 
     single_expression:   ( NAME | function ) [ operators value ]
@@ -70,8 +71,12 @@ grammar = r"""
 
 
 class TreeToAST(Transformer):
-    def start(self, _):
-        return None
+    def start(self, s):
+
+        if not s:
+            return Query()
+
+        return Query(s[0])
 
     int = v_args(inline=True)(int)
     float = v_args(inline=True)(float)
@@ -131,8 +136,6 @@ class TreeToAST(Transformer):
 class Parser:
     parser = Lark(grammar)
 
-    # parser = Lark(grammar, parser='lalr', lexer='contextual', transformer=TreeToAST(), debug=False)
-
     def parse(self, string):
         return self.parser.parse(string)
 
@@ -159,10 +162,10 @@ if __name__ == '__main__':
         '((aa and bb > 22) and cc > 33) and dd > 44 ',
         '(aa and bb > 22) and (cc > 33 and dd > 44) ',
         '(aa and bb > 22 and cc > 33 and dd > 44) ',
-        # 'aa and bb > 23.54 or 22 in cc and dd',
-        # 'aa & bb > 23.54 | (22 in cc & dd)',
-        # 'aa and bb > 23.54 or (22 in cc and dd)',
-        # 'aa and not (bb > 23.54 or (22 in cc and dd))',
+        'aa and bb > 23.54 or 22 in cc and dd',
+        'aa & bb > 23.54 | (22 in cc & dd)',
+        'aa and bb > 23.54 or (22 in cc and dd)',
+        'aa and not (bb > 23.54 or (22 in cc and dd))',
         # # 'expression = (bb/3-1)*cc',
         # # 'energy/n_atoms > 3',
         # '1=3',

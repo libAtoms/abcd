@@ -27,17 +27,25 @@ def init_db(func):
 
         db = ABCD.from_url(url=url)
 
-        # TODO: clean this part
-        # TODO: resturn with a new object (ASTDict)
-        default_query = kwargs.pop('default_query', [])
-        query = kwargs.pop('query', [])
-        q = default_query if default_query else []
-        q += query if query else []
+        # TODO: AST.from_string() ?!
+        # TODO: parser should accept list
+        # TODO: better ast optimisation
 
-        if q:
-            q = parser.parse(q)
+        query_list = []
+        for q in kwargs.pop('default_query', []):
+            query_list.append(parser(q))
 
-        func(*args, db=db, query=q, **kwargs)
+        for q in kwargs.pop('query', []):
+            query_list.append(parser(q))
+
+        if not query_list:
+            query = None
+        elif len(query_list) == 1:
+            query = query_list[0]
+        else:
+            query = ('AND', *query_list)
+
+        func(*args, db=db, query=query, **kwargs)
 
     return wrapper
 

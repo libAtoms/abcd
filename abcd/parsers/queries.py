@@ -25,7 +25,7 @@ grammar = r"""
               | GTE
               | LT
               | LTE
-              | REGEXP
+              | RE
 
         ?relation_ops: AND 
                  | OR 
@@ -42,7 +42,7 @@ grammar = r"""
     GTE:      ">=" 
     LT:       "<" 
     LTE:      "<="
-    REGEXP:   "~"     
+    RE:       "~"     
     IN:       "in"
 
 
@@ -71,13 +71,6 @@ grammar = r"""
 
     %ignore WS_INLINE
 """
-
-
-class Parser:
-    parser = Lark(grammar, start='statement')
-
-    def parse(self, string):
-        return self.parser.parse(string)
 
 
 @v_args(inline=True)
@@ -123,8 +116,18 @@ class TreeTransformer(Transformer):
         return operator.type, expression
 
 
+class Parser:
+    parser = Lark(grammar, start='statement')
+    transformer = TreeTransformer()
+
+    def parse(self, string):
+        return self.parser.parse(string)
+
+    def __call__(self, string):
+        return self.transformer.transform(self.parse(string))
+
+
 parser = Parser()
-transformer = TreeTransformer()
 
 if __name__ == '__main__':
     # logging.basicConfig(level=logging.DEBUG)
@@ -165,6 +168,6 @@ if __name__ == '__main__':
         try:
             tree = parser.parse(query)
             logger.info('=> tree: {}'.format(tree))
-            logger.info('==> ast: {}'.format(transformer.transform(tree)))
+            logger.info('==> ast: {}'.format(parser(query)))
         except LarkError:
             raise NotImplementedError

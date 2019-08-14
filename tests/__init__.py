@@ -1,7 +1,5 @@
 import unittest
-# from .basic import TestStringMethods
-# from .parsers import ParsingQueries , ParsingExtras
+from .parsers import ParsingQueries, ParsingExtras
 
 if __name__ == '__main__':
-    unittest.main(module='basic', verbosity=1, exit=False)
-    unittest.main(module='parsers', verbosity=1, exit=False)
+    unittest.main(verbosity=1, exit=False)

@@ -142,7 +142,7 @@ class ParsingExtras(unittest.TestCase):
             'not_array="1.2 3.4 text"',
             'not_bool_array=[T F S]',
         )
-        pass
+        print(s)
 
 
 class ParsingQueries(unittest.TestCase):
@@ -197,6 +197,7 @@ class ParsingQueries(unittest.TestCase):
             ('aa and bb > 23.54 or (22 in cc and dd)', {}),
             ('aa and (bb > 23.54 or (22 in cc and dd))', {}),
         )
+        print(s)
 
 
 if __name__ == '__main__':

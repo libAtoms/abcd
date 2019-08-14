@@ -1,0 +1,4 @@
+ase
+numpy
+lark
+pymongo

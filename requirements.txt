@@ -1,4 +1,4 @@
 ase
 numpy
-lark
+lark-parser
 pymongo

@@ -13,8 +13,7 @@ from ase.io import iread
 from abcd.model import AbstractModel
 from abcd.database import AbstractABCD
 from abcd.queryset import AbstractQuerySet
-
-from abcd.parsers.extras_fallback import key_val_str_to_dict
+from abcd.parsers import extras
 
 from pymongo import MongoClient
 
@@ -258,7 +257,7 @@ class MongoDatabase(AbstractABCD):
     def push(self, atoms: Union[Atoms, Iterable], extra_info=None):
 
         if extra_info and isinstance(extra_info, str):
-            extra_info = key_val_str_to_dict(extra_info)
+            extra_info = extras.parser.parse(extra_info)
 
         if isinstance(atoms, Atoms):
             data = AtomsModel.from_atoms(atoms, extra_info)
@@ -269,8 +268,9 @@ class MongoDatabase(AbstractABCD):
 
     def upload(self, file, extra_info=None):
 
+        # TODO: avoiding join
         if extra_info:
-            extra_info = key_val_str_to_dict(' '.join(extra_info))
+            extra_info = extras.parser.parse(' '.join(extra_info))
         else:
             extra_info = {}
 

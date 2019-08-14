@@ -203,9 +203,10 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 @init_config
 @init_db
 def key_add(*, db, query, keys, **kwargs):
-    from abcd.parsers.extras_fallback import key_val_str_to_dict
+    from abcd.parsers.extras import parser
 
-    data = key_val_str_to_dict(' '.join(keys))
+    # TODO: avoiding join
+    data = parser.parse(' '.join(keys))
 
     if db.count(query=query + [' or '.join(data.keys())]):
         print('The new key already exist for the given query! '

@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 parser = ArgumentParser(description='Command line interface for ABCD database')
 parser.add_argument('-v', '--verbose', help='Enable verbose mode', action='store_true')
-parser.add_argument('-q', '--query', dest='default_query', action='append', help='Filtering extra quantities')
+parser.add_argument('-q', '--query', dest='default_query', action='append', help='Filtering extra quantities', default=[])
 
 parser.add_argument('--read-only', help='Disables all the functions which would modify the database',
                     action='store_true')
@@ -22,7 +22,7 @@ login_parser.add_argument(dest='url',
 
 download_parser = subparsers.add_parser('download', help='download data from the database')
 download_parser.set_defaults(callback_func=commands.download)
-download_parser.add_argument('-q', '--query', action='append', help='Filtering extra quantities')
+download_parser.add_argument('-q', '--query', action='append', help='Filtering extra quantities', default=[])
 download_parser.add_argument(dest='filename', help='name of the file to store the configurations')
 
 upload_parser = subparsers.add_parser('upload', help='upload any ase supported files to the database')
@@ -32,7 +32,7 @@ upload_parser.set_defaults(callback_func=commands.upload)
 
 summary_parser = subparsers.add_parser('summary', help='Discovery mode')
 summary_parser.set_defaults(callback_func=commands.summary)
-summary_parser.add_argument('-q', '--query', action='append', help='Filtering extra quantities')
+summary_parser.add_argument('-q', '--query', action='append', help='Filtering extra quantities', default=[])
 summary_parser.add_argument('-p', '--props', action='append',
                             help='Selecting properties for detailed description')
 summary_parser.add_argument('-a', '--all',
@@ -45,31 +45,31 @@ summary_parser.add_argument('-t', '--trunc',
 
 delete_parser = subparsers.add_parser('delete', help='Delete configurations from the database')
 delete_parser.set_defaults(callback_func=commands.delete)
-delete_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
+delete_parser.add_argument('-q', '--query', action='append', help='Filtering by a query', default=[])
 delete_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
 
 key_add_parser = subparsers.add_parser('add-key', help='Adding new key value pairs for a given query')
 key_add_parser.set_defaults(callback_func=commands.key_add)
-key_add_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
+key_add_parser.add_argument('-q', '--query', action='append', help='Filtering by a query', default=[])
 key_add_parser.add_argument('-y', '--yes', action='store_true', help='Overwrite?')
 key_add_parser.add_argument('keys', help='keys(=value) pairs', nargs='+')
 
 key_rename_parser = subparsers.add_parser('rename-key', help='Rename a specific keys for a given query')
 key_rename_parser.set_defaults(callback_func=commands.key_rename)
-key_rename_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
+key_rename_parser.add_argument('-q', '--query', action='append', help='Filtering by a query', default=[])
 key_rename_parser.add_argument('-y', '--yes', action='store_true', help='Overwrite?')
 key_rename_parser.add_argument('old_keys', help='name of the old key')
 key_rename_parser.add_argument('new_keys', help='new name of the key')
 
 key_delete_parser = subparsers.add_parser('delete-key', help='Delete all the keys for a given query')
 key_delete_parser.set_defaults(callback_func=commands.key_delete)
-key_delete_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
+key_delete_parser.add_argument('-q', '--query', action='append', help='Filtering by a query', default=[])
 key_delete_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual deletion.')
 key_delete_parser.add_argument('keys', help='keys(=value) data', nargs='+')
 
 exec_parser = subparsers.add_parser('exec', help='Running custom python code')
 exec_parser.set_defaults(callback_func=commands.execute)
-exec_parser.add_argument('-q', '--query', action='append', help='Filtering by a query')
+exec_parser.add_argument('-q', '--query', action='append', help='Filtering by a query', default=[])
 exec_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual execution.')
 exec_parser.add_argument('python_code', help='Selecting properties for detailed description')
 
@@ -96,6 +96,7 @@ def main(args=None):
 
 
 if __name__ == '__main__':
+    main('summary -q formula~"Si2"'.split())
     main()
     main('-v login mongodb://mongoadmin:secret@localhost:27017/abcd'.split())
     main('-v summary'.split())

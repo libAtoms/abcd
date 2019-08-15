@@ -18,7 +18,7 @@ class AbstractModel(dict):
 
         # TODO: extra_info should go to update method
 
-        reserved_keys = {'n_atoms', 'cell', '_derived', 'calculator_name', 'calculator_parameters'}
+        reserved_keys = {'n_atoms', 'cell', 'derived', 'calculator_name', 'calculator_parameters'}
         arrays_keys = set(atoms.arrays.keys())
         info_keys = set(atoms.info.keys())
         results_keys = set(atoms.calc.results.keys()) if atoms.calc else {}
@@ -60,7 +60,7 @@ class AbstractModel(dict):
                         info_keys.update(key)
                     dct[key] = value.tolist()
 
-        dct['_derived'] = {
+        dct['derived'] = {
             'elements': Counter(atoms.get_chemical_symbols()),
             'arrays_keys': list(arrays_keys),
             'info_keys': list(info_keys),
@@ -72,9 +72,9 @@ class AbstractModel(dict):
     def to_atoms(self):
         # TODO: Proper initialisation fo Calculators
 
-        arrays_keys = self['_derived']['arrays_keys']
-        info_keys = self['_derived']['info_keys']
-        results_keys = self['_derived']['results_keys']
+        arrays_keys = self['derived']['arrays_keys']
+        info_keys = self['derived']['info_keys']
+        results_keys = self['derived']['results_keys']
 
         cell = self.pop('cell', None)
         pbc = self.pop('pbc', None)

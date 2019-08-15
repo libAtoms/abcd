@@ -19,11 +19,10 @@ class AbstractModel(dict):
         reserved_keys = {'n_atoms', 'cell', 'derived', 'calculator_name', 'calculator_parameters'}
         arrays_keys = set(atoms.arrays.keys())
         info_keys = set(atoms.info.keys())
-        results_keys = set(atoms.calc.results.keys()) if atoms.calc else {}
 
-        # all_keys = (reserved_keys, arrays_keys, info_keys, results_keys)
-        # if len(set.union(*all_keys)) != sum(map(len, all_keys)):
-        #     raise ValueError('All the keys must be unique!')
+        all_keys = (reserved_keys, arrays_keys, info_keys)
+        if len(set.union(*all_keys)) != sum(map(len, all_keys)):
+            raise ValueError('All the keys must be unique!')
 
         n_atoms = len(atoms)
 
@@ -32,6 +31,7 @@ class AbstractModel(dict):
             'cell': atoms.cell.tolist(),
             'pbc': atoms.pbc.tolist(),
         }
+
         info_keys.update({'n_atoms', 'cell', 'pbc'})
 
         for key, value in atoms.arrays.items():
@@ -46,25 +46,10 @@ class AbstractModel(dict):
             else:
                 dct[key] = value
 
-        if atoms.calc is not None:
-            dct['calculator_name'] = atoms.calc.__class__.__name__
-            dct['calculator_parameters'] = atoms.calc.todict()
-            info_keys.update({'calculator_name', 'calculator_parameters'})
-
-            for key, value in atoms.calc.results.items():
-
-                if isinstance(value, np.ndarray):
-                    if value.shape[0] == n_atoms:
-                        arrays_keys.update(key)
-                    else:
-                        info_keys.update(key)
-                    dct[key] = value.tolist()
-
         dct['derived'] = {
             'elements': Counter(atoms.get_chemical_symbols()),
             'arrays_keys': list(arrays_keys),
             'info_keys': list(info_keys),
-            'results_keys': list(results_keys)
         }
 
         return cls(**dct)
@@ -74,7 +59,6 @@ class AbstractModel(dict):
 
         arrays_keys = self['derived']['arrays_keys']
         info_keys = self['derived']['info_keys']
-        results_keys = self['derived']['results_keys']
 
         cell = self.pop('cell', None)
         pbc = self.pop('pbc', None)
@@ -91,15 +75,6 @@ class AbstractModel(dict):
             cell=cell,
             pbc=pbc,
             positions=positions)
-
-        if 'calculator_name' in self:
-            # calculator_name = self['info'].pop('calculator_name')
-            # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
-
-            params = self.pop('calculator_parameters', {})
-
-            atoms.calc = SinglePointCalculator(atoms, **params)
-            atoms.calc.results.update((key, self[key]) for key in results_keys)
 
         atoms.arrays.update((key, self[key]) for key in arrays_keys)
         atoms.arrays.update((key, self[key]) for key in info_keys)

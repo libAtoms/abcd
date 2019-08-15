@@ -157,7 +157,7 @@ class MongoDatabase(AbstractABCD):
 
             self.collection.insert_many(generator(atoms))
 
-    def upload(self, file, extra_info=None):
+    def upload(self, file, extra_info=None, calculator=True):
 
         # TODO: avoiding join
         if extra_info:
@@ -168,7 +168,7 @@ class MongoDatabase(AbstractABCD):
         extra_info['filename'] = str(file)
 
         data = iread(str(file))
-        self.push(data, extra_info)
+        self.push(data, extra_info, calculator=calculator)
 
     def get_atoms(self, query=None):
         query = parser(query)

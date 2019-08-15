@@ -177,24 +177,10 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 
     else:
         for p in props_list:
-            data = db.hist('arrays.' + p, query=query, bins=bins, truncate=truncate)
+            data = db.hist(p, query=query, bins=bins, truncate=truncate)
 
             if data:
-                f.title('arrays.' + p)
-                f.describe(data)
-                f.hist(data)
-
-            data = db.hist('info.' + p, query=query, bins=bins, truncate=truncate)
-
-            if data:
-                f.title('info.' + p)
-                f.describe(data)
-                f.hist(data)
-
-            data = db.hist('derived.' + p, query=query, bins=bins, truncate=truncate)
-
-            if data:
-                f.title('derived.' + p)
+                f.title(p)
                 f.describe(data)
                 f.hist(data)
 

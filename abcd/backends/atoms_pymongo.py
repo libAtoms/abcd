@@ -38,15 +38,7 @@ class MongoQuery(AbstractQuerySet):
             pass
 
     def visit_name(self, fields):
-        # return {fields: {'$exists': True}}
-        return {
-            '$or': [
-                {fields: {'$exists': True}},
-                {'info.' + fields: {'$exists': True}},
-                {'arrays.' + fields: {'$exists': True}},
-                {'derived.' + fields: {'$exists': True}},
-            ]
-        }
+        return {fields: {'$exists': True}}
 
     def visit_and(self, *args):
         return {'$and': [self.visit(arg) for arg in args]}
@@ -62,74 +54,25 @@ class MongoQuery(AbstractQuerySet):
         return {'$or': [self.visit(arg) for arg in args]}
 
     def visit_eq(self, field, value):
-        # return {field[1]: value[1]}
-        return {
-            '$or': [
-                {'info.' + field[1]: value[1]},
-                {'arrays.' + field[1]: value[1]},
-                {'derived.' + field[1]: value[1]},
-            ]
-        }
+        return {field[1]: value[1]}
 
     def visit_re(self, field, value):
-        # return {field[1]: {'$regex': value[1]}}
-        return {
-            '$or': [
-                {'info.' + field[1]: {'$regex': value[1]}},
-                {'arrays.' + field[1]: {'$regex': value[1]}},
-                {'derived.' + field[1]: {'$regex': value[1]}},
-            ]
-        }
+        return {field[1]: {'$regex': value[1]}}
 
     def visit_gt(self, field, value):
-        # return {field[1]: {'$gt': value[1]}}
-        return {
-            '$or': [
-                {'info.' + field[1]: {'$gt': value[1]}},
-                {'arrays.' + field[1]: {'$gt': value[1]}},
-                {'derived.' + field[1]: {'$gt': value[1]}},
-            ]
-        }
+        return {field[1]: {'$gt': value[1]}}
 
     def visit_gte(self, field, value):
-        # return {field[1]: {'$gte': value[1]}}
-        return {
-            '$or': [
-                {'info.' + field[1]: {'$gte': value[1]}},
-                {'arrays.' + field[1]: {'$gte': value[1]}},
-                {'derived.' + field[1]: {'$gte': value[1]}},
-            ]
-        }
+        return {field[1]: {'$gte': value[1]}}
 
     def visit_lt(self, field, value):
-        # return {field[1]: {'$lt': value[1]}}
-        return {
-            '$or': [
-                {'info.' + field[1]: {'$lt': value[1]}},
-                {'arrays.' + field[1]: {'$lt': value[1]}},
-                {'derived.' + field[1]: {'$lt': value[1]}},
-            ]
-        }
+        return {field[1]: {'$lt': value[1]}}
 
     def visit_lte(self, field, value):
-        # return {field[1]: {'$lte': value[1]}}
-        return {
-            '$or': [
-                {'info.' + field[1]: {'$lte': value[1]}},
-                {'arrays.' + field[1]: {'$lte': value[1]}},
-                {'derived.' + field[1]: {'$lte': value[1]}},
-            ]
-        }
+        return {field[1]: {'$lte': value[1]}}
 
     def visit_in(self, field, *values):
-        # return {field[1]: {'$in': [value[1] for value in values]}}
-        return {
-            '$or': [
-                {'info.' + field[1]: {'$in': [value[1] for value in values]}},
-                {'arrays.' + field[1]: {'$in': [value[1] for value in values]}},
-                {'derived.' + field[1]: {'$in': [value[1] for value in values]}},
-            ]
-        }
+        return {field[1]: {'$in': [value[1] for value in values]}}
 
     def __enter__(self):
         return self

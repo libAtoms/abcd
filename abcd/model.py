@@ -25,8 +25,6 @@ class AbstractModel(dict):
 
         all_keys = (reserved_keys, arrays_keys, info_keys, results_keys)
 
-        print(all_keys)
-
         if len(set.union(*all_keys)) != sum(map(len, all_keys)):
             raise ValueError('All the keys must be unique!')
 
@@ -64,11 +62,10 @@ class AbstractModel(dict):
 
         dct['_derived'] = {
             'elements': Counter(atoms.get_chemical_symbols()),
-            'arrays_keys': arrays_keys,
-            'info_keys': info_keys,
-            'results_keys': results_keys
+            'arrays_keys': list(arrays_keys),
+            'info_keys': list(info_keys),
+            'results_keys': list(results_keys)
         }
-        print(dct)
 
         return cls(**dct)
 

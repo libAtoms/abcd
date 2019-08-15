@@ -24,68 +24,6 @@ class AtomsModel(AbstractModel):
     pass
 
 
-# TODO: derived properties when save ()
-#     def pre_save_post_validation(cls, sender, document, **kwargs):
-#
-#         document.info['username'] = getpass.getuser()
-#
-#         natoms = len(document.arrays['numbers'])
-#         elements = Counter(str(element) for element in document.arrays['numbers'])
-#
-#         arrays_keys = list(document.arrays.keys())
-#         info_keys = list(document.info.keys())
-#         derived_keys = ['natoms', 'elements', 'username', 'uploaded', 'modified']
-#
-#         cell = document.info.get('cell')
-#         if cell:
-#             derived_keys.append('volume')
-#             virial = document.info.get('virial')
-#             if virial:
-#                 derived_keys.append('pressure')
-#
-#         document.derived = DerivedModel(
-#             natoms=natoms,
-#             elements=elements,
-#             arrays_keys=arrays_keys,
-#             info_keys=info_keys,
-#             derived_keys=derived_keys,
-#             username=getpass.getuser()
-#         )
-#
-#         cell = document.info.get('cell')
-#         if cell:
-#             volume = abs(np.linalg.det(cell))  # atoms.get_volume()
-#             document.derived['volume'] = volume
-#
-#             virial = document.info.get('virial')
-#             if virial:
-#                 # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
-#                 document.derived['pressure'] = -1 / 3 * np.trace(virial / volume)
-#
-#         if not document.uploaded:
-#             document.uploaded = datetime.datetime.utcnow()
-#
-#         document.modified = datetime.datetime.utcnow()
-#
-#         logger.debug("Pre Save: %s" % document)
-#
-#     @classmethod
-#     def post_save(cls, sender, document, **kwargs):
-#
-#         logger.debug("Post Save: %s" % document)
-#
-#         if 'created' in kwargs:
-#             if kwargs['created']:
-#                 logger.debug("Created")
-#             else:
-#                 logger.debug("Updated")
-#
-#     @classmethod
-#     def pre_bulk_insert(cls, sender, documents, **kwargs):
-#         for document in documents:
-#             cls.pre_save_post_validation(sender, document, **kwargs)
-#
-
 class MongoQuery(AbstractQuerySet):
 
     def __init__(self):
@@ -260,11 +198,21 @@ class MongoDatabase(AbstractABCD):
             extra_info = extras.parser.parse(extra_info)
 
         if isinstance(atoms, Atoms):
-            data = AtomsModel.from_atoms(atoms, extra_info)
+            data = AtomsModel.from_atoms(atoms)
+            if extra_info:
+                data.update(extra_info)
             self.collection.insert_one(data)
 
-        if isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-            self.collection.insert_many(AtomsModel.from_atoms(at, extra_info) for at in atoms)
+        elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
+
+            def generator(collection):
+                for atoms in collection:
+                    data = AtomsModel.from_atoms(atoms)
+                    if extra_info:
+                        data.update(extra_info)
+                    yield data
+
+            self.collection.insert_many(generator(atoms))
 
     def upload(self, file, extra_info=None):
 

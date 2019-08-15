@@ -2,10 +2,10 @@ import datetime
 import getpass
 import logging
 from collections import Counter
+from ase.calculators.singlepoint import SinglePointCalculator
 
 import numpy as np
 from ase import Atoms
-from ase.calculators.singlepoint import SinglePointCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -13,14 +13,15 @@ logger = logging.getLogger(__name__)
 class AbstractModel(dict):
 
     @classmethod
-    def from_atoms(cls, atoms: Atoms):
+    def from_atoms(cls, atoms: Atoms, calculator=True):
         """ASE's original implementation"""
 
-        reserved_keys = {'n_atoms', 'cell', 'derived', 'calculator_name', 'calculator_parameters'}
+        reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived'}
         arrays_keys = set(atoms.arrays.keys())
         info_keys = set(atoms.info.keys())
+        results_keys = set(atoms.calc.results.keys()) if calculator and atoms.calc else {}
 
-        all_keys = (reserved_keys, arrays_keys, info_keys)
+        all_keys = (reserved_keys, arrays_keys, info_keys, results_keys)
         if len(set.union(*all_keys)) != sum(map(len, all_keys)):
             raise ValueError('All the keys must be unique!')
 
@@ -46,35 +47,56 @@ class AbstractModel(dict):
             else:
                 dct[key] = value
 
+        if calculator and atoms.calc:
+            dct['calculator_name'] = atoms.calc.__class__.__name__
+            dct['calculator_parameters'] = atoms.calc.todict()
+            info_keys.update({'calculator_name', 'calculator_parameters'})
+
+            for key, value in atoms.calc.results.items():
+
+                if isinstance(value, np.ndarray):
+                    if value.shape[0] == n_atoms:
+                        arrays_keys.update(key)
+                    else:
+                        info_keys.update(key)
+                    dct[key] = value.tolist()
+
         dct['derived'] = {
             'elements': Counter(atoms.get_chemical_symbols()),
             'arrays_keys': list(arrays_keys),
             'info_keys': list(info_keys),
+            'results_keys': list(results_keys)
         }
 
         return cls(**dct)
 
     def to_atoms(self):
-        # TODO: Proper initialisation fo Calculators
 
         arrays_keys = self['derived']['arrays_keys']
         info_keys = self['derived']['info_keys']
 
         cell = self.pop('cell', None)
         pbc = self.pop('pbc', None)
-        info_keys.remove({'cell', 'pbc'})
-
         numbers = self.pop('numbers', None)
-        arrays_keys.remove('numbers')
-
         positions = self.pop('positions', None)
-        arrays_keys.remove('positions')
+        results_keys = self['derived']['results_keys']
+
+        arrays_keys.remove({'cell', 'pbc', 'numbers', 'positions'})
 
         atoms = Atoms(
-            numbers=numbers,
             cell=cell,
             pbc=pbc,
+            numbers=numbers,
             positions=positions)
+
+        if 'calculator_name' in self:
+            # calculator_name = self['info'].pop('calculator_name')
+            # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
+
+            params = self.pop('calculator_parameters', {})
+
+            atoms.calc = SinglePointCalculator(atoms, **params)
+            atoms.calc.results.update((key, self[key]) for key in results_keys)
 
         atoms.arrays.update((key, self[key]) for key in arrays_keys)
         atoms.arrays.update((key, self[key]) for key in info_keys)

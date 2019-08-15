@@ -135,13 +135,13 @@ class MongoDatabase(AbstractABCD):
     def destroy(self):
         self.collection.drop()
 
-    def push(self, atoms: Union[Atoms, Iterable], extra_info=None):
+    def push(self, atoms: Union[Atoms, Iterable], extra_info=None, calculator=True):
 
         if extra_info and isinstance(extra_info, str):
             extra_info = extras.parser.parse(extra_info)
 
         if isinstance(atoms, Atoms):
-            data = AtomsModel.from_atoms(atoms)
+            data = AtomsModel.from_atoms(atoms, calculator=calculator)
             if extra_info:
                 data.update(extra_info)
             self.collection.insert_one(data)
@@ -150,7 +150,7 @@ class MongoDatabase(AbstractABCD):
 
             def generator(collection):
                 for atoms in collection:
-                    data = AtomsModel.from_atoms(atoms)
+                    data = AtomsModel.from_atoms(atoms, calculator=calculator)
                     if extra_info:
                         data.update(extra_info)
                     yield data

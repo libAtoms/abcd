@@ -30,8 +30,9 @@ class AbstractModel(dict):
         dct = {
             'n_atoms': n_atoms,
             'cell': atoms.cell.tolist(),
+            'pbc': atoms.pbc.tolist(),
         }
-        info_keys.update({'n_atoms', 'cell'})
+        info_keys.update({'n_atoms', 'cell', 'pbc'})
 
         for key, value in atoms.arrays.items():
             if isinstance(value, np.ndarray):

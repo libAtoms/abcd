@@ -158,19 +158,17 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
         props = db.properties(query=query)
 
         for p in props['arrays']:
-            name = 'arrays.' + p
-            data = db.hist(name, query=query, bins=bins, truncate=truncate)
+            data = db.hist(p, query=query, bins=bins, truncate=truncate)
 
-            f.title(name)
+            f.title(p)
             if data:
                 f.describe(data)
                 f.hist(data)
 
         for p in props['info']:
-            name = 'info.' + p
-            data = db.hist(name, query=query, bins=bins, truncate=truncate)
+            data = db.hist(p, query=query, bins=bins, truncate=truncate)
 
-            f.title(name)
+            f.title(p)
             if data:
                 f.describe(data)
                 f.hist(data)

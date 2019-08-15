@@ -16,17 +16,14 @@ class AbstractModel(dict):
     def from_atoms(cls, atoms: Atoms):
         """ASE's original implementation"""
 
-        # TODO: extra_info should go to update method
-
         reserved_keys = {'n_atoms', 'cell', 'derived', 'calculator_name', 'calculator_parameters'}
         arrays_keys = set(atoms.arrays.keys())
         info_keys = set(atoms.info.keys())
         results_keys = set(atoms.calc.results.keys()) if atoms.calc else {}
 
-        all_keys = (reserved_keys, arrays_keys, info_keys, results_keys)
-
-        if len(set.union(*all_keys)) != sum(map(len, all_keys)):
-            raise ValueError('All the keys must be unique!')
+        # all_keys = (reserved_keys, arrays_keys, info_keys, results_keys)
+        # if len(set.union(*all_keys)) != sum(map(len, all_keys)):
+        #     raise ValueError('All the keys must be unique!')
 
         n_atoms = len(atoms)
 
@@ -34,22 +31,24 @@ class AbstractModel(dict):
             'n_atoms': n_atoms,
             'cell': atoms.cell.tolist(),
         }
+        info_keys.update({'n_atoms', 'cell'})
 
         for key, value in atoms.arrays.items():
             if isinstance(value, np.ndarray):
                 dct[key] = value.tolist()
             else:
-                dct[key] = key
+                dct[key] = value
 
         for key, value in atoms.info.items():
             if isinstance(value, np.ndarray):
                 dct[key] = value.tolist()
             else:
-                dct[key] = key
+                dct[key] = value
 
         if atoms.calc is not None:
             dct['calculator_name'] = atoms.calc.__class__.__name__
             dct['calculator_parameters'] = atoms.calc.todict()
+            info_keys.update({'calculator_name', 'calculator_parameters'})
 
             for key, value in atoms.calc.results.items():
 
@@ -78,6 +77,7 @@ class AbstractModel(dict):
 
         cell = self.pop('cell', None)
         pbc = self.pop('pbc', None)
+        info_keys.remove({'cell', 'pbc'})
 
         numbers = self.pop('numbers', None)
         arrays_keys.remove('numbers')

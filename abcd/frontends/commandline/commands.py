@@ -194,10 +194,15 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 def key_add(*, db, query, keys, **kwargs):
     from abcd.parsers.extras import parser
 
-    # TODO: avoiding join
-    data = parser.parse(' '.join(keys))
+    keys = ' '.join(keys)
+    data = parser.parse(keys)
 
-    if db.count(query=query + [' or '.join(data.keys())]):
+    if query:
+        test = ('AND', query, ("OR", *(('NAME', key) for key in data.keys())))
+    else:
+        test = ("OR", *(('NAME', key) for key in data.keys()))
+
+    if db.count(query=test):
         print('The new key already exist for the given query! '
               'Please make sure that the target key name don\'t exist')
         exit(1)
@@ -252,7 +257,8 @@ class SimpleStyle(object):
         # template = '{{:=^{self.width}}}'
         # title = self._trunc(title, self.width - 4)
         # print('', template.format(' ' + title + ' '), sep=os.linesep)
-        print('')
+        # print('')
+        pass
 
     def h1(self, title):
         title = self._trunc(title, self.width)

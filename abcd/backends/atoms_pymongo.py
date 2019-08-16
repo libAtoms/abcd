@@ -41,6 +41,7 @@ class MongoQuery(AbstractQuerySet):
         return {fields: {'$exists': True}}
 
     def visit_and(self, *args):
+        print(args)
         return {'$and': [self.visit(arg) for arg in args]}
         # TODO recursively combining all the and statements
         # out = {}
@@ -257,12 +258,10 @@ class MongoDatabase(AbstractABCD):
     def add_property(self, data, query=None):
         logger.info('add: data={}, query={}'.format(data, query))
 
-        info_data = {'info.' + key: value for key, value in data.items()}
-
         self.collection.update_many(
             parser(query),
             {'$push': {'derived.info_keys': {'$each': list(data.keys())}},
-             '$set': info_data})
+             '$set': data})
 
     def rename_property(self, name, new_name, query=None):
         logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))

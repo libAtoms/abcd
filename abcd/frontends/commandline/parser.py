@@ -1,5 +1,5 @@
 import logging
-from argparse import ArgumentParser
+from argparse import ArgumentParser, REMAINDER
 from abcd.frontends.commandline import commands
 
 logger = logging.getLogger(__name__)
@@ -102,10 +102,11 @@ if __name__ == '__main__':
     main('summary -q formula~"Si2"'.split())
     main()
     main('-v login mongodb://mongoadmin:secret@localhost:27017/abcd'.split())
-    main('-v summary'.split())
-    main('-v summary -p energy'.split())
-    main('-v summary -p *'.split())
-    # main(['summary', '-h'])  # ok
+    # main('-v summary'.split())
+    # main('-v summary -p energy'.split())
+    # main('-v summary -p *'.split())
+    # main('add-key -q cas selected user="cas"'.split())
+    main('delete-key user'.split())
     # main(['summary', '-p', '*'])
     # main(['summary', '-p', 'info.config_name, info.energy'])
     # main(['summary', '-p', 'info.config_name, info.energy,info.energy;info.energy info.energy'])

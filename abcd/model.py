@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractModel(dict):
+    reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived'}
 
     @classmethod
     def from_atoms(cls, atoms: Atoms, calculator=True):
@@ -62,7 +63,6 @@ class AbstractModel(dict):
                     dct[key] = value.tolist()
 
         dct['derived'] = {
-            'elements': Counter(atoms.get_chemical_symbols()),
             'arrays_keys': list(arrays_keys),
             'info_keys': list(info_keys),
             'results_keys': list(results_keys)
@@ -72,8 +72,8 @@ class AbstractModel(dict):
 
     def to_atoms(self):
 
-        arrays_keys = self['derived']['arrays_keys']
-        info_keys = self['derived']['info_keys']
+        arrays_keys = set(self['derived']['arrays_keys'])
+        info_keys = set(self['derived']['info_keys'])
 
         cell = self.pop('cell', None)
         pbc = self.pop('pbc', None)
@@ -81,7 +81,8 @@ class AbstractModel(dict):
         positions = self.pop('positions', None)
         results_keys = self['derived']['results_keys']
 
-        arrays_keys.remove({'cell', 'pbc', 'numbers', 'positions'})
+        info_keys -= {'cell', 'pbc'}
+        arrays_keys -= {'numbers', 'positions'}
 
         atoms = Atoms(
             cell=cell,
@@ -103,66 +104,31 @@ class AbstractModel(dict):
 
         return atoms
 
-    # # TODO: derived properties when save ()
-    # def pre_save_post_validation(cls, sender, document, **kwargs):
-    #
-    #     document.info['username'] = getpass.getuser()
-    #
-    #     natoms = len(document.arrays['numbers'])
-    #     elements = Counter(str(element) for element in document.arrays['numbers'])
-    #
-    #     arrays_keys = list(document.arrays.keys())
-    #     info_keys = list(document.info.keys())
-    #     derived_keys = ['natoms', 'elements', 'username', 'uploaded', 'modified']
-    #
-    #     cell = document.info.get('cell')
-    #     if cell:
-    #         derived_keys.append('volume')
-    #         virial = document.info.get('virial')
-    #         if virial:
-    #             derived_keys.append('pressure')
-    #
-    #     document.derived = dict(
-    #         natoms=natoms,
-    #         elements=elements,
-    #         arrays_keys=arrays_keys,
-    #         info_keys=info_keys,
-    #         derived_keys=derived_keys,
-    #         username=getpass.getuser()
-    #     )
-    #
-    #     cell = document.info.get('cell')
-    #     if cell:
-    #         volume = abs(np.linalg.det(cell))  # atoms.get_volume()
-    #         document.derived['volume'] = volume
-    #
-    #         virial = document.info.get('virial')
-    #         if virial:
-    #             # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
-    #             document.derived['pressure'] = -1 / 3 * np.trace(virial / volume)
-    #
-    #     if not document.uploaded:
-    #         document.uploaded = datetime.datetime.utcnow()
-    #
-    #     document.modified = datetime.datetime.utcnow()
-    #
-    #     logger.debug("Pre Save: %s" % document)
-    #
-    # @classmethod
-    # def post_save(cls, sender, document, **kwargs):
-    #
-    #     logger.debug("Post Save: %s" % document)
-    #
-    #     if 'created' in kwargs:
-    #         if kwargs['created']:
-    #             logger.debug("Created")
-    #         else:
-    #             logger.debug("Updated")
-    #
-    # @classmethod
-    # def pre_bulk_insert(cls, sender, documents, **kwargs):
-    #     for document in documents:
-    #         cls.pre_save_post_validation(sender, document, **kwargs)
+    def pre_save(self):
+
+        cell = self['cell']
+
+        if cell:
+            volume = abs(np.linalg.det(cell))  # atoms.get_volume()
+            self['volume'] = volume
+            self['derived']['derived_keys'].append('volume')
+
+            virial = self.get('virial')
+            if virial:
+                # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
+                self['pressure'] = -1 / 3 * np.trace(virial / volume)
+                self['derived']['derived_keys'].append('pressure')
+
+        # 'elements': Counter(atoms.get_chemical_symbols()),
+        self['elements'] = Counter(str(element) for element in self['numbers'])
+
+        self['username'] = getpass.getuser()
+        self['derived']['derived_keys'].append('pressure')
+
+        if not self.get('uploaded'):
+            self['uploaded'] = datetime.datetime.utcnow()
+
+        self['modified'] = datetime.datetime.utcnow()
 
 
 if __name__ == '__main__':

@@ -46,8 +46,7 @@ grammar = r"""
     IN:       "in"
 
 
-    value: NAME 
-         | FLOAT    -> float
+    value: FLOAT    -> float
          | INT      -> int
          | STRING   -> string
          | "True"   -> true

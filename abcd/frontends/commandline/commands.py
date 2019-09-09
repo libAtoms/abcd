@@ -62,7 +62,7 @@ def delete(*, db, query, yes, **kwargs):
 @init_config
 @init_db
 @check_readonly
-def upload(*, db, path, extra_info, ignore_calc_results, **kwargs):
+def upload(*, db, path, extra_infos, ignore_calc_results, **kwargs):
     from pathlib import Path
 
     calculator = not ignore_calc_results
@@ -70,12 +70,12 @@ def upload(*, db, path, extra_info, ignore_calc_results, **kwargs):
     path = Path(path)
 
     if path.is_file():
-        db.upload(path, extra_info, calculator=calculator)
+        db.upload(path, extra_infos, calculator=calculator)
 
     elif path.is_dir():
         for file in path.glob('.xyz'):
             logger.info('Uploaded file: {}'.format(file))
-            db.upload(file, extra_info, calculator=calculator)
+            db.upload(file, extra_infos, calculator=calculator)
         else:
             logger.info('No file found: {}'.format(path))
             raise FileNotFoundError()

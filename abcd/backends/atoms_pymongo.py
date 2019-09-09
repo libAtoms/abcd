@@ -16,12 +16,21 @@ from abcd.queryset import AbstractQuerySet
 from abcd.parsers import extras
 
 from pymongo import MongoClient
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
 class AtomsModel(AbstractModel):
-    pass
+
+    @classmethod
+    def from_atoms(cls, atoms: Atoms, collection=None, calculator=True):
+        data = super().from_atoms(atoms, calculator)
+        data._collection = collection
+        return data
+
+    def save(self):
+        pass
 
 
 class MongoQuery(AbstractQuerySet):
@@ -142,7 +151,7 @@ class MongoDatabase(AbstractABCD):
             extra_info = extras.parser.parse(extra_info)
 
         if isinstance(atoms, Atoms):
-            data = AtomsModel.from_atoms(atoms, calculator=calculator)
+            data = AtomsModel.from_atoms(atoms, calculator=calculator, collection=collection)
             if extra_info:
                 data.update(extra_info)
             self.collection.insert_one(data)
@@ -151,22 +160,20 @@ class MongoDatabase(AbstractABCD):
 
             def generator(collection):
                 for atoms in collection:
-                    data = AtomsModel.from_atoms(atoms, calculator=calculator)
+                    data = AtomsModel.from_atoms(atoms, calculator=calculator, collection=collection)
                     if extra_info:
                         data.update(extra_info)
                     yield data
 
             self.collection.insert_many(generator(atoms))
 
-    def upload(self, file, extra_info=None, calculator=True):
+    def upload(self, file: Path, extra_infos=None, calculator=True):
 
-        # TODO: avoiding join
-        if extra_info:
-            extra_info = extras.parser.parse(' '.join(extra_info))
-        else:
-            extra_info = {}
+        extra_info = {}
+        for info in extra_infos:
+            extra_info.update(extras.parser.parse(info))
 
-        extra_info['filename'] = str(file)
+        extra_info['filename'] = str(file.name)
 
         data = iread(str(file))
         self.push(data, extra_info, calculator=calculator)

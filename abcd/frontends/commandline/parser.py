@@ -27,7 +27,7 @@ download_parser.add_argument('-q', '--query', action='append', help='Filtering e
 download_parser.add_argument(dest='filename', help='name of the file to store the configurations')
 
 upload_parser = subparsers.add_parser('upload', help='upload any ase supported files to the database')
-upload_parser.add_argument('-e', '--extra_info', action='append', help='Adding extra quantities')
+upload_parser.add_argument('-e', '--extra_infos', action='append', help='Adding extra quantities')
 upload_parser.add_argument(dest='path', help='file or folder which contains the xyz files')
 upload_parser.add_argument('-i', '--ignore_calc_results', action='store_true',
                            help='Ignore calculators results/parameters')
@@ -101,6 +101,7 @@ def main(args=None):
 if __name__ == '__main__':
     main('summary -q formula~"Si2"'.split())
     main()
+    main('upload -e cas -i ../../../tutorials/GB_alphaFe_001/tilt/00110391110_v6bxv2_tv0.4bxv0.2_d1.6z_traj.xyz'.split())
     main('-v login mongodb://mongoadmin:secret@localhost:27017/abcd'.split())
     # main('-v summary'.split())
     # main('-v summary -p energy'.split())

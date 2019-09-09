@@ -19,15 +19,15 @@ grammar = r"""
                | "(" statement ")"         -> grouped_expression 
                | NOT statement             -> negation_expression
         
-    ?comparison_ops: EQUAL
-              | NOTEQUAL
+    ?comparison_ops: EQ
+              | NEQ
+              | RE
               | GT
               | GTE
               | LT
               | LTE
-              | RE
 
-        ?relation_ops: AND 
+    ?relation_ops: AND 
                  | OR 
 
     AND: "&" | "and"
@@ -36,14 +36,14 @@ grammar = r"""
 
     ?reversed_ops: IN
         
-    EQUAL:    "=" 
-    NOTEQUAL: "!=" 
-    GT:       ">" 
-    GTE:      ">=" 
-    LT:       "<" 
-    LTE:      "<="
-    RE:       "~"     
-    IN:       "in"
+    EQ:   "=" 
+    NEQ:  "!=" 
+    RE:    "~"     
+    GT:   ">" 
+    GTE:  ">=" 
+    LT:   "<" 
+    LTE:  "<="
+    IN:    "in"
 
 
     value: FLOAT    -> float

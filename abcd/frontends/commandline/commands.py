@@ -108,7 +108,7 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 
         logging.info('property list: {}'.format(props_list))
 
-    f = SimpleStyle()
+    f = Formater()
     if props_list is None:
 
         total = db.count(query)
@@ -117,47 +117,34 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
         print('Total number of configurations: {}'.format(total))
 
         if props['arrays']:
-            f.title('Properties')
-            f.h1('Arrays (per atom properties)')
+            f.title('Arrays (per atom properties)')
 
             labels, counts = [], []
             for k in sorted(props['arrays'], key=str.lower):
                 labels.append(k)
                 counts.append(props['arrays'][k]['count'])
 
-            f.hist({
-                'type': 'hist_labels',
-                'labels': labels,
-                'counts': counts
-            })
+            f.hist_labels(counts, labels)
 
         if props['info']:
-            f.h1('Infos (properties of the whole configuration)')
+            f.title('Infos (properties of the whole configuration)')
 
             labels, counts = [], []
             for k in sorted(props['info'], key=str.lower):
                 labels.append(k)
                 counts.append(props['info'][k]['count'])
 
-            f.hist({
-                'type': 'hist_labels',
-                'labels': labels,
-                'counts': counts
-            })
+            f.hist_labels(counts, labels)
 
         if props['derived']:
-            f.h1('Derived')
+            f.title('Derived')
 
             labels, counts = [], []
             for k in sorted(props['derived'], key=str.lower):
                 labels.append(k)
                 counts.append(props['derived'][k]['count'])
 
-            f.hist({
-                'type': 'hist_labels',
-                'labels': labels,
-                'counts': counts
-            })
+            f.hist_labels(counts, labels)
 
     elif props_list == '*':
         props = db.properties(query=query)
@@ -165,7 +152,6 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
         for p in props['arrays']:
             data = db.hist(p, query=query, bins=bins, truncate=truncate)
 
-            f.title(p)
             if data:
                 f.describe(data)
                 f.hist(data)
@@ -173,7 +159,6 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
         for p in props['info']:
             data = db.hist(p, query=query, bins=bins, truncate=truncate)
 
-            f.title(p)
             if data:
                 f.describe(data)
                 f.hist(data)
@@ -183,7 +168,6 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
             data = db.hist(p, query=query, bins=bins, truncate=truncate)
 
             if data:
-                f.title(p)
                 f.describe(data)
                 f.hist(data)
 
@@ -247,26 +231,11 @@ def execute(*, db, query, yes, python_code, **kwargs):
     db.exec(python_code, query)
 
 
-class SimpleStyle(object):
+class Formater(object):
     partialBlocks = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]  # char=pb
 
-    def __init__(self, width=80):
-        self.width = width
-
     def title(self, title):
-        # template = '{{:=^{self.width}}}'
-        # title = self._trunc(title, self.width - 4)
-        # print('', template.format(' ' + title + ' '), sep=os.linesep)
-        # print('')
-        pass
-
-    def h1(self, title):
-        title = self._trunc(title, self.width)
         print('', title, '=' * len(title), sep=os.linesep)
-
-    def h2(self, title):
-        title = self._trunc(title, self.width)
-        print('', title, '-' * len(title), sep=os.linesep)
 
     def describe(self, data):
         if data['type'] == 'hist_float':
@@ -286,53 +255,60 @@ class SimpleStyle(object):
         else:
             pass
 
+    def hist_float(self, bin_edges, counts, width_hist=40):
+        ratio = width_hist / max(counts)
+        width_count = len(str(max(counts)))
+
+        for count, lower, upper in zip(counts, bin_edges[:-1], bin_edges[1:]):
+            scale = int(ratio * count)
+            self.print('{:<{}} {:>{}d} [{:.4e}, {:.4e})'.format(
+                "▉" * scale, width_hist,
+                count, width_count,
+                lower, upper))
+
+    def hist_int(self, bin_edges, counts, width_hist=40):
+
+        ratio = width_hist / max(counts)
+        width_count = len(str(max(counts)))
+
+        for count, lower, upper in zip(counts, bin_edges[:-1], bin_edges[1:]):
+            scale = int(ratio * count)
+            self.print('{:<{}} {:>{}d} [{:d}, {:d})'.format(
+                "▉" * scale, width_hist,
+                count, width_count,
+                np.ceil(lower).astype(int), np.floor(upper).astype(int)))
+
+    def hist_str(self, total, counts, labels, width_hist=40):
+        remain = total - sum(counts)
+        if remain > 0:
+            # counts.append(remain)
+            # labels.append('...')
+            counts = (*counts, remain)
+            labels = (*labels, '...')
+
+        width_count = len(str(max(counts)))
+        ratio = width_hist / max(counts)
+        for label, count in zip(labels, counts):
+            scale = int(ratio * count)
+            self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
+
+    def hist_labels(self, counts, labels, width_hist=40):
+
+        width_count = len(str(max(counts)))
+        ratio = width_hist / max(counts)
+        for label, count in zip(labels, counts):
+            scale = int(ratio * count)
+            self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
+
     def hist(self, data: dict, width_hist=40):
         if data['type'] == 'hist_float':
-            bin_edges = data['edges']
-
-            ratio = width_hist / max(data['counts'])
-            width_count = len(str(max(data['counts'])))
-
-            for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
-                scale = int(ratio * count)
-                self.print('{:<{}} {:>{}d} [{:.4e}, {:.4e})'.format(
-                    "▉" * scale, width_hist,
-                    count, width_count,
-                    lower, upper))
-
+            self.hist_float(data['edges'], data['counts'])
         elif data['type'] == 'hist_int':
-            bin_edges = data['edges']
-
-            ratio = width_hist / max(data['counts'])
-            width_count = len(str(max(data['counts'])))
-
-            for count, lower, upper in zip(data['counts'], bin_edges[:-1], bin_edges[1:]):
-                scale = int(ratio * count)
-                self.print('{:<{}} {:>{}d} [{:d}, {:d})'.format(
-                    "▉" * scale, width_hist,
-                    count, width_count,
-                    np.ceil(lower).astype(int), np.floor(upper).astype(int)))
-
+            self.hist_int(data['edges'], data['counts'])
         elif data['type'] == 'hist_str':
-            remain = data['total'] - sum(data['counts'])
-            if remain > 0:
-                data['counts'] = (*data['counts'], remain)
-                data['labels'] = (*data['labels'], '...')
-
-            width_count = len(str(max(data['counts'])))
-            ratio = width_hist / max(data['counts'])
-            for label, count in zip(data['labels'], data['counts']):
-                scale = int(ratio * count)
-                self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
-
+            self.hist_str(data['total'], data['counts'], data['labels'])
         elif data['type'] == 'hist_labels':
-
-            width_count = len(str(max(data['counts'])))
-            ratio = width_hist / max(data['counts'])
-            for label, count in zip(data['labels'], data['counts']):
-                scale = int(ratio * count)
-                self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
-
+            self.hist_labels(data['counts'], data['labels'])
         else:
             pass
 
@@ -340,6 +316,5 @@ class SimpleStyle(object):
     def print(*args, **kwargs):
         print(*args, **kwargs)
 
-    def _trunc(self, text, width=None):
-        width = width if width else self.width
+    def _trunc(self, text, width=80):
         return text if len(text) < width else text[:width - 3] + '...'

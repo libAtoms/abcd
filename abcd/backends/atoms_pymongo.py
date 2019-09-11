@@ -352,6 +352,9 @@ def histogram(name, data, **kwargs):
             bins = kwargs.get('bins', 10)
             return _hist_float(name, data, bins)
 
+        elif isinstance(data[0], bool):
+            pass
+
         elif isinstance(data[0], int):
             bins = kwargs.get('bins', 10)
             return _hist_int(name, data, bins)

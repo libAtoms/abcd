@@ -6,6 +6,7 @@ from typing import Union, Iterable
 from os import linesep
 from operator import itemgetter
 from collections import Counter
+import datetime
 
 from ase import Atoms
 from ase.io import iread
@@ -371,9 +372,13 @@ def histogram(name, data, **kwargs):
         elif isinstance(data[0], str):
             return _hist_str(name, data, **kwargs)
 
+        elif isinstance(data[0], datetime.datetime):
+            bins = kwargs.get('bins', 10)
+            return _hist_date(name, data, bins)
+
         else:
-            print('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
-            logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data)))
+            print('{}: Histogram for list of {} types are not supported!'.format(name, type(data[0])))
+            logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data[0])))
 
     else:
         logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))
@@ -386,6 +391,24 @@ def _hist_float(name, data, bins=10):
 
     return {
         'type': 'hist_float',
+        'name': name,
+        'bins': bins,
+        'edges': bin_edges,
+        'counts': hist,
+        'min': data.min(),
+        'max': data.max(),
+        'median': data.mean(),
+        'std': data.std(),
+        'var': data.var()
+    }
+
+
+def _hist_date(name, data, bins=10):
+    data = np.array([int(t.timestamp()) for t in data])
+    hist, bin_edges = np.histogram(data, bins=bins)
+
+    return {
+        'type': 'hist_int',
         'name': name,
         'bins': bins,
         'edges': bin_edges,

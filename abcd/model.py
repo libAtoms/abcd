@@ -13,17 +13,21 @@ logger = logging.getLogger(__name__)
 class AbstractModel(dict):
     reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived'}
 
+    # def update(self, E=None, **kwargs):
+    #     super().update(E, kwargs)
+
     @classmethod
-    def from_atoms(cls, atoms: Atoms, calculator=True):
+    def from_atoms(cls, atoms: Atoms, extra_info=None, store_calc=True):
         """ASE's original implementation"""
 
         reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived'}
         arrays_keys = set(atoms.arrays.keys())
         info_keys = set(atoms.info.keys())
-        results_keys = set(atoms.calc.results.keys()) if calculator and atoms.calc else {}
+        results_keys = set(atoms.calc.results.keys()) if store_calc and atoms.calc else {}
 
         all_keys = (reserved_keys, arrays_keys, info_keys, results_keys)
         if len(set.union(*all_keys)) != sum(map(len, all_keys)):
+            print(all_keys)
             raise ValueError('All the keys must be unique!')
 
         n_atoms = len(atoms)
@@ -48,7 +52,7 @@ class AbstractModel(dict):
             else:
                 dct[key] = value
 
-        if calculator and atoms.calc:
+        if store_calc and atoms.calc:
             dct['calculator_name'] = atoms.calc.__class__.__name__
             dct['calculator_parameters'] = atoms.calc.todict()
             info_keys.update({'calculator_name', 'calculator_parameters'})
@@ -69,6 +73,11 @@ class AbstractModel(dict):
         }
 
         item = cls(**dct)
+
+        if extra_info:
+            item.update(extra_info)
+            item['derived']['info_keys'].append(*extra_info.keys())
+
         item.pre_save()
         return item
 

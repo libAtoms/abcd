@@ -23,14 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class AtomsModel(AbstractModel):
-
-    @classmethod
-    def from_atoms(cls, atoms: Atoms, calculator=True):
-        data = super().from_atoms(atoms, calculator)
-        return data
-
-    def save(self):
-        pass
+    pass
 
 
 class AtomsModelExec(AbstractModel):
@@ -39,6 +32,8 @@ class AtomsModelExec(AbstractModel):
         self._collection = collection
 
     def save(self):
+        # TODO: detect changes in data structure
+        # TODO: update modified value
         self._collection.replace_one({'_id': self['_id']}, self)
 
 
@@ -101,6 +96,14 @@ class MongoQuery(AbstractQuerySet):
 
     def __call__(self, ast):
         logger.info('parsed ast: {}'.format(ast))
+
+        if isinstance(ast, dict):
+            return ast
+        elif isinstance(ast, str):
+            from abcd.parsers.queries import parser
+            p = parser(ast)
+            return self.visit(p)
+
         return self.visit(ast) if ast else {}
 
 
@@ -143,7 +146,7 @@ class MongoDatabase(AbstractABCD):
             'port': port,
             'db': self.db.name,
             'collection': self.collection.name,
-            'number of confs': self.collection.count(),
+            'number of confs': self.collection.count_documents({}),
             'type': 'mongodb'
         }
 
@@ -154,38 +157,38 @@ class MongoDatabase(AbstractABCD):
     def destroy(self):
         self.collection.drop()
 
-    def push(self, atoms: Union[Atoms, Iterable], extra_info=None, calculator=True):
+    def push(self, atoms: Union[Atoms, Iterable], extra_info=None, store_calc=True):
 
         if extra_info and isinstance(extra_info, str):
             extra_info = extras.parser.parse(extra_info)
 
         if isinstance(atoms, Atoms):
-            data = AtomsModel.from_atoms(atoms, calculator=calculator)
-            if extra_info:
-                data.update(extra_info)
+            data = AtomsModel.from_atoms(atoms, extra_info=extra_info, store_calc=store_calc)
             self.collection.insert_one(data)
 
         elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
 
             def generator(collection):
                 for atoms in collection:
-                    data = AtomsModel.from_atoms(atoms, calculator=calculator)
-                    if extra_info:
-                        data.update(extra_info)
+                    data = AtomsModel.from_atoms(atoms, extra_info=extra_info, store_calc=store_calc)
                     yield data
 
             self.collection.insert_many(generator(atoms))
 
-    def upload(self, file: Path, extra_infos=None, calculator=True):
+    def upload(self, file: Path, extra_infos=None, store_calc=True):
+
+        if isinstance(file, str):
+            file = Path(file)
 
         extra_info = {}
-        for info in extra_infos:
-            extra_info.update(extras.parser.parse(info))
+        if extra_infos:
+            for info in extra_infos:
+                extra_info.update(extras.parser.parse(info))
 
         extra_info['filename'] = str(file.name)
 
         data = iread(str(file))
-        self.push(data, extra_info, calculator=calculator)
+        self.push(data, extra_info, store_calc=store_calc)
 
     def get_items(self, query=None):
         query = parser(query)
@@ -202,7 +205,7 @@ class MongoDatabase(AbstractABCD):
         logger.info('query; {}'.format(query))
 
         if not query:
-            return self.collection.count()
+            query = {}
 
         return self.db.atoms.count_documents(query)
 

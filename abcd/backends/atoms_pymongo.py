@@ -32,6 +32,15 @@ class AtomsModel(AbstractModel):
         pass
 
 
+class AtomsModelExec(AbstractModel):
+    def __init__(self, collection, atoms):
+        super().__init__(atoms)
+        self._collection = collection
+
+    def save(self):
+        self._collection.replace_one({'_id': self['_id']}, self)
+
+
 class MongoQuery(AbstractQuerySet):
 
     def __init__(self):
@@ -159,7 +168,7 @@ class MongoDatabase(AbstractABCD):
 
             def generator(collection):
                 for atoms in collection:
-                    data = AtomsModel.from_atoms(atoms, calculator=calculator, collection=collection)
+                    data = AtomsModel.from_atoms(atoms, calculator=calculator)
                     if extra_info:
                         data.update(extra_info)
                     yield data
@@ -312,7 +321,7 @@ class MongoDatabase(AbstractABCD):
 
     def exec(self, code, query=None):
         for item in self.db.atoms.find(query):
-            # TODO: map all of the available variables
+            at = AtomsModelExec(self.collection, item)
             exec(code)
 
     def __repr__(self):

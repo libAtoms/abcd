@@ -65,10 +65,12 @@ class AbstractModel(dict):
         dct['derived'] = {
             'arrays_keys': list(arrays_keys),
             'info_keys': list(info_keys),
-            'results_keys': list(results_keys)
+            'results_keys': list(results_keys),
         }
 
-        return cls(**dct)
+        item = cls(**dct)
+        item.pre_save()
+        return item
 
     def to_atoms(self):
 
@@ -105,6 +107,7 @@ class AbstractModel(dict):
         return atoms
 
     def pre_save(self):
+        self['derived']['derived_keys'] = ['elements', 'username', 'uploaded', 'modified']
 
         cell = self['cell']
 
@@ -123,7 +126,6 @@ class AbstractModel(dict):
         self['elements'] = Counter(str(element) for element in self['numbers'])
 
         self['username'] = getpass.getuser()
-        self['derived']['derived_keys'].append('pressure')
 
         if not self.get('uploaded'):
             self['uploaded'] = datetime.datetime.utcnow()

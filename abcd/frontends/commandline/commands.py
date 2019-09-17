@@ -172,6 +172,27 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
                 f.hist(data)
 
 
+@init_config
+@init_db
+def show(*, db, query, print_all, props, **kwargs):
+    logger.info('show\n kwargs: {}'.format(kwargs))
+    logger.info('query: {}'.format(query))
+
+    limit = None if print_all else 10
+
+    from itertools import islice
+
+    for dct in islice(db.get_items(query), 0, limit):
+        if props:
+            for prop in props:
+                print(dct.get(prop, None))
+            continue
+
+        print(dct)
+
+    logging.info('property list: {}'.format(props))
+
+
 @check_readonly
 @init_config
 @init_db
@@ -210,6 +231,9 @@ def key_rename(*, db, query, old_keys, new_keys, **kwargs):
 @init_config
 @init_db
 def key_delete(*, db, query, yes, keys, **kwargs):
+    print(keys)
+    print(query)
+
     query += keys
 
     if not yes:
@@ -281,8 +305,6 @@ class Formater(object):
     def hist_str(self, total, counts, labels, width_hist=40):
         remain = total - sum(counts)
         if remain > 0:
-            # counts.append(remain)
-            # labels.append('...')
             counts = (*counts, remain)
             labels = (*labels, '...')
 

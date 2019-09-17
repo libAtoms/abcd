@@ -24,9 +24,8 @@ logger = logging.getLogger(__name__)
 class AtomsModel(AbstractModel):
 
     @classmethod
-    def from_atoms(cls, atoms: Atoms, collection=None, calculator=True):
+    def from_atoms(cls, atoms: Atoms, calculator=True):
         data = super().from_atoms(atoms, calculator)
-        data._collection = collection
         return data
 
     def save(self):
@@ -151,7 +150,7 @@ class MongoDatabase(AbstractABCD):
             extra_info = extras.parser.parse(extra_info)
 
         if isinstance(atoms, Atoms):
-            data = AtomsModel.from_atoms(atoms, calculator=calculator, collection=collection)
+            data = AtomsModel.from_atoms(atoms, calculator=calculator)
             if extra_info:
                 data.update(extra_info)
             self.collection.insert_one(data)
@@ -177,6 +176,11 @@ class MongoDatabase(AbstractABCD):
 
         data = iread(str(file))
         self.push(data, extra_info, calculator=calculator)
+
+    def get_items(self, query=None):
+        query = parser(query)
+        for dct in self.db.atoms.find(query):
+            yield dct
 
     def get_atoms(self, query=None):
         query = parser(query)
@@ -272,38 +276,34 @@ class MongoDatabase(AbstractABCD):
 
     def rename_property(self, name, new_name, query=None):
         logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))
-
+        # TODO name in derived.info_keys OR name in derived.arrays_keys OR name in derived.derived_keys
         self.collection.update_many(
-            parser(query + ['info.{}'.format(name)]),
+            parser(query),
             {'$push': {'derived.info_keys': new_name}})
 
         self.collection.update_many(
-            parser(query + ['info.{}'.format(name)]),
+            parser(query),
             {
                 '$pull': {'derived.info_keys': name},
-                '$rename': {'info.{}'.format(name): 'info.{}'.format(new_name)}})
+                '$rename': {name: new_name}})
 
-        self.collection.update_many(
-            parser(query + ['arrays.{}'.format(name)]),
-            {'$push': {'derived.arrays_keys': new_name}})
-
-        self.collection.update_many(
-            parser(query + ['arrays.{}'.format(name)]),
-            {'$pull': {'derived.arrays_keys': name},
-             '$rename': {'arrays.{}'.format(name): 'arrays.{}'.format(new_name)}})
+        # self.collection.update_many(
+        #     parser(query + ['arrays.{}'.format(name)]),
+        #     {'$push': {'derived.arrays_keys': new_name}})
+        #
+        # self.collection.update_many(
+        #     parser(query + ['arrays.{}'.format(name)]),
+        #     {'$pull': {'derived.arrays_keys': name},
+        #      '$rename': {'arrays.{}'.format(name): 'arrays.{}'.format(new_name)}})
 
     def delete_property(self, name, query=None):
         logger.info('delete: query={}, porperty={}'.format(name, query))
 
         self.collection.update_many(
-            parser(query + ['info.{}'.format(name)]),
-            {'$pull': {'derived.info_keys': name},
-             '$unset': {'info.{}'.format(name): ''}})
-
-        self.collection.update_many(
-            parser(query + ['arrays.{}'.format(name)]),
-            {'$pull': {'derived.arrays_keys': name},
-             '$unset': {'arrays.{}'.format(name): ''}})
+            parser(query),
+            {'$pull': {'derived.info_keys': name,
+                       'derived.arrays_keys': name},
+             '$unset': {name: ''}})
 
     def hist(self, name, query=None, **kwargs):
 

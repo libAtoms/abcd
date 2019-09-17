@@ -46,6 +46,15 @@ summary_parser.add_argument('-t', '--trunc',
                             help='Length of string before truncation',
                             default=20, type=int, dest='truncate')
 
+show_parser = subparsers.add_parser('show', help='shows the first 10 items')
+show_parser.set_defaults(callback_func=commands.show)
+show_parser.add_argument('-q', '--query', action='append', help='Filtering extra quantities', default=[])
+show_parser.add_argument('-p', '--props', action='append',
+                         help='Selecting properties for detailed description')
+show_parser.add_argument('-a', '--all',
+                         help='Show everything without truncation of strings and limits of lines',
+                         action='store_true', dest='print_all')
+
 delete_parser = subparsers.add_parser('delete', help='Delete configurations from the database')
 delete_parser.set_defaults(callback_func=commands.delete)
 delete_parser.add_argument('-q', '--query', action='append', help='Filtering by a query', default=[])
@@ -99,10 +108,12 @@ def main(args=None):
 
 
 if __name__ == '__main__':
-    main('summary -q formula~"Si2"'.split())
-    main()
-    main('upload -e cas -i ../../../tutorials/GB_alphaFe_001/tilt/00110391110_v6bxv2_tv0.4bxv0.2_d1.6z_traj.xyz'.split())
-    main('-v login mongodb://mongoadmin:secret@localhost:27017/abcd'.split())
+    main(['summary'])
+    main('delete-key -q pbc pbc'.split())
+    # main('upload -e cas -i ../../../tutorials/GB_alphaFe_001/tilt/00110391110_v6bxv2_tv0.4bxv0.2_d1.6z_traj.xyz'.split())
+    # main('summary -q formula~"Si2"'.split())
+    # main('upload -e cas -i ../../../tutorials/GB_alphaFe_001/tilt/00110391110_v6bxv2_tv0.4bxv0.2_d1.6z_traj.xyz'.split())
+    # main('-v login mongodb://mongoadmin:secret@localhost:27017/abcd'.split())
     # main('-v summary'.split())
     # main('-v summary -p energy'.split())
     # main('-v summary -p *'.split())

@@ -2,3 +2,4 @@ ase
 numpy
 lark-parser
 pymongo
+mongomock

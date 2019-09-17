@@ -13,9 +13,9 @@ setup(
         'Source Code': 'https://github.com/libatoms/abcd',
     },
     packages=find_packages(),
-    # install_requires=['ase', 'click', 'ply'],
     install_requires=['ase', 'numpy', 'lark', 'pymongo'],
     extras_require={
+        'tests': ['mongomock'],
         'mongo': ['pymongo'],
         'http': ['requests'],
         'server-api': ['flask'],

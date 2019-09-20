@@ -1,7 +1,7 @@
 import datetime
 import getpass
 import logging
-from collections import Counter
+from collections import Counter, UserDict
 from ase.calculators.singlepoint import SinglePointCalculator
 
 import numpy as np
@@ -10,11 +10,51 @@ from ase import Atoms
 logger = logging.getLogger(__name__)
 
 
-class AbstractModel(dict):
-    reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived'}
+class AbstractModel(UserDict):
+    reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters'}
 
-    # def update(self, E=None, **kwargs):
-    #     super().update(E, kwargs)
+    def __init__(self, dict=None, **kwargs):
+        self.arrays_keys = []
+        self.info_keys = []
+        self.results_keys = []
+        self.derived_keys = []
+
+        super().__init__(dict, **kwargs)
+
+    @property
+    def derived(self):
+        return {
+            'arrays_keys': self.arrays_keys,
+            'info_keys': self.info_keys,
+            'results_keys': self.results_keys,
+            'derived_keys': self.derived_keys
+        }
+
+    def __getitem__(self, key):
+        if key == 'derived':
+            return self.derived
+
+        return super().__getitem__(key)
+
+    def __setitem__(self, key, value):
+        logger.info(f'{key}: {value}')
+
+        if key == 'derived':
+            raise KeyError('Please do not use "derived" as key because it is protected!')
+
+        # if key not in self.derived:
+        #     self.derived.append(key)
+
+        super().__setitem__(key, value)
+
+    def __delitem__(self, key):
+        # self.derived.remove(key)
+        super().__delitem__(key)
+
+    def __iter__(self):
+        for item in super().__iter__():
+            yield item
+        yield 'derived'
 
     @classmethod
     def from_atoms(cls, atoms: Atoms, extra_info=None, store_calc=True):
@@ -29,6 +69,8 @@ class AbstractModel(dict):
         if len(set.union(*all_keys)) != sum(map(len, all_keys)):
             print(all_keys)
             raise ValueError('All the keys must be unique!')
+
+        item = cls()
 
         n_atoms = len(atoms)
 
@@ -66,31 +108,28 @@ class AbstractModel(dict):
                         info_keys.update(key)
                     dct[key] = value.tolist()
 
-        dct['derived'] = {
-            'arrays_keys': list(arrays_keys),
-            'info_keys': list(info_keys),
-            'results_keys': list(results_keys),
-        }
+        item.arrays_keys = list(arrays_keys),
+        item.info_keys = list(info_keys),
+        item.results_keys = list(results_keys),
 
-        item = cls(**dct)
+        item.update(dct)
 
         if extra_info:
             item.update(extra_info)
-            item['derived']['info_keys'].append(*extra_info.keys())
+            item.info_keys.append(*extra_info.keys())
 
         item.pre_save()
         return item
 
     def to_atoms(self):
-
-        arrays_keys = set(self['derived']['arrays_keys'])
-        info_keys = set(self['derived']['info_keys'])
+        arrays_keys = set(*self.arrays_keys)
+        info_keys = set(*self.info_keys)
 
         cell = self.pop('cell', None)
         pbc = self.pop('pbc', None)
         numbers = self.pop('numbers', None)
         positions = self.pop('positions', None)
-        results_keys = self['derived']['results_keys']
+        results_keys = self.derived['results_keys']
 
         info_keys -= {'cell', 'pbc'}
         arrays_keys -= {'numbers', 'positions'}
@@ -116,20 +155,20 @@ class AbstractModel(dict):
         return atoms
 
     def pre_save(self):
-        self['derived']['derived_keys'] = ['elements', 'username', 'uploaded', 'modified']
+        self.derived_keys = ['elements', 'username', 'uploaded', 'modified']
 
         cell = self['cell']
 
         if cell:
             volume = abs(np.linalg.det(cell))  # atoms.get_volume()
             self['volume'] = volume
-            self['derived']['derived_keys'].append('volume')
+            self.derived_keys.append('volume')
 
             virial = self.get('virial')
             if virial:
                 # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
                 self['pressure'] = -1 / 3 * np.trace(virial / volume)
-                self['derived']['derived_keys'].append('pressure')
+                self.derived_keys.append('pressure')
 
         # 'elements': Counter(atoms.get_chemical_symbols()),
         self['elements'] = Counter(str(element) for element in self['numbers'])

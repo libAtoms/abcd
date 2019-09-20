@@ -31,13 +31,15 @@ class AbstractModel(UserDict):
         }
 
     def __getitem__(self, key):
+        logger.info(f'__getitem__: {key}')
+
         if key == 'derived':
             return self.derived
 
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-        logger.info(f'{key}: {value}')
+        logger.info(f'__setitem__: {key}: {value}')
 
         if key == 'derived':
             raise KeyError('Please do not use "derived" as key because it is protected!')
@@ -108,9 +110,9 @@ class AbstractModel(UserDict):
                         info_keys.update(key)
                     dct[key] = value.tolist()
 
-        item.arrays_keys = list(arrays_keys),
-        item.info_keys = list(info_keys),
-        item.results_keys = list(results_keys),
+        item.arrays_keys = list(arrays_keys)
+        item.info_keys = list(info_keys)
+        item.results_keys = list(results_keys)
 
         item.update(dct)
 
@@ -122,8 +124,8 @@ class AbstractModel(UserDict):
         return item
 
     def to_atoms(self):
-        arrays_keys = set(*self.arrays_keys)
-        info_keys = set(*self.info_keys)
+        arrays_keys = set(self.arrays_keys)
+        info_keys = set(self.info_keys)
 
         cell = self.pop('cell', None)
         pbc = self.pop('pbc', None)
@@ -186,6 +188,7 @@ if __name__ == '__main__':
     from pprint import pprint
     from ase.io import read
 
+    logging.basicConfig(level=logging.INFO)
     # from ase.io import jsonio
 
     xyz = io.StringIO("""2

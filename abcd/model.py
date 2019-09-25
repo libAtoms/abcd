@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractModel(UserDict):
-    reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters'}
+    reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived'}
 
     def __init__(self, dict=None, **kwargs):
         self.arrays_keys = []
@@ -42,15 +42,44 @@ class AbstractModel(UserDict):
         logger.info(f'__setitem__: {key}: {value}')
 
         if key == 'derived':
-            raise KeyError('Please do not use "derived" as key because it is protected!')
+            # raise KeyError('Please do not use "derived" as key because it is protected!')
+            return
 
-        # if key not in self.derived:
-        #     self.derived.append(key)
+        self.update_key_category(key, value)
 
         super().__setitem__(key, value)
 
+    def update_key_category(self, key, value):
+
+        if key == '_id':
+            # raise KeyError('Please do not use "derived" as key because it is protected!')
+            return
+
+        for category in ('arrays_keys', 'info_keys', 'results_keys', 'derived_keys'):
+            if key in self.derived[category]:
+                return
+
+        if key in ('positions', 'forces'):
+            self.derived['arrays_keys'].append(key)
+            return
+
+        if key in ('n_atoms', 'cell', 'pbc'):
+            self.derived['info_keys'].append(key)
+            return
+
+        # Guess the category based in the shape of the value
+        n_atoms = self['n_atoms']
+        if isinstance(value, (np.ndarray, list)) and len(value) == n_atoms:
+            self.derived['arrays_keys'].append(key)
+        else:
+            self.derived['info_keys'].append(key)
+
     def __delitem__(self, key):
-        # self.derived.remove(key)
+        for category in ('arrays_keys', 'info_keys', 'results_keys', 'derived_keys'):
+            if key in self.derived[category]:
+                self.derived[category].remove(key)
+                break
+
         super().__delitem__(key)
 
     def __iter__(self):

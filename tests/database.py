@@ -2,13 +2,14 @@ import unittest
 import mongomock
 
 from abcd import ABCD
-
+import logging
 
 class Mongo(unittest.TestCase):
 
     @classmethod
     @mongomock.patch(servers=(('localhost', 27017),))
     def setUpClass(cls):
+        logging.basicConfig(level=logging.INFO)
         url = 'mongodb://localhost'
         abcd = ABCD.from_url(url)
         abcd.print_info()

@@ -17,24 +17,40 @@ from abcd.queryset import AbstractQuerySet
 from abcd.parsers import extras
 
 from pymongo import MongoClient
+from bson import ObjectId
+
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
 class AtomsModel(AbstractModel):
-    pass
+    def __init__(self, collection=None, dict=None):
+        super().__init__(dict)
 
-
-class AtomsModelExec(AbstractModel):
-    def __init__(self, collection, atoms):
-        super().__init__(atoms)
         self._collection = collection
 
+    @classmethod
+    def from_atoms(cls, collection, atoms: Atoms, extra_info=None, store_calc=True):
+        obj = super().from_atoms(atoms, extra_info, store_calc)
+        obj._collection = collection
+        return obj
+
+    @property
+    def _id(self):
+        return self.get('_id', None)
+
     def save(self):
-        # TODO: detect changes in data structure
-        # TODO: update modified value
-        self._collection.replace_one({'_id': self['_id']}, self)
+        if not self._id:
+            self._collection.insert(self)
+        else:
+            self._collection.update(
+                {"_id": ObjectId(self.id)}, self)
+
+    def remove(self):
+        if self._id:
+            self._collection.remove({"_id": ObjectId(self._id)})
+            self.clear()
 
 
 class MongoQuery(AbstractQuerySet):
@@ -163,17 +179,15 @@ class MongoDatabase(AbstractABCD):
             extra_info = extras.parser.parse(extra_info)
 
         if isinstance(atoms, Atoms):
-            data = AtomsModel.from_atoms(atoms, extra_info=extra_info, store_calc=store_calc)
-            self.collection.insert_one(data)
+            data = AtomsModel.from_atoms(self.collection, atoms, extra_info=extra_info, store_calc=store_calc)
+            data.save()
+            # self.collection.insert_one(data)
 
         elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
 
-            def generator(collection):
-                for atoms in collection:
-                    data = AtomsModel.from_atoms(atoms, extra_info=extra_info, store_calc=store_calc)
-                    yield data
-
-            self.collection.insert_many(generator(atoms))
+            for item in atoms:
+                data = AtomsModel.from_atoms(self.collection, item, extra_info=extra_info, store_calc=store_calc)
+                data.save()
 
     def upload(self, file: Path, extra_infos=None, store_calc=True):
 
@@ -198,7 +212,7 @@ class MongoDatabase(AbstractABCD):
     def get_atoms(self, query=None):
         query = parser(query)
         for dct in self.db.atoms.find(query):
-            yield AtomsModel(dct).to_atoms()
+            yield AtomsModel(None, dct).to_atoms()
 
     def count(self, query=None):
         query = parser(query)
@@ -325,7 +339,7 @@ class MongoDatabase(AbstractABCD):
 
     def exec(self, code, query=None):
         for item in self.db.atoms.find(query):
-            at = AtomsModelExec(self.collection, item)
+            at = AtomsModel(self.collection, item)
             exec(code)
 
     def __repr__(self):

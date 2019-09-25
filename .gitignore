@@ -3,6 +3,7 @@
 
 .idea
 /data
+/datadir
 /tmp
 
 # Byte-compiled / optimized / DLL files

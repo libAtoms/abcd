@@ -1,17 +1,25 @@
 import logging
-from abcd import backends
-
 from urllib import parse
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 
 
+class ConnectionType(Enum):
+    mongodb = 1
+    http = 2
+
+
 class ABCD(object):
-    """Factory method"""
-
-    def __new__(cls, url, **kwargs):
+    @classmethod
+    def from_config(cls, config):
         # Factory method
+        url = config['url']
+        return ABCD.from_url(url)
 
+    @classmethod
+    def from_url(cls, url, **kwargs):
+        # Factory method
         r = parse.urlparse(url)
         logger.info(r)
 
@@ -22,71 +30,35 @@ class ABCD(object):
                 'port': r.port,
                 'username': r.username,
                 'password': r.password,
-                'authentication_source': 'admin',
+                'authSource': 'admin',
             }
 
             db = r.path.split('/')[1] if r.path else None
             db = db if db else 'abcd'
 
-            return backends.MongoDatabase(db=db, **conn_settings, **kwargs)
+            from abcd.backends.atoms_pymongo import MongoDatabase
+            return MongoDatabase(db_name=db, **conn_settings, **kwargs)
 
         elif r.scheme == 'http' or r.scheme == 'https':
             raise NotImplementedError('http not yet supported! soon...')
+        elif r.scheme == 'ssh':
+            raise NotImplementedError('ssh not yet supported! soon...')
         else:
             raise NotImplementedError('Unable to recognise the type of connection. (url: {})'.format(url))
 
-    @classmethod
-    def from_config(cls, config):
-        url = config['url']
-        return cls(url)
-
 
 if __name__ == '__main__':
-    from ase.io import iread
-
     logging.basicConfig(level=logging.INFO)
 
-    # url = 'mongodb://2ef35d3635e9dc5a922a6a42:ac6ce72e259f5ddcc8dd5178@localhost:27017/abcd'
-    url = 'mongodb://localhost:27017'
-    abcd = ABCD(url, collection='atoms')
+    # url = 'mongodb://mongoadmin:secret@localhost:27017'
+    url = 'mongodb://mongoadmin:secret@localhost:27017/abcd_new'
+    abcd = ABCD.from_url(url)
     abcd.print_info()
 
-    for atoms in iread('../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
-        # Hack to fix the representation of forces
-        atoms.calc.results['forces'] = atoms.arrays['force']
-
-        print(atoms)
-
-    abcd.query('aa>22 bb')
-    # todo: query_str2_query_dict
-
-    # db = ABCD(url='http://localhost:5000/api')
+    # from ase.io import iread
+    # for atoms in iread('../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
+    #     # Hack to fix the representation of forces
+    #     atoms.calc.results['forces'] = atoms.arrays['force']
     #
-    # query = {
-    #     'elements': ['Cu']
-    # }
-    # results = db.search(query)
-    #
-    # # Fetch all results (returns with an Atoms object
-    # for id in results:
-    #     atoms = db.get_atoms(id)
+    #     abcd.push(atoms)
     #     print(atoms)
-    #
-    #     local_db = [db.get_atoms(id) for id in results]
-    # #
-    # # context manager for the database
-    # with ABCD(url='http://localhost:5000/api') as db:
-    #     results = db.search('formula=Fe3O1;elements=[Fe,*];n_atoms=10,pbc;metadata.collection=iron')
-    #     local_db = [db.get_atoms(id) for id in results]
-
-    # with ABCD(url='http://localhost:5000/api') as db:
-    #     results = db.search('formula=Fe3O1;elements=[Fe,*];n_atoms=10,pbc;metadata.collection=iron')
-    #     local_db = [db.get_atoms(id) for id in results]
-
-    # connection = ABCD()
-    # for atoms in traj:
-    #     hash_value = connection.push(atoms)
-    #     print(hash_value)
-
-    # with ABCD(url='http://localhost:5000/api') as db:
-    #     db.push(atoms)

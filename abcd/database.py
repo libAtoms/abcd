@@ -1,21 +1,11 @@
+import logging
 from abc import ABCMeta, abstractmethod
-from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
-class ConnectionType(Enum):
-    mongodb = 1
-    http = 2
-
-
-class URLError(Exception):
-    pass
-
-
-class AuthenticationError(Exception):
-    pass
-
-
-class Database(object, metaclass=ABCMeta):
+class AbstractABCD(metaclass=ABCMeta):
+    """Factory method"""
 
     @abstractmethod
     def __init__(self):

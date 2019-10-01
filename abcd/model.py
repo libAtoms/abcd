@@ -43,6 +43,7 @@ class AbstractModel(UserDict):
 
         if key == 'derived':
             # raise KeyError('Please do not use "derived" as key because it is protected!')
+            # Silent return to avoid raising error in pymongo package
             return
 
         self.update_key_category(key, value)
@@ -146,8 +147,8 @@ class AbstractModel(UserDict):
         item.update(dct)
 
         if extra_info:
-            item.update(extra_info)
             item.info_keys.append(*extra_info.keys())
+            item.update(extra_info)
 
         item.pre_save()
         return item

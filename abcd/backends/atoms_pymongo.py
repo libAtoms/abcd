@@ -66,8 +66,12 @@ class MongoQuery(AbstractQuerySet):
         except KeyError:
             pass
 
-    def visit_name(self, fields):
-        return {fields: {'$exists': True}}
+    def visit_name(self, field):
+        return {field: {'$exists': True}}
+
+    def visit_not(self, value):
+        _, field = value
+        return {field: {'$exists': False}}
 
     def visit_and(self, *args):
         print(args)

@@ -239,7 +239,7 @@ if __name__ == '__main__':
     # pprint(jsonio.encode(atoms.arrays))
     # pprint(jsonio.encode(atoms.info))
     # pprint(jsonio.encode(atoms.cell))
-    #
+
     pprint(AbstractModel.from_atoms(atoms))
 
     model = AbstractModel.from_atoms(atoms)

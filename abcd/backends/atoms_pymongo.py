@@ -203,7 +203,7 @@ class MongoDatabase(AbstractABCD):
             for info in extra_infos:
                 extra_info.update(extras.parser.parse(info))
 
-        extra_info['filename'] = str(file.name)
+        extra_info['filename'] = str(file)
 
         data = iread(str(file))
         self.push(data, extra_info, store_calc=store_calc)

@@ -66,16 +66,15 @@ def upload(*, db, path, extra_infos, ignore_calc_results, **kwargs):
     from pathlib import Path
 
     calculator = not ignore_calc_results
-
     path = Path(path)
 
     if path.is_file():
-        db.upload(path, extra_infos, calculator=calculator)
+        db.upload(path, extra_infos, store_calc=calculator)
 
     elif path.is_dir():
         for file in path.glob('.xyz'):
             logger.info('Uploaded file: {}'.format(file))
-            db.upload(file, extra_infos, calculator=calculator)
+            db.upload(file, extra_infos, store_calc=calculator)
         else:
             logger.info('No file found: {}'.format(path))
             raise FileNotFoundError()

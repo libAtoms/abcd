@@ -147,7 +147,7 @@ class AbstractModel(UserDict):
         item.update(dct)
 
         if extra_info:
-            item.info_keys.append(*extra_info.keys())
+            item.info_keys.extend(extra_info.keys())
             item.update(extra_info)
 
         item.pre_save()

@@ -500,6 +500,8 @@ if __name__ == '__main__':
     print(db.info())
     print(db.count())
 
+    print(db.info())
+
     # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
     #     # print(at)
     #     atoms.calc.results['forces'] = atoms.arrays['force']

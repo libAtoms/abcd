@@ -221,10 +221,11 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     # from ase.io import jsonio
 
-    xyz = io.StringIO("""2
-        Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t e s t _ s t r" pbc="F F F"
-        Si       0.00000000       0.00000000       0.00000000 
-        Si       0.00000000       0.00000000       0.00000000 
+    xyz = io.StringIO("""
+    2
+    Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t e s t _ s t r" pbc="F F F"
+    Si       0.00000000       0.00000000       0.00000000 
+    Si       0.00000000       0.00000000       0.00000000 
         """)
 
     atoms = read(xyz, format='xyz')

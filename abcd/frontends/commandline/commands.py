@@ -12,28 +12,19 @@ logger = logging.getLogger(__name__)
 def login(*, config, name, url, **kwargs):
     logger.info('login args: \nconfig:{}, name:{}, url:{}, kwargs:{}'.format(config, name, url, kwargs))
     from abcd import ABCD
-    from abcd.errors import URLError, AuthenticationError
 
-    try:
-        db = ABCD.from_url(url=url)
-        info = db.info()
+    db = ABCD.from_url(url=url)
+    info = db.info()
 
-        config['url'] = url
-        config.save()
+    config['url'] = url
+    config.save()
 
-        print('Successfully connected to the database!')
-        print(" type:       {type}\n"
-              " hostname:   {host}\n"
-              " port:       {port}\n"
-              " database:   {db}\n"
-              " # of confs: {number of confs}".format(**info))
-
-    except URLError:
-        print('Wrong connection: Please check the parameters of th url!')
-        exit(1)
-    except AuthenticationError:
-        print('Authentication failed!')
-        exit(1)
+    print('Successfully connected to the database!')
+    print(" type:       {type}\n"
+          " hostname:   {host}\n"
+          " port:       {port}\n"
+          " database:   {db}\n"
+          " # of confs: {number of confs}".format(**info))
 
 
 @init_config
@@ -252,6 +243,12 @@ def execute(*, db, query, yes, python_code, **kwargs):
         exit(1)
 
     db.exec(python_code, query)
+
+
+@check_readonly
+def server(*, abcd_url, url, api_only, **kwargs):
+    logger.info("SERVER -  abcd: {}, url: {}, api_only:{}".format(abcd_url, url, api_only))
+    exit(0)
 
 
 class Formater(object):

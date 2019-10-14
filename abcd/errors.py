@@ -12,3 +12,7 @@ class AuthenticationError(ABCDError):
 
 class PropertyNotImplementedError(NotImplementedError):
     """Raised if a calculator does not implement the requested property."""
+
+
+class TimeoutError(ABCDError):
+    pass

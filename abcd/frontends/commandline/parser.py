@@ -1,6 +1,7 @@
 import logging
-from argparse import ArgumentParser, REMAINDER
+from argparse import ArgumentParser
 from abcd.frontends.commandline import commands
+from abcd.errors import URLError, AuthenticationError, TimeoutError
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,12 @@ exec_parser.add_argument('-q', '--query', action='append', help='Filtering by a 
 exec_parser.add_argument('-y', '--yes', action='store_true', help='Do the actual execution.')
 exec_parser.add_argument('python_code', help='Selecting properties for detailed description')
 
+server = subparsers.add_parser('server', help='Running custom python code')
+server.set_defaults(callback_func=commands.server)
+server.add_argument('abcd_url', help='Url for abcd database.')
+server.add_argument('--api-only', action='store_true', help='Running only the API.')
+server.add_argument('-u', '--url', help='Url to run the server.', default='http://localhost:27017')
+
 
 def main(args=None):
     kwargs = parser.parse_args(args).__dict__
@@ -102,9 +109,19 @@ def main(args=None):
         print(parser.format_help())
         return
 
-    # return namespace.callback_func(namespace)
-    callback_func = kwargs.pop('callback_func')
-    return callback_func(**kwargs)
+    try:
+        callback_func = kwargs.pop('callback_func')
+        callback_func(**kwargs)
+
+    except URLError:
+        print('Wrong connection: Please check the parameters of the url!')
+        exit(1)
+    except AuthenticationError:
+        print('Authentication failed: Please check the parameters of the connection!')
+        exit(1)
+    except TimeoutError:
+        print("Timeout: Please check the parameters of the connection!")
+        exit(1)
 
 
 if __name__ == '__main__':

@@ -11,11 +11,13 @@ import datetime
 from ase import Atoms
 from ase.io import iread
 
+import abcd.errors
 from abcd.model import AbstractModel
 from abcd.database import AbstractABCD
 from abcd.queryset import AbstractQuerySet
 from abcd.parsers import extras
 
+import pymongo.errors
 from pymongo import MongoClient
 from bson import ObjectId
 
@@ -154,6 +156,16 @@ class MongoDatabase(AbstractABCD):
         self.client = MongoClient(
             host=host, port=port, username=username, password=password,
             authSource=authSource)
+
+        try:
+            info = self.client.server_info()  # Forces a call.
+            logger.info('DB info: {}'.format(info))
+
+        except pymongo.errors.OperationFailure:
+            raise abcd.errors.AuthenticationError()
+
+        except pymongo.errors.ServerSelectionTimeoutError:
+            raise abcd.errors.TimeoutError()
 
         self.db = self.client[db_name]
         self.collection = self.db[collection_name]

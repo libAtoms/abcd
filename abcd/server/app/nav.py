@@ -27,9 +27,9 @@ def main_navbar():
 
         Subgroup(
             'Links',
-            Link('Docs', 'https://fekad.github.io/abcd/'),
+            Link('Docs', 'https://libatoms.github.io/abcd/'),
             Separator(),
-            Link('Github', 'https://github.com/fekad/abcd'),
+            Link('Github', 'https://github.com/libatoms/abcd'),
         ),
     )
 

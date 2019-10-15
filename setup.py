@@ -19,7 +19,7 @@ setup(
         'mongo': ['pymongo'],
         'http': ['requests'],
         'server-api': ['flask'],
-        'server-app': ['flask', 'Flask-Nav', 'Flask-MongoEngine', 'gunicorn'],
+        'server-app': ['flask', 'Flask-Nav', 'Flask-MongoEngine', 'gunicorn', 'flask-paginate'],
     },
     test_require=['mongomock'],
     entry_points={

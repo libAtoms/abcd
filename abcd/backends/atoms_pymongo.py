@@ -221,6 +221,7 @@ class MongoDatabase(AbstractABCD):
         self.push(data, extra_info, store_calc=store_calc)
 
     def get_items(self, query=None):
+        # TODO: better method for aggregations
         query = parser(query)
         for dct in self.db.atoms.find(query):
             yield dct

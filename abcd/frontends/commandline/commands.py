@@ -168,17 +168,15 @@ def show(*, db, query, print_all, props, **kwargs):
     logger.info('show\n kwargs: {}'.format(kwargs))
     logger.info('query: {}'.format(query))
 
-    limit = None if print_all else 10
+    if not props:
+        print("Please define at least on property by using the -p option!")
+        exit(0)
 
     from itertools import islice
 
+    limit = None if print_all else 10
     for dct in islice(db.get_items(query), 0, limit):
-        if props:
-            for prop in props:
-                print(dct.get(prop, None))
-            continue
-
-        print(dct)
+        print(" | ".join(str(dct.get(prop, None)) for prop in props))
 
     logging.info('property list: {}'.format(props))
 
@@ -293,7 +291,7 @@ class Formater(object):
 
         for count, lower, upper in zip(counts, bin_edges[:-1], bin_edges[1:]):
             scale = int(ratio * count)
-            self.print('{:<{}} {:>{}d} [{: >11.4e}, {: >11.4e})'.format(
+            self.print('{:<{}} {:>{}d} [{: >11.4e}, {: >11.4f})'.format(
                 "▉" * scale, width_hist,
                 count, width_count,
                 lower, upper))

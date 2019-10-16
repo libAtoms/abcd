@@ -62,10 +62,16 @@ grammar = r"""
 
     //NAME : /(?!and\b)/ /(?!or\b)/ /(?!not\b)/ CNAME
 
+    // Strings
+    _STRING_INNER: /.*?/
+    _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/ 
+    
+    STRING : "\"" _STRING_ESC_INNER "\""
+           | "'" _STRING_ESC_INNER "'"
+
     %import common.CNAME          -> NAME          
     %import common.SIGNED_FLOAT   -> FLOAT
     %import common.SIGNED_INT     -> INT
-    %import common.ESCAPED_STRING -> STRING
     %import common.WS_INLINE
 
     %ignore WS_INLINE

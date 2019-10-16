@@ -30,8 +30,8 @@ grammar = r"""
     ?relation_ops: AND 
                  | OR 
 
-    AND: "&" | "and"
-    OR:  "|" | "or"
+    AND: "&&" | "and"
+    OR:  "||" | "or"
     NOT: "!" | "not"
 
     ?reversed_ops: IN

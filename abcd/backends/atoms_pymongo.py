@@ -355,8 +355,10 @@ class MongoDatabase(AbstractABCD):
         return histogram(name, data, **kwargs)
 
     def exec(self, code, query=None):
-        for item in self.db.atoms.find(query):
-            at = AtomsModel(self.collection, item)
+        # TODO: Separate python environment with its own packages loaded
+
+        for dct in self.get_items(query):
+            at = AtomsModel(self.collection, dct)
             exec(code)
 
     def __repr__(self):

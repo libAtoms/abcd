@@ -59,11 +59,11 @@
                             <th class="column-header col-data-{{ column.slug }}">{{ column.name }}</th>{% endfor %}
                         </tr>
                         </thead>
-                        <tbody>{% for row in atoms.items %}
-                            <tr id="{{ row.id }}">{% for column in info.columns %}
-                                <td class="col-data-{{ column.slug }}">{{ row[column.slug] }}</td>{% endfor %}
-                            </tr>
-                        {% endfor %}
+{#                        <tbody>{% for row in atoms.items %}#}
+{#                            <tr id="{{ row.id }}">{% for column in info.columns %}#}
+{#                                <td class="col-data-{{ column.slug }}">{{ row[column.slug] }}</td>{% endfor %}#}
+{#                            </tr>#}
+{#                        {% endfor %}#}
                         </tbody>
                     </table>
                 </div>
@@ -71,7 +71,7 @@
         </div>
 
 
-        {{ render_navigation(atoms) }}
+{#        {{ render_navigation(atoms) }}#}
     </div>
 
 {%- endblock %}

@@ -5,17 +5,16 @@ from flask_nav import register_renderer
 
 from abcd.server.app.db import db
 from abcd.server.app.nav import nav, BootstrapRenderer, DatabaseNav
-from abcd.server.app.views import index  # database, api, index
+from abcd.server.app.views import index, database, api
 
 
 def create_app():
     # Define the WSGI application object
     app = Flask(__name__)
-    app.logger.info('Creating application')
+    app.logger.info('Creating an application')
 
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(12).hex())
-    app.config['ABCD_URL'] = os.getenv('ABCD_URL', 'localhost:27017/abcd')
-
+    app.config['ABCD_URL'] = os.getenv('ABCD_URL', 'mongodb://localhost:27017/abcd')
 
     # Initialize extensions/add-ons/plugins.
     nav.init_app(app)
@@ -26,9 +25,8 @@ def create_app():
 
     # Setup redirects and register blueprints.
     app.register_blueprint(index.bp)
-
-    # app.register_blueprint(api.bp, url_prefix='/api')
-    # app.register_blueprint(database.bp, url_prefix='/db')
+    app.register_blueprint(database.bp, url_prefix='/db')
+    app.register_blueprint(api.bp, url_prefix='/api')
 
     @app.errorhandler(404)
     def not_found(error):

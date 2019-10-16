@@ -5,8 +5,6 @@ from hashlib import sha1
 from dominate import tags
 from flask_nav.renderers import Renderer
 
-# from flask import url_for
-
 nav = Nav()
 
 
@@ -19,18 +17,11 @@ class TopNavbar(Navbar):
 def main_navbar():
     return TopNavbar(
         'ABCD',
-        View('Databases', 'index.index'),
-        View('GraphQL', 'index.graphql'),
-        View('Login', 'index.login'),
-
-        View('New', 'index.new'),
-
-        Subgroup(
-            'Links',
-            Link('Docs', 'https://libatoms.github.io/abcd/'),
-            Separator(),
-            Link('Github', 'https://github.com/libatoms/abcd'),
-        ),
+        View('Home', 'index.index'),
+        View('API', 'api.index'),
+        View('Databases', 'database.database', database_name='default'),
+        Link('Docs', 'https://libatoms.github.io/abcd/'),
+        Link('Github', 'https://github.com/libatoms/abcd'),
     )
 
 

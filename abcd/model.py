@@ -46,9 +46,18 @@ class AbstractModel(UserDict):
             # Silent return to avoid raising error in pymongo package
             return
 
+        value = self.convert(value)
         self.update_key_category(key, value)
 
         super().__setitem__(key, value)
+
+    def convert(self, value):
+        # TODO: https://api.mongodb.com/python/current/api/bson/index.html using type_registry
+
+        if isinstance(value, np.int64):
+            return int(value)
+
+        return value
 
     def update_key_category(self, key, value):
 

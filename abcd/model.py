@@ -101,7 +101,7 @@ class AbstractModel(UserDict):
     def from_atoms(cls, atoms: Atoms, extra_info=None, store_calc=True):
         """ASE's original implementation"""
 
-        reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived'}
+        reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived', 'formula'}
         arrays_keys = set(atoms.arrays.keys())
         info_keys = set(atoms.info.keys())
         results_keys = set(atoms.calc.results.keys()) if store_calc and atoms.calc else {}
@@ -119,9 +119,10 @@ class AbstractModel(UserDict):
             'n_atoms': n_atoms,
             'cell': atoms.cell.tolist(),
             'pbc': atoms.pbc.tolist(),
+            'formula': atoms.get_chemical_formula()
         }
 
-        info_keys.update({'n_atoms', 'cell', 'pbc'})
+        info_keys.update({'n_atoms', 'cell', 'pbc', 'formula'})
 
         for key, value in atoms.arrays.items():
             if isinstance(value, np.ndarray):

@@ -1,22 +1,21 @@
-from flask import Blueprint, Response
+from flask import Blueprint, Response, make_response, jsonify, request
 
 bp = Blueprint('api', __name__)
 
 
 @bp.route('/')
 def index():
-    return Response(status=200)
+    return Response('ok', status=200)
 
-# # endpoint to create new user
-# @bp.route("/calculation", methods=["POST"])
-# def query_calculation():
-#     response = {
-#         'query': request.json,
-#         'results': []
-#     }
-#     return jsonify(response)
-#
-#
+# endpoint to create new user
+@bp.route("/calculation", methods=["POST"])
+def query_calculation():
+    response = {
+        'query': request.json,
+        'results': []
+    }
+    return jsonify(response)
+
 # # endpoint to show all users
 # @bp.route("/calculation", methods=["GET"])
 # def get_calculation():

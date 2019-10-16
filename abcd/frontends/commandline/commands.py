@@ -270,10 +270,11 @@ class Formater(object):
 
     def describe(self, data):
         if data['type'] == 'hist_float':
-            print('{}  count: {} '.format(data["name"], sum(data["counts"])),
-                  'min: {:.8g} med: {:.8g} max: {:.8g}  '.format(data["min"], data["median"], data["max"]),
-                  'std: {:.8g} var:{:.8g}'.format(data["std"], data["var"])
-                  )
+            print('{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} var:{:11.4e}'.format(
+                data["name"], sum(data["counts"]),
+                data["min"], data["median"], data["max"],
+                data["std"], data["var"])
+            )
 
         elif data['type'] == 'hist_int':
             print('{}  count: {} '.format(data["name"], sum(data["counts"])),
@@ -292,7 +293,7 @@ class Formater(object):
 
         for count, lower, upper in zip(counts, bin_edges[:-1], bin_edges[1:]):
             scale = int(ratio * count)
-            self.print('{:<{}} {:>{}d} [{:.4e}, {:.4e})'.format(
+            self.print('{:<{}} {:>{}d} [{: >11.4e}, {: >11.4e})'.format(
                 "▉" * scale, width_hist,
                 count, width_count,
                 lower, upper))

@@ -90,7 +90,7 @@ server = subparsers.add_parser('server', help='Running custom python code')
 server.set_defaults(callback_func=commands.server)
 server.add_argument('abcd_url', help='Url for abcd database.')
 server.add_argument('--api-only', action='store_true', help='Running only the API.')
-server.add_argument('-u', '--url', help='Url to run the server.', default='http://localhost:27017')
+server.add_argument('-u', '--url', help='Url to run the server.', default='http://localhost:5000')
 
 
 def main(args=None):

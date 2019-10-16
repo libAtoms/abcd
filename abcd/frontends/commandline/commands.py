@@ -247,8 +247,19 @@ def execute(*, db, query, yes, python_code, **kwargs):
 
 @check_readonly
 def server(*, abcd_url, url, api_only, **kwargs):
+    from urllib.parse import urlparse
+    from abcd.server.app import create_app
+
     logger.info("SERVER -  abcd: {}, url: {}, api_only:{}".format(abcd_url, url, api_only))
-    exit(0)
+
+    if api_only:
+        print("Not implemented yet!")
+        exit(1)
+
+    o = urlparse(url)
+
+    app = create_app(abcd_url)
+    app.run(host=o.hostname, port=o.port)
 
 
 class Formater(object):

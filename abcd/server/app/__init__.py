@@ -8,7 +8,7 @@ from abcd.server.app.nav import nav, BootstrapRenderer, DatabaseNav
 from abcd.server.app.views import index, database, api
 
 
-def create_app():
+def create_app(abcd_url=None):
     # Define the WSGI application object
     app = Flask(__name__)
     app.logger.info('Creating an application')

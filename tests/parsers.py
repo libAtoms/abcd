@@ -166,8 +166,8 @@ class ParsingQueries(unittest.TestCase):
     def test_combination(self):
         """Combinations"""
         s = (
-            ('aa & not bb', {}),
-            ('aa & bb > 23.54 | cc & dd', {}),
+            ('aa && not bb', {}),
+            ('aa && bb > 23.54 || cc && dd', {}),
             ('aa and bb > 23 and bb > 23 and bb > 23 ', {}),
             ('aa and bb > 23.54 or 22 in cc and dd', {}),
         )
@@ -193,7 +193,7 @@ class ParsingQueries(unittest.TestCase):
         s = (
             ('1=3', {}),
             ('aa = [True True True]', {}),
-            ('aa & bb > 23.54 | (22 in cc & dd)', {}),
+            ('aa && bb > 23.54 || (22 in cc && dd)', {}),
             ('aa and bb > 23.54 or (22 in cc and dd)', {}),
             ('aa and (bb > 23.54 or (22 in cc and dd))', {}),
         )

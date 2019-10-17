@@ -69,7 +69,11 @@ grammar = r"""
     STRING : "\"" _STRING_ESC_INNER "\""
            | "'" _STRING_ESC_INNER "'"
 
-    %import common.CNAME          -> NAME          
+    NAME: ("_"|LETTER|DIGIT) ("_"|"-"|LETTER|DIGIT)*  
+
+    %import common.LETTER
+    %import common.DIGIT
+    
     %import common.SIGNED_FLOAT   -> FLOAT
     %import common.SIGNED_INT     -> INT
     %import common.WS_INLINE

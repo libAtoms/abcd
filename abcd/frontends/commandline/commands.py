@@ -304,10 +304,10 @@ class Formater(object):
 
         width_count = len(str(max(counts)))
         ratio = width_hist / max(counts)
-        for label, count, category, dtype in zip(labels, counts, categories, dtypes):
+        for label, count, dtype in zip(labels, counts, dtypes):
             scale = int(ratio * count)
-            self.print('{:<{}} {:<8} {:<21} {:>{}d} {}'.format(
-                "▉" * scale, width_hist, category, dtype, count, width_count, label))
+            self.print('{:<{}} {:<21} {:>{}d} {}'.format(
+                "▉" * scale, width_hist, dtype, count, width_count, label))
 
     def hist(self, data: dict, width_hist=40):
         if data['type'] == 'hist_float':

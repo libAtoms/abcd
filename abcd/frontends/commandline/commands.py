@@ -3,7 +3,7 @@ import logging
 import os
 import numpy as np
 
-from abcd.frontends.commandline.decorators import init_db, init_config, check_readonly
+from abcd.frontends.commandline.decorators import init_db, init_config, check_remote
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +33,17 @@ def download(*, db, query, filename, **kwargs):
     logger.info('download\n kwargs: {}'.format(kwargs))
 
     from ase.io import write
+
+    if kwargs.pop('remote'):
+        write('-', list(db.get_atoms(query=query)), format='extxyz')
+        return
+
     write(filename, list(db.get_atoms(query=query)))
 
 
 @init_config
 @init_db
-@check_readonly
+@check_remote
 def delete(*, db, query, yes, **kwargs):
     logger.info('delete\n kwargs: {}'.format(kwargs))
 
@@ -52,7 +57,7 @@ def delete(*, db, query, yes, **kwargs):
 
 @init_config
 @init_db
-@check_readonly
+@check_remote
 def upload(*, db, path, extra_infos, ignore_calc_results, **kwargs):
     from pathlib import Path
 
@@ -155,7 +160,7 @@ def show(*, db, query, print_all, props, **kwargs):
     logging.info('property list: {}'.format(props))
 
 
-@check_readonly
+@check_remote
 @init_config
 @init_db
 def key_add(*, db, query, keys, **kwargs):
@@ -177,7 +182,7 @@ def key_add(*, db, query, keys, **kwargs):
     db.add_property(data, query=query)
 
 
-@check_readonly
+@check_remote
 @init_config
 @init_db
 def key_rename(*, db, query, old_keys, new_keys, **kwargs):
@@ -189,7 +194,7 @@ def key_rename(*, db, query, old_keys, new_keys, **kwargs):
     db.rename_property(old_keys, new_keys, query=query)
 
 
-@check_readonly
+@check_remote
 @init_config
 @init_db
 def key_delete(*, db, query, yes, keys, **kwargs):
@@ -206,7 +211,7 @@ def key_delete(*, db, query, yes, keys, **kwargs):
         db.delete_property(k, query=query)
 
 
-@check_readonly
+@check_remote
 @init_config
 @init_db
 def execute(*, db, query, yes, python_code, **kwargs):
@@ -217,7 +222,7 @@ def execute(*, db, query, yes, python_code, **kwargs):
     db.exec(python_code, query)
 
 
-@check_readonly
+@check_remote
 def server(*, abcd_url, url, api_only, **kwargs):
     from urllib.parse import urlparse
     from abcd.server.app import create_app

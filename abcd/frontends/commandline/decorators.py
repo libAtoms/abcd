@@ -50,10 +50,9 @@ def init_db(func):
     return wrapper
 
 
-def check_readonly(func):
+def check_remote(func):
     def wrapper(*args, **kwargs):
-        read_only = kwargs.pop('read_only')
-        if read_only:
+        if kwargs.pop('remote'):
             print('In read only mode, you can\'t modify the data in the database')
             exit(1)
 

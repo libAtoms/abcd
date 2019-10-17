@@ -10,7 +10,7 @@ parser.add_argument('-v', '--verbose', help='Enable verbose mode', action='store
 parser.add_argument('-q', '--query', dest='default_query', action='append', help='Filtering extra quantities',
                     default=[])
 
-parser.add_argument('--read-only', help='Disables all the functions which would modify the database',
+parser.add_argument('--remote', help='Disables all the functions which would modify the database',
                     action='store_true')
 
 subparsers = parser.add_subparsers(title='Commands', dest='command', parser_class=ArgumentParser)

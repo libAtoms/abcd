@@ -191,8 +191,8 @@ class AbstractModel(UserDict):
             atoms.calc = SinglePointCalculator(atoms, **params)
             atoms.calc.results.update((key, self[key]) for key in results_keys)
 
-        atoms.arrays.update((key, self[key]) for key in arrays_keys)
-        atoms.arrays.update((key, self[key]) for key in info_keys)
+        atoms.arrays.update((key, np.array(self[key])) for key in arrays_keys)
+        atoms.info.update((key, self[key]) for key in info_keys)
 
         return atoms
 

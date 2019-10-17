@@ -43,7 +43,7 @@ The above login command will place create an `~/.abcd` file with the following c
 
 You can set up an `abcd` user on your machine where the database is running, and then access it remotely for discovering data. Make sure you have the `~/.abcd` file created for this user, then put this in the `.ssh/authorized_keys` file (substituting your public key for the last part):
 ```
-command="/path/to/abcd --read-only  ${SSH_ORIGINAL_COMMAND}",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-rsa <public-key> your@email
+command="/path/to/abcd --remote  ${SSH_ORIGINAL_COMMAND}",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-rsa <public-key> your@email
 ```
 
 Then you'll be able to access the database remotely using, e.g. 

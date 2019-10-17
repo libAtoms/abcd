@@ -25,7 +25,7 @@ login_parser.add_argument(dest='url',
 download_parser = subparsers.add_parser('download', help='download data from the database')
 download_parser.set_defaults(callback_func=commands.download)
 download_parser.add_argument('-q', '--query', action='append', help='Filtering extra quantities', default=[])
-download_parser.add_argument(dest='filename', help='name of the file to store the configurations')
+download_parser.add_argument(dest='filename', help='name of the file to store the configurations', nargs='?')
 
 upload_parser = subparsers.add_parser('upload', help='upload any ase supported files to the database')
 upload_parser.add_argument('-e', '--extra_infos', action='append', help='Adding extra quantities')

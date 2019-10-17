@@ -397,21 +397,25 @@ def histogram(name, data, **kwargs):
         return None
 
     elif data and isinstance(data, list):
-        if isinstance(data[0], float):
+
+        ptype = type(data[0])
+
+        if not all(isinstance(x, ptype) for x in data):
+            print("Mixed type error of the {} property!".format(name))
+            return None
+
+        if ptype == float:
             bins = kwargs.get('bins', 10)
             return _hist_float(name, data, bins)
 
-        elif isinstance(data[0], bool):
-            pass
-
-        elif isinstance(data[0], int):
+        elif ptype == int:
             bins = kwargs.get('bins', 10)
             return _hist_int(name, data, bins)
 
-        elif isinstance(data[0], str):
+        elif ptype == str:
             return _hist_str(name, data, **kwargs)
 
-        elif isinstance(data[0], datetime.datetime):
+        elif ptype == datetime.datetime:
             bins = kwargs.get('bins', 10)
             return _hist_date(name, data, bins)
 

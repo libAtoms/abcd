@@ -106,50 +106,24 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 
         print('Total number of configurations: {}'.format(total))
 
-        if props['arrays']:
-            f.title('Arrays (per atom properties)')
+        labels, ptype, counts = [], [], []
+        for k in sorted(props, key=str.lower):
+            labels.append(k)
+            counts.append(props[k]['count'])
+            ptype.append(props[k]['type'])
 
-            labels, counts = [], []
-            for k in sorted(props['arrays'], key=str.lower):
-                labels.append(k)
-                counts.append(props['arrays'][k]['count'])
-
-            f.hist_labels(counts, labels)
-
-        if props['info']:
-            f.title('Infos (properties of the whole configuration)')
-
-            labels, counts = [], []
-            for k in sorted(props['info'], key=str.lower):
-                labels.append(k)
-                counts.append(props['info'][k]['count'])
-
-            f.hist_labels(counts, labels)
-
-        if props['derived']:
-            f.title('Derived')
-
-            labels, counts = [], []
-            for k in sorted(props['derived'], key=str.lower):
-                labels.append(k)
-                counts.append(props['derived'][k]['count'])
-
-            f.hist_labels(counts, labels)
+        f.hist_labels(counts, ptype, labels)
 
     elif props_list == '*':
         props = db.properties(query=query)
 
-        for p in props['arrays']:
-            data = db.hist(p, query=query, bins=bins, truncate=truncate)
+        for ptype in props:
+            for p in props[ptype]:
+                data = db.hist(p, query=query, bins=bins, truncate=truncate)
 
-            if data:
-                f.describe(data)
-                f.hist(data)
+                if not data:
+                    continue
 
-        for p in props['info']:
-            data = db.hist(p, query=query, bins=bins, truncate=truncate)
-
-            if data:
                 f.describe(data)
                 f.hist(data)
 
@@ -320,13 +294,13 @@ class Formater(object):
             scale = int(ratio * count)
             self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
 
-    def hist_labels(self, counts, labels, width_hist=40):
+    def hist_labels(self, counts, types, labels, width_hist=40):
 
         width_count = len(str(max(counts)))
         ratio = width_hist / max(counts)
-        for label, count in zip(labels, counts):
+        for label, count, ptype in zip(labels, counts, types):
             scale = int(ratio * count)
-            self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
+            self.print('{:<{}} {:<8} {:>{}d} {}'.format("▉" * scale, width_hist, ptype, count, width_count, label))
 
     def hist(self, data: dict, width_hist=40):
         if data['type'] == 'hist_float':

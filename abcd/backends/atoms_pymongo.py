@@ -269,16 +269,19 @@ class MongoDatabase(AbstractABCD):
         ]
         properties['arrays'] = [value['_id'] for value in self.db.atoms.aggregate(pipeline)]
 
+        pipeline = [
+            {'$match': query},
+            {'$unwind': '$derived.derived_keys'},
+            {'$group': {'_id': '$derived.derived_keys'}}
+        ]
+        properties['derived'] = [value['_id'] for value in self.db.atoms.aggregate(pipeline)]
+
         return properties
 
     def count_properties(self, query=None):
         query = parser(query)
 
-        properties = {
-            'info': {},
-            'arrays': {},
-            'derived': {}
-        }
+        properties = {}
 
         pipeline = [
             {'$match': query},
@@ -288,7 +291,7 @@ class MongoDatabase(AbstractABCD):
 
         info_keys = self.db.atoms.aggregate(pipeline)
         for val in info_keys:
-            properties['info'][val['_id']] = {'count': val['count']}
+            properties[val['_id']] = {'count': val['count'], 'type': 'info'}
 
         pipeline = [
             {'$match': query},
@@ -297,7 +300,7 @@ class MongoDatabase(AbstractABCD):
         ]
         arrays_keys = list(self.db.atoms.aggregate(pipeline))
         for val in arrays_keys:
-            properties['arrays'][val['_id']] = {'count': val['count']}
+            properties[val['_id']] = {'count': val['count'], 'type': 'arrays'}
 
         pipeline = [
             {'$match': query},
@@ -306,7 +309,7 @@ class MongoDatabase(AbstractABCD):
         ]
         arrays_keys = list(self.db.atoms.aggregate(pipeline))
         for val in arrays_keys:
-            properties['derived'][val['_id']] = {'count': val['count']}
+            properties[val['_id']] = {'count': val['count'], 'type': 'derived'}
 
         return properties
 

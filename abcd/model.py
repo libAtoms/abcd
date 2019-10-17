@@ -163,7 +163,7 @@ class AbstractModel(UserDict):
         item.pre_save()
         return item
 
-    def to_atoms(self):
+    def to_ase(self):
         arrays_keys = set(self.arrays_keys)
         info_keys = set(self.info_keys)
 
@@ -254,4 +254,4 @@ if __name__ == '__main__':
     pprint(AbstractModel.from_atoms(atoms))
 
     model = AbstractModel.from_atoms(atoms)
-    print(model.to_atoms())
+    print(model.to_ase())

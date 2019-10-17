@@ -229,7 +229,7 @@ class MongoDatabase(AbstractABCD):
     def get_atoms(self, query=None):
         query = parser(query)
         for dct in self.db.atoms.find(query):
-            yield AtomsModel(None, dct).to_atoms()
+            yield AtomsModel(None, dct).to_ase()
 
     def count(self, query=None):
         query = parser(query)
@@ -361,7 +361,7 @@ class MongoDatabase(AbstractABCD):
         # TODO: Separate python environment with its own packages loaded
 
         for dct in self.get_items(query):
-            at = AtomsModel(self.collection, dct)
+            atoms = AtomsModel(self.collection, dct)
             exec(code)
 
     def __repr__(self):

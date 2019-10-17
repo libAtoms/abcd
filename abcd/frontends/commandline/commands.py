@@ -29,16 +29,16 @@ def login(*, config, name, url, **kwargs):
 
 @init_config
 @init_db
-def download(*, db, query, filename, **kwargs):
+def download(*, db, query, fileformat, filename, **kwargs):
     logger.info('download\n kwargs: {}'.format(kwargs))
 
     from ase.io import write
 
     if kwargs.pop('remote'):
-        write('-', list(db.get_atoms(query=query)), format='extxyz')
+        write('-', list(db.get_atoms(query=query)), format=fileformat)
         return
 
-    write(filename, list(db.get_atoms(query=query)))
+    write(filename, list(db.get_atoms(query=query)), format=fileformat)
 
 
 @init_config

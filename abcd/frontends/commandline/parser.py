@@ -25,13 +25,14 @@ login_parser.add_argument(dest='url',
 download_parser = subparsers.add_parser('download', help='download data from the database')
 download_parser.set_defaults(callback_func=commands.download)
 download_parser.add_argument('-q', '--query', action='append', help='Filtering extra quantities', default=[])
+download_parser.add_argument('-f', '--format', help='Valid ASE file format (optional)', dest='fileformat', default='')
 download_parser.add_argument(dest='filename', help='name of the file to store the configurations', nargs='?')
 
 upload_parser = subparsers.add_parser('upload', help='upload any ase supported files to the database')
 upload_parser.add_argument('-e', '--extra_infos', action='append', help='Adding extra quantities')
-upload_parser.add_argument(dest='path', help='file or folder which contains the xyz files')
 upload_parser.add_argument('-i', '--ignore_calc_results', action='store_true',
                            help='Ignore calculators results/parameters')
+upload_parser.add_argument(dest='path', help='Path to the file or folder.')
 upload_parser.set_defaults(callback_func=commands.upload)
 
 summary_parser = subparsers.add_parser('summary', help='Discovery mode')

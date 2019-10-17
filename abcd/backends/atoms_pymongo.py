@@ -25,6 +25,15 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+map_types = {
+    bool: 'bool',
+    float: 'float',
+    int: 'int',
+    str: 'str',
+    datetime.datetime: 'date',
+    dict: 'dict'
+}
+
 
 class AtomsModel(AbstractModel):
     def __init__(self, collection=None, dict=None):
@@ -278,6 +287,28 @@ class MongoDatabase(AbstractABCD):
 
         return properties
 
+    def get_type_of_property(self, prop, category):
+        # TODO: Probably it would be nicer to store the type info in the database from the beginning.
+        atoms = self.db.atoms.find_one({prop: {'$exists': True}})
+        data = atoms[prop]
+
+        if category == 'arrays':
+            if type(data[0]) == list:
+                return 'array({}, N x {})'.format(map_types[type(data[0][0])], len(data[0]))
+            else:
+                return 'vector({}, N)'.format(map_types[type(data[0])])
+
+        if type(data) == list:
+            if type(data[0]) == list:
+                if type(data[0][0]) == list:
+                    return 'list(list(...)'
+                else:
+                    return 'array({})'.format(map_types[type(data[0][0])])
+            else:
+                return 'vector({})'.format(map_types[type(data[0])])
+        else:
+            return 'scalar({})'.format(map_types[type(data)])
+
     def count_properties(self, query=None):
         query = parser(query)
 
@@ -291,7 +322,11 @@ class MongoDatabase(AbstractABCD):
 
         info_keys = self.db.atoms.aggregate(pipeline)
         for val in info_keys:
-            properties[val['_id']] = {'count': val['count'], 'type': 'info'}
+            properties[val['_id']] = {
+                'count': val['count'],
+                'category': 'info',
+                'dtype': self.get_type_of_property(val['_id'], 'info')
+            }
 
         pipeline = [
             {'$match': query},
@@ -300,7 +335,11 @@ class MongoDatabase(AbstractABCD):
         ]
         arrays_keys = list(self.db.atoms.aggregate(pipeline))
         for val in arrays_keys:
-            properties[val['_id']] = {'count': val['count'], 'type': 'arrays'}
+            properties[val['_id']] = {
+                'count': val['count'],
+                'category': 'arrays',
+                'dtype': self.get_type_of_property(val['_id'], 'arrays')
+            }
 
         pipeline = [
             {'$match': query},
@@ -309,7 +348,11 @@ class MongoDatabase(AbstractABCD):
         ]
         arrays_keys = list(self.db.atoms.aggregate(pipeline))
         for val in arrays_keys:
-            properties[val['_id']] = {'count': val['count'], 'type': 'derived'}
+            properties[val['_id']] = {
+                'count': val['count'],
+                'category': 'derived',
+                'dtype': self.get_type_of_property(val['_id'], 'derived')
+            }
 
         return properties
 

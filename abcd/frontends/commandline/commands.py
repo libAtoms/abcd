@@ -111,13 +111,14 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 
         print('Total number of configurations: {}'.format(total))
 
-        labels, ptype, counts = [], [], []
+        labels, categories, dtypes, counts = [], [], [], []
         for k in sorted(props, key=str.lower):
             labels.append(k)
             counts.append(props[k]['count'])
-            ptype.append(props[k]['type'])
+            categories.append(props[k]['category'])
+            dtypes.append(props[k]['dtype'])
 
-        f.hist_labels(counts, ptype, labels)
+        f.hist_labels(counts, categories, dtypes, labels)
 
     elif props_list == '*':
         props = db.properties(query=query)
@@ -299,13 +300,14 @@ class Formater(object):
             scale = int(ratio * count)
             self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
 
-    def hist_labels(self, counts, types, labels, width_hist=40):
+    def hist_labels(self, counts, categories, dtypes, labels, width_hist=40):
 
         width_count = len(str(max(counts)))
         ratio = width_hist / max(counts)
-        for label, count, ptype in zip(labels, counts, types):
+        for label, count, category, dtype in zip(labels, counts, categories, dtypes):
             scale = int(ratio * count)
-            self.print('{:<{}} {:<8} {:>{}d} {}'.format("▉" * scale, width_hist, ptype, count, width_count, label))
+            self.print('{:<{}} {:<8} {:<21} {:>{}d} {}'.format(
+                "▉" * scale, width_hist, category, dtype, count, width_count, label))
 
     def hist(self, data: dict, width_hist=40):
         if data['type'] == 'hist_float':
@@ -314,8 +316,6 @@ class Formater(object):
             self.hist_int(data['edges'], data['counts'])
         elif data['type'] == 'hist_str':
             self.hist_str(data['total'], data['counts'], data['labels'])
-        elif data['type'] == 'hist_labels':
-            self.hist_labels(data['counts'], data['labels'])
         else:
             pass
 

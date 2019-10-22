@@ -1,6 +1,7 @@
 import datetime
 import getpass
 import logging
+from hashlib import md5
 from collections import Counter, UserDict
 from ase.calculators.singlepoint import SinglePointCalculator
 
@@ -8,6 +9,45 @@ import numpy as np
 from ase import Atoms
 
 logger = logging.getLogger(__name__)
+
+
+class Hasher(object):
+    def __init__(self, method=md5()):
+        self.method = method
+
+    def update(self, value):
+
+        if isinstance(value, int):
+            self.update(str(value))
+
+        elif isinstance(value, str):
+            self.update(value.encode('utf-8'))
+
+        elif isinstance(value, float):
+            self.update(str(value))
+
+        elif isinstance(value, (tuple, list)):
+            for e in value:
+                self.update(e)
+
+        elif isinstance(value, (dict, UserDict)):
+            keys = value.keys()
+            for k in sorted(keys):
+                self.update(k.encode('utf-8'))
+                self.update(value[k])
+
+        elif isinstance(value, datetime.datetime):
+            self.update(str(value))
+
+        elif isinstance(value, bytes):
+            self.method.update(value)
+
+        else:
+            raise ValueError("The {} type cannot be hashed! (Value: {})", format(type(value), value))
+
+    def __call__(self):
+        """Retrieve the digest of the hash."""
+        return self.method.hexdigest()
 
 
 class AbstractModel(UserDict):
@@ -222,6 +262,23 @@ class AbstractModel(UserDict):
 
         self['modified'] = datetime.datetime.utcnow()
 
+        m = Hasher()
+
+        for key in ('numbers', 'positions', 'cell', 'pbc'):
+            m.update(self[key])
+
+        self.derived_keys.append('hash_structure')
+        self['hash_structure'] = m()
+
+        m = Hasher()
+        for key in self.arrays_keys:
+            m.update(self[key])
+        for key in self.info_keys:
+            m.update(self[key])
+
+        self.derived_keys.append('hash')
+        self['hash'] = m()
+
 
 if __name__ == '__main__':
     import io
@@ -231,17 +288,10 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     # from ase.io import jsonio
 
-    xyz = io.StringIO("""
-    2
-    Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t e s t _ s t r" pbc="F F F"
-    Si       0.00000000       0.00000000       0.00000000 
-    Si       0.00000000       0.00000000       0.00000000 
-        """)
-
-    atoms = read(xyz, format='xyz')
+    atoms = read('test.xyz', format='xyz', index=0)
     atoms.set_cell([1, 1, 1])
 
-    # print(atoms)
+    print(atoms)
     # print(atoms.arrays)
     # print(atoms.info)
 
@@ -253,5 +303,20 @@ if __name__ == '__main__':
 
     pprint(AbstractModel.from_atoms(atoms))
 
+    h = Hasher()
+    h.update(AbstractModel.from_atoms(atoms))
+    print(h())
+
     model = AbstractModel.from_atoms(atoms)
     print(model.to_ase())
+
+    # xyz = io.StringIO(
+    #     """
+    #     2
+    #     Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t e s t _ s t r" pbc="F F F"
+    #     Si       0.00000000       0.00000000       0.00000000
+    #     Si       0.00000000       0.00000000       0.00000000
+    #
+    #     """)
+    #
+    # atoms = read(xyz, format='extxyz', index=0)

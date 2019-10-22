@@ -71,7 +71,6 @@ class AbstractModel(UserDict):
         }
 
     def __getitem__(self, key):
-        logger.info(f'__getitem__: {key}')
 
         if key == 'derived':
             return self.derived
@@ -79,7 +78,6 @@ class AbstractModel(UserDict):
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-        logger.info(f'__setitem__: {key}: {value}')
 
         if key == 'derived':
             # raise KeyError('Please do not use "derived" as key because it is protected!')

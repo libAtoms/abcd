@@ -18,13 +18,13 @@ class Hasher(object):
     def update(self, value):
 
         if isinstance(value, int):
-            self.update(str(value))
+            self.update(str(value).encode('ascii'))
 
         elif isinstance(value, str):
             self.update(value.encode('utf-8'))
 
         elif isinstance(value, float):
-            self.update(str(value))
+            self.update('{:.8e}'.format(value).encode('ascii'))
 
         elif isinstance(value, (tuple, list)):
             for e in value:

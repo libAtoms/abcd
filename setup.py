@@ -13,7 +13,7 @@ setup(
         'Source Code': 'https://github.com/libatoms/abcd',
     },
     packages=find_packages(),
-    install_requires=['ase', 'numpy', 'lark', 'pymongo'],
+    install_requires=['ase', 'numpy', 'lark-parser', 'pymongo'],
     extras_require={
         'tests': ['mongomock'],
         'mongo': ['pymongo'],

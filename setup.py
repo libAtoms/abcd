@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='abcd',
-    version='0.5',
+    version='0.5.1',
     author='Adam Fekete, Gabor Csanyi',
     author_email='adam.fekete@kcl.ac.uk',
     description='This is an package witch help to store and share atomistic data.',

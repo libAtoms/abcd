@@ -32,6 +32,12 @@ upload_parser = subparsers.add_parser('upload', help='upload any ase supported f
 upload_parser.add_argument('-e', '--extra_infos', action='append', help='Adding extra quantities')
 upload_parser.add_argument('-i', '--ignore_calc_results', action='store_true',
                            help='Ignore calculators results/parameters')
+upload_parser.add_argument('--upload-duplicates', action='store_true',
+                           help='Upload but still report all of the duplicates')
+upload_parser.add_argument('--upload-structure-duplicates', action='store_true',
+                           help='Ignore all the "exact" duplicates but store all of the structural duplicates')
+upload_parser.add_argument('--upload-duplicates-replace', action='store_true',
+                           help='Upload everything and duplicates overwrite previously existing data')
 upload_parser.add_argument(dest='path', help='Path to the file or folder.')
 upload_parser.set_defaults(callback_func=commands.upload)
 

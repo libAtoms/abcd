@@ -6,7 +6,7 @@ from typing import Union, Iterable
 from os import linesep
 from operator import itemgetter
 from collections import Counter
-import datetime
+from datetime import datetime
 
 from ase import Atoms
 from ase.io import iread
@@ -30,7 +30,7 @@ map_types = {
     float: 'float',
     int: 'int',
     str: 'str',
-    datetime.datetime: 'date',
+    datetime: 'date',
     dict: 'dict'
 }
 
@@ -458,7 +458,7 @@ def histogram(name, data, **kwargs):
         elif ptype == str:
             return _hist_str(name, data, **kwargs)
 
-        elif ptype == datetime.datetime:
+        elif ptype == datetime:
             bins = kwargs.get('bins', 10)
             return _hist_date(name, data, bins)
 
@@ -493,8 +493,7 @@ def _hist_date(name, data, bins=10):
     hist_data = np.array([t.timestamp() for t in data])
     hist, bin_edges = np.histogram(hist_data, bins=bins)
 
-    fromtimestamp = datetime.datetime.fromtimestamp
-
+    fromtimestamp = datetime.fromtimestamp
 
     return {
         'type': 'hist_date',

@@ -288,6 +288,18 @@ class Formater(object):
                 count, width_count,
                 np.ceil(lower).astype(int), np.floor(upper).astype(int)))
 
+    def hist_date(self, bin_edges, counts, width_hist=40):
+        dateformat = '%y-%m-%d %H:%M'
+        ratio = width_hist / max(counts)
+        width_count = len(str(max(counts)))
+
+        for count, lower, upper in zip(counts, bin_edges[:-1], bin_edges[1:]):
+            scale = int(ratio * count)
+            self.print('{:<{}} {:>{}d} [{}, {})'.format(
+                "▉" * scale, width_hist,
+                count, width_count,
+                lower.strftime(dateformat), upper.strftime(dateformat)))
+
     def hist_str(self, total, counts, labels, width_hist=40):
         remain = total - sum(counts)
         if remain > 0:
@@ -314,6 +326,8 @@ class Formater(object):
             self.hist_float(data['edges'], data['counts'])
         elif data['type'] == 'hist_int':
             self.hist_int(data['edges'], data['counts'])
+        elif data['type'] == 'hist_date':
+            self.hist_date(data['edges'], data['counts'])
         elif data['type'] == 'hist_str':
             self.hist_str(data['total'], data['counts'], data['labels'])
         else:

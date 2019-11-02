@@ -490,20 +490,23 @@ def _hist_float(name, data, bins=10):
 
 
 def _hist_date(name, data, bins=10):
-    data = np.array([int(t.timestamp()) for t in data])
-    hist, bin_edges = np.histogram(data, bins=bins)
+    hist_data = np.array([t.timestamp() for t in data])
+    hist, bin_edges = np.histogram(hist_data, bins=bins)
+
+    fromtimestamp = datetime.datetime.fromtimestamp
+
 
     return {
-        'type': 'hist_int',
+        'type': 'hist_date',
         'name': name,
         'bins': bins,
-        'edges': bin_edges,
+        'edges': [fromtimestamp(d) for d in bin_edges],
         'counts': hist,
-        'min': data.min(),
-        'max': data.max(),
-        'median': data.mean(),
-        'std': data.std(),
-        'var': data.var()
+        'min': fromtimestamp(hist_data.min()),
+        'max': fromtimestamp(hist_data.max()),
+        'median': fromtimestamp(hist_data.mean()),
+        'std': fromtimestamp(hist_data.std()),
+        'var': fromtimestamp(hist_data.var())
     }
 
 
@@ -565,7 +568,7 @@ if __name__ == '__main__':
     print(db.info())
     print(db.count())
 
-    print(db.info())
+    print(db.hist('uploaded'))
 
     # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
     #     # print(at)

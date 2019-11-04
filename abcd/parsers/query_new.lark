@@ -1,0 +1,75 @@
+// Complex query grammar for ABCD (Lark format)
+
+expression: [or_expression]
+
+// Logical operators/expressions
+or_expression:  and_expression (_OR and_expression)*
+and_expression: not_expression (_AND not_expression)*
+not_expression: _NOT not_expression -> not
+              | comparison
+
+_OR: "OR" | "or" | "|"
+_AND: "AND" | "and" | "&"
+_NOT: "NOT" | "not"
+
+// Comparison operators
+comparison: arithmetic_expression (_comp_operator arithmetic_expression)*
+
+// arithmetic expressions
+arithmetic_expression: term (_add_operator term)*
+
+term: factor (_mul_operator factor)*
+
+factor: _factor_operator factor
+      | power
+
+power: atom_expression ["^" factor]
+
+// Atomic expressions
+
+atom_expression: atom_expression "(" [arguments] ")"    -> funccall
+               | atom_expression "[" subscriptlist "]"  -> getitem
+               | atom_expression "." NAME               -> getattr
+               | atom
+
+atom: "(" [testlist_comp] ")" -> tuple
+    | "[" [testlist_comp] "]"  -> list
+    | NAME -> var
+    | number
+    | string
+    | "(" expression ")"
+    | "None"    -> const_none
+    | "True"    -> const_true
+    | "False"   -> const_false
+
+
+arguments: expression ("," expression)*
+
+subscriptlist: subscript ("," subscript)*
+subscript: expression | [expression] ":" [expression]
+
+testlist_comp: expression ("," expression)*
+
+//Operators
+
+!_factor_operator: "+" | "-"
+!_add_operator: "+" | "-"
+!_mul_operator: "*" | "/"
+
+!_comp_operator: "<" | "<=" | ">" | ">=" | "=" | "!=" | "~" | "in"
+
+// Primitive types
+
+number: SIGNED_INT | SIGNED_FLOAT
+string: ESCAPED_STRING
+
+// Tokens
+
+%import common.SIGNED_INT
+%import common.SIGNED_FLOAT
+%import common.ESCAPED_STRING
+%import common.CNAME -> NAME
+
+// White-space
+%import common.WS
+%ignore WS

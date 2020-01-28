@@ -56,7 +56,7 @@ class AtomsModel(AbstractModel):
             self._collection.insert(self)
         else:
             self._collection.update(
-                {"_id": ObjectId(self.id)}, self)
+                {"_id": ObjectId(self._id)}, self)
 
     def remove(self):
         if self._id:

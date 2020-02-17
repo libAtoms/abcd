@@ -55,7 +55,7 @@ ssh abcd@your.machine summary
 
 The database has a simple GUI, coupled with a visualiser. Data for now needs to be uploaded on the command line, but query can be done through the browsers. Instructions below (they include running `abcd` from a docker too, but of course you can run it outside the docker as well. )
 
-```
+
 #### Usage in docker
 Currently a manual uploaded image is available, that was built on 7/2/2020 by Tamas K. Stenczel.
 To access it:
@@ -73,4 +73,4 @@ After usage, for cleanup:
     `docker stop visualiser-dev abcd-mongodb-net         # stop the containers`
     `docker rm visualiser-dev abcd-mongodb-net           # remove them if --rm did not`
     `docker network rm abcd-network                      # remove the docker network`
-```
+

@@ -44,6 +44,6 @@ abcd exec -q formula~W128 'print(item.info.cell)' --yes
 abcd exec -q formula~W128 'at=item.to_atoms(); print(at.cell)' --yes
 ```
 ```
-abcd exec -q formula~W128 'item.info["energy_per_atom"]=item.info["energy"]/item.derived.natoms; item.save()' --yes
+abcd exec  'atoms["energy_per_atom"] = atoms["energy"]/atoms["n_atoms"] ; atoms.save()' --yes
 abcd summary -p energy_per_atom
 ```

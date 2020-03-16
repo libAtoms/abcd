@@ -1,6 +1,7 @@
 # Examples
 
 ```
+abcd login mongodb://localhost
 abcd login mongodb://mongoadmin:secret@localhost:27017/abcd_new
 ```
 ```

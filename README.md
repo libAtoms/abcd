@@ -5,6 +5,8 @@
 
 storage and discovery of atomistic data
 
+take a look at the `examples.md` file for.. examples!
+
 ## Installation
 
 creating tables and views

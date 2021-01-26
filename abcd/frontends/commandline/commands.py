@@ -111,6 +111,9 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 
         print('Total number of configurations: {}'.format(total))
 
+        if total == 0:
+            return
+
         labels, categories, dtypes, counts = [], [], [], []
         for k in sorted(props, key=str.lower):
             labels.append(k)

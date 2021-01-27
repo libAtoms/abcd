@@ -20,10 +20,10 @@ jobs:
         - pip install -r requirements.txt
         - pip install sphinx sphinx-rtd-theme
       script:
-        - cd docs; make html
+        - cd docs_src; make html
       deploy:
         provider: pages
-        local_dir: docs/_build/html
+        local_dir: docs_src/_build/html
         skip-cleanup: true
         github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
         keep-history: true

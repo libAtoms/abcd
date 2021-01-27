@@ -33,7 +33,7 @@ class Mongo(unittest.TestCase):
             Si       0.00000000       0.00000000       0.00000000 
             """)
 
-        atoms = read(xyz, format='xyz')
+        atoms = read(xyz, format='extxyz')
         atoms.set_cell([1, 1, 1])
 
         self.abcd.destroy()

@@ -203,10 +203,12 @@ def key_rename(*, db, query, old_keys, new_keys, **kwargs):
 @init_config
 @init_db
 def key_delete(*, db, query, yes, keys, **kwargs):
-    print(keys)
-    print(query)
+    from abcd.parsers.extras import parser
 
-    query += keys
+    keys = ' '.join(keys)
+    data = parser.parse(keys)
+
+    query = ('AND', query, ('OR', *(('NAME', key) for key in data.keys())))
 
     if not yes:
         print('Please use --yes for deleting keys from {} configurations'.format(

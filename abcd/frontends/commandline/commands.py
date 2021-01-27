@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 @init_config
 def login(*, config, name, url, **kwargs):
-    logger.info('login args: \nconfig:{}, name:{}, url:{}, kwargs:{}'.format(config, name, url, kwargs))
+    logger.info(
+        'login args: \nconfig:{}, name:{}, url:{}, kwargs:{}'.format(config, name, url, kwargs))
     from abcd import ABCD
 
     db = ABCD.from_url(url=url)
@@ -103,16 +104,16 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 
         logging.info('property list: {}'.format(props_list))
 
+    total = db.count(query)
+    props = db.count_properties(query=query)
+
+    print('Total number of configurations: {}'.format(total))
+
+    if total == 0:
+        return
+
     f = Formater()
     if props_list is None:
-
-        total = db.count(query)
-        props = db.count_properties(query=query)
-
-        print('Total number of configurations: {}'.format(total))
-
-        if total == 0:
-            return
 
         labels, categories, dtypes, counts = [], [], [], []
         for k in sorted(props, key=str.lower):
@@ -208,7 +209,8 @@ def key_delete(*, db, query, yes, keys, **kwargs):
     query += keys
 
     if not yes:
-        print('Please use --yes for deleting keys from {} configurations'.format(db.count(query=query)))
+        print('Please use --yes for deleting keys from {} configurations'.format(
+            db.count(query=query)))
         exit(1)
 
     for k in keys:
@@ -220,7 +222,8 @@ def key_delete(*, db, query, yes, keys, **kwargs):
 @init_db
 def execute(*, db, query, yes, python_code, **kwargs):
     if not yes:
-        print('Please use --yes for executing code on {} configurations'.format(db.count(query=query)))
+        print('Please use --yes for executing code on {} configurations'.format(
+            db.count(query=query)))
         exit(1)
 
     db.exec(python_code, query)
@@ -251,15 +254,18 @@ class Formater(object):
 
     def describe(self, data):
         if data['type'] == 'hist_float':
-            print('{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} var:{:11.4e}'.format(
-                data["name"], sum(data["counts"]),
-                data["min"], data["median"], data["max"],
-                data["std"], data["var"])
+            print(
+                '{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} var:{'
+                ':11.4e}'.format(
+                    data["name"], sum(data["counts"]),
+                    data["min"], data["median"], data["max"],
+                    data["std"], data["var"])
             )
 
         elif data['type'] == 'hist_int':
             print('{}  count: {} '.format(data["name"], sum(data["counts"])),
-                  'min: {:d} med: {:d} max: {:d}  '.format(int(data["min"]), int(data["median"]), int(data["max"]))
+                  'min: {:d} med: {:d} max: {:d}  '.format(int(data["min"]), int(data["median"]),
+                                                           int(data["max"]))
                   )
 
         elif data['type'] == 'hist_str':
@@ -313,7 +319,8 @@ class Formater(object):
         ratio = width_hist / max(counts)
         for label, count in zip(labels, counts):
             scale = int(ratio * count)
-            self.print('{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
+            self.print(
+                '{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
 
     def hist_labels(self, counts, categories, dtypes, labels, width_hist=40):
 

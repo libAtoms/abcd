@@ -1,9 +1,9 @@
 import logging
-
 import os
+
 import numpy as np
 
-from abcd.frontends.commandline.decorators import init_db, init_config, check_remote
+from abcd.frontends.commandline.decorators import check_remote, init_config, init_db
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
     logger.info('query: {}'.format(query))
 
     if print_all:
-        bins, truncate = None, None
+        truncate = None
 
     if props is None:
         props_list = None

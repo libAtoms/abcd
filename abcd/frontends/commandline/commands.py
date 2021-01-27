@@ -105,8 +105,6 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
         logging.info('property list: {}'.format(props_list))
 
     total = db.count(query)
-    props = db.count_properties(query=query)
-
     print('Total number of configurations: {}'.format(total))
 
     if total == 0:
@@ -114,6 +112,8 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 
     f = Formater()
     if props_list is None:
+
+        props = db.count_properties(query=query)
 
         labels, categories, dtypes, counts = [], [], [], []
         for k in sorted(props, key=str.lower):

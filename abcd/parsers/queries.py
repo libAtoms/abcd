@@ -30,7 +30,7 @@ grammar = r"""
     ?relation_ops: AND 
                  | OR 
 
-    AND: "&&" | "and" | "AND"
+    AND: "&" | "and" | "AND"
     OR:  "||" | "or"  | "OR"
     NOT: "!"  | "not" | "NOT"
 
@@ -150,15 +150,15 @@ if __name__ == '__main__':
         'operator_gt > -2.31e-5 ',
         'string = "some string"',
         'regexp ~ ".*H"',
-        'aa && not bb',
-        'aa && bb > 23.54 || cc && dd',
+        'aa & not bb',
+        'aa & bb > 23.54 || cc & dd',
         # 'aa bb > 22 cc > 33 dd > 44 ',
         'aa and bb > 22 and cc > 33 and dd > 44 ',
         '((aa and bb > 22) and cc > 33) and dd > 44 ',
         '(aa and bb > 22) and (cc > 33 and dd > 44) ',
         '(aa and bb > 22 and cc > 33 and dd > 44) ',
         'aa and bb > 23.54 or 22 in cc and dd',
-        'aa && bb > 23.54 || (22 in cc && dd)',
+        'aa & bb > 23.54 || (22 in cc & dd)',
         'aa and bb > 23.54 or (22 in cc and dd)',
         'aa and not (bb > 23.54 or (22 in cc and dd))',
         # 'expression = (bb/3-1)*cc',
@@ -176,7 +176,7 @@ if __name__ == '__main__':
         # print(parser.parse(query).pretty())
         try:
             tree = parser.parse(query)
-            logger.info('=> tree: {}'.format(tree))
+            # logger.info('=> tree: {}'.format(tree))
             logger.info('==> ast: {}'.format(parser(query)))
         except LarkError:
             raise NotImplementedError

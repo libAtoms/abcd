@@ -50,9 +50,9 @@ abcd download -q 'formula~"W128"' -f xyz data.xyz
 
 executing commands on all configurations that match a query:
 ```
-abcd exec -q 'formula~"W128"' 'print(item.info.cell)'
-abcd exec -q 'formula~"W128"' 'print(item.info.cell)' --yes
-abcd exec -q 'formula~"W128"' 'at=item.to_atoms(); print(at.cell)' --yes
+abcd exec -q 'formula~"W128"' 'print(atoms.to_ase().cell)'
+abcd exec -q 'formula~"W128"' 'print(atoms.to_ase().cell)' --yes
+abcd exec -q 'formula~"W128"' 'at=atoms.to_ase(); print(at.cell)' --yes
 ```
 ```
 abcd exec  'atoms["energy_per_atom"] = atoms["energy"]/atoms["n_atoms"] ; atoms.save()' --yes

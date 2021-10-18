@@ -3,9 +3,15 @@
 [![Doc](https://img.shields.io/badge/docs-master-green.svg)](https://libatoms.github.io/abcd/)
 [![Build Status](https://travis-ci.org/libAtoms/abcd.svg?branch=master)](https://travis-ci.org/libAtoms/abcd)
 
-storage and discovery of atomistic data
+Database storage and discovery of atomistic data. 
 
-take a look at the `examples.md` file for.. examples!
+Take a look at the `examples.md` file for.. examples!
+
+Main features:
+
+- Configurations that consist of atom positions, elements, forces, and various metadata are stored as a dictionary by a MongoDB backend. 
+- Two modes: "discovery" and "download". Both use filter-type queries, but in "discover" mode, summary statistics of the configurations that pass the filter are reported. The user can use this to refine the query. In "download" mode, the matching configurations are downloaded and exported to a file. 
+- Complex queries on dictionary key-value pairs are allowed, and their logical combinations. 
 
 ## Installation
 

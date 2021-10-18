@@ -10,6 +10,7 @@ Take a look at the `examples.md` file for.. examples!
 Main features:
 
 - Configurations that consist of atom positions, elements, forces, and various metadata are stored as a dictionary by a MongoDB backend. 
+- There is no predefined schema, any combination of keys are allowed for all configurations. 
 - Two modes: "discovery" and "download". Both use filter-type queries, but in "discover" mode, summary statistics of the configurations that pass the filter are reported. The user can use this to refine the query. In "download" mode, the matching configurations are downloaded and exported to a file. 
 - Complex queries on dictionary key-value pairs are allowed, and their logical combinations. 
 

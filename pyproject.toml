@@ -10,14 +10,15 @@ repository = "https://github.com/libatoms/abcd"
 documentation = "https://libatoms.github.io/abcd/"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-notebook = "^7.2"
-numpy = "^1.26"
-tqdm = "^4.66"
-pymongo = "^4.7.3"
-matplotlib = "^3.9"
 ase = "3.22.1"
 lark = "^1.1.9"
+matplotlib = "^3.9"
+notebook = "^7.2"
+numpy = "^1.26"
+opensearch-py = "^2.2.0"
+pymongo = "^4.7.3"
+python = "^3.9"
+tqdm = "^4.66"
 
 [tool.poetry.group.dev.dependencies]
 mongomock = "^4.1.2"
@@ -25,11 +26,11 @@ pytest = "^8.2.2"
 pytest-cov = "^5.0.0"
 
 [tool.poetry.extras]
-tests = ["mongomock", "pytest", "pytest-cov"]
-mongo = ["pymongo"]
 http = ["requests"]
+mongo = ["pymongo"]
 server-api = ["flask"]
 server-app = ["flask", "Flask-Nav", "Flask-MongoEngine", "gunicorn", "flask-paginate"]
+tests = ["mongomock", "pytest", "pytest-cov"]
 
 [build-system]
 requires = ["poetry-core"]

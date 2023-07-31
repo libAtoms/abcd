@@ -8,7 +8,7 @@ grammar = r"""
     key: NAME
     key_value: NAME "=" value
 
-    NAME.2: ("_"|LETTER|DIGIT) ("_"|"-"|LETTER|DIGIT)*  
+    NAME: ("_"|LETTER|DIGIT) ("_"|"-"|LETTER|DIGIT)*
 
     ?value: 
           | ESCAPED_STRING     -> string

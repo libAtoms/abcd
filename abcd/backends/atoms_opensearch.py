@@ -1,16 +1,32 @@
+import types
 import logging
 
+from typing import Union, Iterable
 from os import linesep
+from datetime import datetime
 
 from ase import Atoms
+from ase.io import iread
 
 import abcd.errors
 from abcd.model import AbstractModel
 from abcd.database import AbstractABCD
+from abcd.parsers import extras
 
-from opensearchpy import OpenSearch, AuthenticationException, ConnectionTimeout
+from pathlib import Path
+
+from opensearchpy import OpenSearch, helpers, AuthenticationException, ConnectionTimeout
 
 logger = logging.getLogger(__name__)
+
+map_types = {
+    bool: "bool",
+    float: "float",
+    int: "int",
+    str: "str",
+    datetime: "date",
+    dict: "dict"
+}
 
 
 class AtomsModel(AbstractModel):
@@ -30,6 +46,13 @@ class AtomsModel(AbstractModel):
     @property
     def _id(self):
         return self.get("_id", None)
+
+    def save(self):
+        if not self._id:
+            body = {}
+            body.update(self.data)
+            body["derived"] = self.derived
+            self._client.index(index=self._index_name, body=body)
 
 
 class OpenSearchDatabase(AbstractABCD):
@@ -84,8 +107,62 @@ class OpenSearchDatabase(AbstractABCD):
             "type": "opensearch"
         }
 
+    def delete(self, query=None):
+        # query = parser(query)
+        if not query:
+            query = {
+                "match_all": {}
+            }
+
+        self.client.delete_by_query(
+            index=self.index_name,
+            body={
+                "query": query,
+            },
+        )
+
+    def destroy(self):
+        self.client.indices.delete(index=self.index_name, ignore=404)
+
     def create(self):
         self.client.indices.create(index=self.index_name, ignore=400)
+
+    def save_bulk(self, actions: Iterable):
+        helpers.bulk(client=self.client, actions=actions, index=self.index_name)
+
+    def push(self, atoms: Union[Atoms, Iterable], extra_info=None, store_calc=True):
+
+        if extra_info and isinstance(extra_info, str):
+            extra_info = extras.parser.parse(extra_info)
+
+        # Could combine into single data.save, but keep separate for option of bulk insertion?
+        if isinstance(atoms, Atoms):
+            data = AtomsModel.from_atoms(self.client, self.index_name, atoms, extra_info=extra_info, store_calc=store_calc)
+            data.save()
+
+        elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
+
+            actions = []
+            for item in atoms:
+                data = AtomsModel.from_atoms(self.client, self.index_name, item, extra_info=extra_info, store_calc=store_calc)
+                actions.append(data.data)
+                actions[-1]["derived"] = data.derived
+            self.save_bulk(actions)
+
+    def upload(self, file: Path, extra_infos=None, store_calc=True):
+
+        if isinstance(file, str):
+            file = Path(file)
+
+        extra_info = {}
+        if extra_infos:
+            for info in extra_infos:
+                extra_info.update(extras.parser.parse(info))
+
+        extra_info["filename"] = str(file)
+
+        data = iread(str(file))
+        self.push(data, extra_info, store_calc=store_calc)
 
     def __repr__(self):
         host = self.client.transport.hosts[0]["host"]

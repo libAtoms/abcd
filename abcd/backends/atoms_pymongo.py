@@ -53,7 +53,7 @@ class AtomsModel(AbstractModel):
 
     def save(self):
         if not self._id:
-            self._collection.insert(self)
+            self._collection.insert_one(self)
         else:
             self._collection.update(
                 {"_id": ObjectId(self._id)}, self)

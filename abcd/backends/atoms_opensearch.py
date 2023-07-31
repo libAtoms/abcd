@@ -164,6 +164,233 @@ class OpenSearchDatabase(AbstractABCD):
         data = iread(str(file))
         self.push(data, extra_info, store_calc=store_calc)
 
+    def get_atoms(self, query=None):
+        # query = parser(query)
+        if not query:
+            query = {
+                "query": {
+                    "match_all": {}
+                }
+            }
+
+        for hit in helpers.scan(
+            self.client,
+            index=self.index_name,
+            query=query,
+        ):
+            yield AtomsModel(None, None, hit["_source"]).to_ase()
+
+    def count(self, query=None):
+        # query = parser(query)
+        logger.info("query; {}".format(query))
+
+        if not query:
+            query = {
+                "match_all": {}
+            }
+
+        return self.client.count(index=self.index_name, body={"query": query})["count"]
+
+    # Slow - use count_property where possible!
+    def property(self, name, query=None):
+        # query = parser(query)
+        if not query:
+            query = {
+                "match_all": {}
+            }
+
+        body = {
+            "query": query,
+        }
+
+        return [hit["_source"][format(name)] for hit in helpers.scan(
+            self.client,
+            index=self.index_name,
+            query=body,
+            stored_fields=format(name),
+            _source=format(name),
+        )]
+
+    def count_property(self, name, query=None):
+        # query = parser(query)
+        if not query:
+            query = {
+                "match_all": {}
+            }
+
+        body = {
+            "size" : 0,
+            "query": query,
+            "aggs": {
+                format(name): {
+                    "terms": {
+                        "field": format(name),
+                        "size": 10000, # Use composite for all results?
+                    },
+                },
+            }
+        }
+
+        prop = {}
+
+        for val in self.client.search(
+            index=self.index_name,
+            body=body,
+        )["aggregations"][format(name)]["buckets"]:
+            prop[val["key"]] = val["doc_count"]
+
+        return prop
+
+    def properties(self, query=None):
+        # query = parser(query)
+        if not query:
+            query = {
+                "match_all": {}
+            }
+
+        properties = {}
+
+        for prop in self.client.indices.get_mapping(self.index_name)[self.index_name]["mappings"]["properties"].keys():
+
+            body = {
+                "size" : 0,
+                "query": query,
+                "aggs": {
+                    "info_keys": {
+                        "filter": {
+                            "term": {
+                                "derived.info_keys.keyword": prop
+                            }
+                        },
+                    },
+                    "derived_keys": {
+                        "filter": {
+                            "term": {
+                                "derived.derived_keys.keyword": prop
+                            }
+                        },
+                    },
+                    "arrays_keys": {
+                        "filter": {
+                            "term": {
+                                "derived.arrays_keys.keyword": prop
+                            }
+                        },
+                    },
+                }
+            }
+
+            res = self.client.search(
+                index=self.index_name,
+                body=body,
+            )
+
+            derived = ["info_keys", "derived_keys", "arrays_keys"]
+            for label in derived:
+                count = res["aggregations"][label]["doc_count"]
+                if count > 0:
+                    key = label.split("_")[0]
+                    if key in properties:
+                        properties[key].append(prop)
+                    else:
+                        properties[key] = [prop]
+
+        return properties
+
+    def get_type_of_property(self, prop, category):
+        # TODO: Probably it would be nicer to store the type info in the database from the beginning.
+        atoms = self.client.search(
+            index=self.index_name,
+            body = {
+                "size" : 1,
+                "query": {
+                   "exists" : {
+                        "field": prop
+                    }
+                }
+            }
+        )
+
+        data = atoms["hits"]["hits"][0]["_source"][prop]
+
+        if category == "arrays":
+            if type(data[0]) == list:
+                return "array({}, N x {})".format(map_types[type(data[0][0])], len(data[0]))
+            else:
+                return "vector({}, N)".format(map_types[type(data[0])])
+
+        if type(data) == list:
+            if type(data[0]) == list:
+                if type(data[0][0]) == list:
+                    return "list(list(...)"
+                else:
+                    return "array({})".format(map_types[type(data[0][0])])
+            else:
+                return "vector({})".format(map_types[type(data[0])])
+        else:
+            return "scalar({})".format(map_types[type(data)])
+
+    def count_properties(self, query=None):
+        # query = parser(query)
+        if not query:
+            query = {
+                "match_all": {}
+            }
+
+        properties = {}
+
+        try:
+            keys = self.client.indices.get_mapping(self.index_name)[self.index_name]["mappings"]["properties"].keys()
+        except KeyError:
+            return properties
+
+        for key in keys:
+
+            body = {
+                "size" : 0,
+                "query": query,
+                "aggs": {
+                    "info_keys": {
+                        "filter": {
+                            "term": {
+                                "derived.info_keys.keyword": key
+                            }
+                        },
+                    },
+                    "derived_keys": {
+                        "filter": {
+                            "term": {
+                                "derived.derived_keys.keyword": key
+                            }
+                        },
+                    },
+                    "arrays_keys": {
+                        "filter": {
+                            "term": {
+                                "derived.arrays_keys.keyword": key
+                            }
+                        },
+                    },
+                }
+            }
+
+            res = self.client.search(
+                index=self.index_name,
+                body=body,
+            )
+
+            derived = ["info_keys", "derived_keys", "arrays_keys"]
+            for label in derived:
+                count = res["aggregations"][label]["doc_count"]
+                if count > 0:
+                    properties[key] = {
+                        "count": count,
+                        "category": label.split("_")[0],
+                        "dtype": self.get_type_of_property(key, label.split("_")[0])
+                    }
+
+        return properties
+
     def __repr__(self):
         host = self.client.transport.hosts[0]["host"]
         port = self.client.transport.hosts[0]["port"]

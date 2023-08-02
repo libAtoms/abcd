@@ -21,3 +21,6 @@ mongomock = "^4.1.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."console_scripts"]
+"abcd" = "abcd.frontends.commandline:main"

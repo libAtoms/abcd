@@ -4,6 +4,11 @@ import logging
 from typing import Union, Iterable
 from os import linesep
 from datetime import datetime
+from collections import Counter
+from operator import itemgetter
+
+
+import numpy as np
 
 from ase import Atoms
 from ase.io import iread
@@ -62,6 +67,7 @@ class OpenSearchDatabase(AbstractABCD):
             self,
             host="localhost",
             port=9200,
+            db="abcd",
             index_name="atoms",
             username="admin",
             password="admin",
@@ -91,6 +97,7 @@ class OpenSearchDatabase(AbstractABCD):
         except ConnectionTimeout:
             raise abcd.errors.TimeoutError()
 
+        self.db = db
         self.index_name = index_name
         self.create()
 
@@ -102,6 +109,7 @@ class OpenSearchDatabase(AbstractABCD):
         return {
             "host": host,
             "port": port,
+            "db": self.db,
             "index": self.index_name,
             "number of confs": self.client.count(index=self.index_name)["count"],
             "type": "opensearch"
@@ -391,6 +399,11 @@ class OpenSearchDatabase(AbstractABCD):
 
         return properties
 
+    def hist(self, name, query=None, **kwargs):
+
+        data = self.property(name, query)
+        return histogram(name, data, **kwargs)
+
     def __repr__(self):
         host = self.client.transport.hosts[0]["host"]
         port = self.client.transport.hosts[0]["port"]
@@ -417,6 +430,127 @@ class OpenSearchDatabase(AbstractABCD):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
+
+
+def histogram(name, data, **kwargs):
+    if not data:
+        return None
+
+    elif data and isinstance(data, list):
+
+        ptype = type(data[0])
+
+        if not all(isinstance(x, ptype) for x in data):
+            print("Mixed type error of the {} property!".format(name))
+            return None
+
+        if ptype == float:
+            bins = kwargs.get('bins', 10)
+            return _hist_float(name, data, bins)
+
+        elif ptype == int:
+            bins = kwargs.get('bins', 10)
+            return _hist_int(name, data, bins)
+
+        elif ptype == str:
+            return _hist_str(name, data, **kwargs)
+
+        elif ptype == datetime:
+            bins = kwargs.get('bins', 10)
+            return _hist_date(name, data, bins)
+
+        else:
+            print('{}: Histogram for list of {} types are not supported!'.format(name, type(data[0])))
+            logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data[0])))
+
+    else:
+        logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))
+        return None
+
+
+def _hist_float(name, data, bins=10):
+    data = np.array(data)
+    hist, bin_edges = np.histogram(data, bins=bins)
+
+    return {
+        'type': 'hist_float',
+        'name': name,
+        'bins': bins,
+        'edges': bin_edges,
+        'counts': hist,
+        'min': data.min(),
+        'max': data.max(),
+        'median': data.mean(),
+        'std': data.std(),
+        'var': data.var()
+    }
+
+
+def _hist_date(name, data, bins=10):
+    hist_data = np.array([t.timestamp() for t in data])
+    hist, bin_edges = np.histogram(hist_data, bins=bins)
+
+    fromtimestamp = datetime.fromtimestamp
+
+    return {
+        'type': 'hist_date',
+        'name': name,
+        'bins': bins,
+        'edges': [fromtimestamp(d) for d in bin_edges],
+        'counts': hist,
+        'min': fromtimestamp(hist_data.min()),
+        'max': fromtimestamp(hist_data.max()),
+        'median': fromtimestamp(hist_data.mean()),
+        'std': fromtimestamp(hist_data.std()),
+        'var': fromtimestamp(hist_data.var())
+    }
+
+
+def _hist_int(name, data, bins=10):
+    data = np.array(data)
+    delta = max(data) - min(data) + 1
+
+    if bins > delta:
+        bins = delta
+
+    hist, bin_edges = np.histogram(data, bins=bins)
+
+    return {
+        'type': 'hist_int',
+        'name': name,
+        'bins': bins,
+        'edges': bin_edges,
+        'counts': hist,
+        'min': data.min(),
+        'max': data.max(),
+        'median': data.mean(),
+        'std': data.std(),
+        'var': data.var()
+    }
+
+
+def _hist_str(name, data, bins=10, truncate=20):
+    n_unique = len(set(data))
+
+    if truncate:
+        # data = (item[:truncate] for item in data)
+        data = (item[:truncate] + '...' if len(item) > truncate else item for item in data)
+
+    data = Counter(data)
+
+    if bins:
+        labels, counts = zip(*sorted(data.items(), key=itemgetter(1, 0), reverse=True))
+    else:
+        labels, counts = zip(*data.items())
+
+    return {
+        'type': 'hist_str',
+        'name': name,
+        'total': sum(data.values()),
+        'unique': n_unique,
+        'labels': labels[:bins],
+        'counts': counts[:bins]
+    }
 
 
 if __name__ == "__main__":

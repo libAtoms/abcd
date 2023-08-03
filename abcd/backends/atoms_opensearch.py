@@ -422,6 +422,33 @@ class OpenSearchDatabase(AbstractABCD):
             body=body,
         )
 
+    def rename_property(self, name, new_name, query=None):
+        logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))
+
+        script_txt = f"if (!ctx._source.containsKey('{new_name}')) {{ "
+        script_txt += f"ctx._source.{new_name} = ctx._source.{name}; ctx._source.remove('params.name');"
+
+        script_txt += f"for (int i=0; i<ctx._source.derived.info_keys.length; i++) {{"
+        script_txt += f"if (ctx._source.derived.info_keys[i] == params.name) {{ "
+        script_txt += f"ctx._source.derived.info_keys[i] = params.new_name;}}}}}}"
+
+        body = {
+            "script": {
+                "source": script_txt,
+                "lang": "painless",
+                "params": {
+                    "name": name,
+                    "new_name": new_name
+                },
+            },
+            "query": query
+        }
+
+        self.client.update_by_query(
+            index=self.index_name,
+            body=body
+        )
+
     def hist(self, name, query=None, **kwargs):
 
         data = self.property(name, query)

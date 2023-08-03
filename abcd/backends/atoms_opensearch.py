@@ -399,6 +399,29 @@ class OpenSearchDatabase(AbstractABCD):
 
         return properties
 
+    def add_property(self, data, query=None):
+        logger.info('add: data={}, query={}'.format(data, query))
+
+        script_txt = "ctx._source.derived.info_keys.addAll(params.keys);"
+        for key, val in data.items():
+            script_txt += f"ctx._source.{key} = '{val}';"
+
+        body = {
+            "script": {
+                "source": script_txt,
+                "lang": "painless",
+                "params" : {
+                    "keys" : list(data.keys())
+                },
+            },
+            "query": query
+        }
+
+        self.client.update_by_query(
+            index=self.index_name,
+            body=body,
+        )
+
     def hist(self, name, query=None, **kwargs):
 
         data = self.property(name, query)

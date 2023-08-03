@@ -449,6 +449,31 @@ class OpenSearchDatabase(AbstractABCD):
             body=body
         )
 
+    def delete_property(self, name, query=None):
+        logger.info('delete: query={}, porperty={}'.format(name, query))
+
+        script_txt = f"if (ctx._source.containsKey('{name}')) {{ "
+        script_txt += f"ctx._source.remove('params.name');"
+        script_txt += f"for (int i=0; i<ctx._source.derived.info_keys.length; i++) {{"
+        script_txt += f"if (ctx._source.derived.info_keys[i] == params.name) {{ "
+        script_txt += f"ctx._source.derived.info_keys.remove(i);}}}}}}"
+
+        body = {
+            "script": {
+                "source": script_txt,
+                "lang": "painless",
+                "params": {
+                    "name": name,
+                },
+            },
+            "query": query
+        }
+
+        self.client.update_by_query(
+            index=self.index_name,
+            body=body
+        )
+
     def hist(self, name, query=None, **kwargs):
 
         data = self.property(name, query)

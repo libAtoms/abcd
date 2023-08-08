@@ -16,11 +16,15 @@ from ase.io import iread
 import abcd.errors
 from abcd.model import AbstractModel
 from abcd.database import AbstractABCD
+from abcd.queryset import AbstractQuerySet
 from abcd.parsers import extras
 
 from pathlib import Path
 
 from opensearchpy import OpenSearch, helpers, AuthenticationException, ConnectionTimeout
+
+from luqum.parser import parser
+from luqum.elasticsearch import SchemaAnalyzer, ElasticsearchQueryBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +36,25 @@ map_types = {
     datetime: "date",
     dict: "dict"
 }
+
+
+class OpenSearchQuery(AbstractQuerySet):
+
+    def __init__(self, client, index_name):
+        schema = client.indices.get_mapping()[index_name]
+        schema_analizer = SchemaAnalyzer(schema)
+        self.message_es_builder = ElasticsearchQueryBuilder(**schema_analizer.query_builder_options())
+
+    def __call__(self, ast):
+        logger.info('parsed ast: {}'.format(ast))
+
+        if isinstance(ast, dict):
+            return ast
+        elif isinstance(ast, str):
+            tree = parser.parse(ast)
+            return self.message_es_builder(tree)
+
+        return ast if ast else None
 
 
 class AtomsModel(AbstractModel):
@@ -100,6 +123,7 @@ class OpenSearchDatabase(AbstractABCD):
         self.db = db
         self.index_name = index_name
         self.create()
+        self.parser = OpenSearchQuery(self.client, self.index_name)
 
     def info(self):
         host = self.client.transport.hosts[0]["host"]
@@ -116,7 +140,7 @@ class OpenSearchDatabase(AbstractABCD):
         }
 
     def delete(self, query=None):
-        # query = parser(query)
+        query = self.parser(query)
         if not query:
             query = {
                 "match_all": {}
@@ -173,7 +197,7 @@ class OpenSearchDatabase(AbstractABCD):
         self.push(data, extra_info, store_calc=store_calc)
 
     def get_atoms(self, query=None):
-        # query = parser(query)
+        query = self.parser(query)
         if not query:
             query = {
                 "query": {
@@ -189,7 +213,7 @@ class OpenSearchDatabase(AbstractABCD):
             yield AtomsModel(None, None, hit["_source"]).to_ase()
 
     def count(self, query=None):
-        # query = parser(query)
+        query = self.parser(query)
         logger.info("query; {}".format(query))
 
         if not query:
@@ -201,7 +225,7 @@ class OpenSearchDatabase(AbstractABCD):
 
     # Slow - use count_property where possible!
     def property(self, name, query=None):
-        # query = parser(query)
+        query = self.parser(query)
         if not query:
             query = {
                 "match_all": {}
@@ -220,7 +244,7 @@ class OpenSearchDatabase(AbstractABCD):
         )]
 
     def count_property(self, name, query=None):
-        # query = parser(query)
+        query = self.parser(query)
         if not query:
             query = {
                 "match_all": {}
@@ -250,7 +274,7 @@ class OpenSearchDatabase(AbstractABCD):
         return prop
 
     def properties(self, query=None):
-        # query = parser(query)
+        query = self.parser(query)
         if not query:
             query = {
                 "match_all": {}
@@ -339,7 +363,7 @@ class OpenSearchDatabase(AbstractABCD):
             return "scalar({})".format(map_types[type(data)])
 
     def count_properties(self, query=None):
-        # query = parser(query)
+        query = self.parser(query)
         if not query:
             query = {
                 "match_all": {}
@@ -401,6 +425,7 @@ class OpenSearchDatabase(AbstractABCD):
 
     def add_property(self, data, query=None):
         logger.info('add: data={}, query={}'.format(data, query))
+        query = self.parser(query)
 
         script_txt = "ctx._source.derived.info_keys.addAll(params.keys);"
         for key, val in data.items():
@@ -424,6 +449,7 @@ class OpenSearchDatabase(AbstractABCD):
 
     def rename_property(self, name, new_name, query=None):
         logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))
+        query = self.parser(query)
 
         script_txt = f"if (!ctx._source.containsKey('{new_name}')) {{ "
         script_txt += f"ctx._source.{new_name} = ctx._source.{name}; ctx._source.remove('params.name');"
@@ -451,6 +477,7 @@ class OpenSearchDatabase(AbstractABCD):
 
     def delete_property(self, name, query=None):
         logger.info('delete: query={}, porperty={}'.format(name, query))
+        query = self.parser(query)
 
         script_txt = f"if (ctx._source.containsKey('{name}')) {{ "
         script_txt += f"ctx._source.remove('params.name');"
@@ -475,6 +502,7 @@ class OpenSearchDatabase(AbstractABCD):
         )
 
     def hist(self, name, query=None, **kwargs):
+        query = self.parser(query)
 
         data = self.property(name, query)
         return histogram(name, data, **kwargs)

@@ -12,6 +12,7 @@ documentation = "https://libatoms.github.io/abcd/"
 [tool.poetry.dependencies]
 ase = "3.22.1"
 lark = "^1.1.9"
+luqum = "^0.13.0"
 matplotlib = "^3.9"
 notebook = "^7.2"
 numpy = "^1.26"

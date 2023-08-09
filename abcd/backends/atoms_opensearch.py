@@ -40,10 +40,13 @@ map_types = {
 
 class OpenSearchQuery(AbstractQuerySet):
 
-    def __init__(self, client, index_name):
-        schema = client.indices.get_mapping()[index_name]
-        schema_analizer = SchemaAnalyzer(schema)
-        self.message_es_builder = ElasticsearchQueryBuilder(**schema_analizer.query_builder_options())
+    def __init__(self, client, index_name, analyse_schema=True):
+        if analyse_schema:
+            schema = client.indices.get_mapping()[index_name]
+            schema_analizer = SchemaAnalyzer(schema)
+            self.query_builder = ElasticsearchQueryBuilder(**schema_analizer.query_builder_options())
+        else:
+            self.query_builder = ElasticsearchQueryBuilder()
 
     def __call__(self, ast):
         logger.info('parsed ast: {}'.format(ast))
@@ -52,7 +55,7 @@ class OpenSearchQuery(AbstractQuerySet):
             return ast
         elif isinstance(ast, str):
             tree = parser.parse(ast)
-            return self.message_es_builder(tree)
+            return self.query_builder(tree)
 
         return ast if ast else None
 
@@ -94,6 +97,7 @@ class OpenSearchDatabase(AbstractABCD):
             index_name="atoms",
             username="admin",
             password="admin",
+            analyse_schema=True,
             **kwargs):
 
         super().__init__()
@@ -123,7 +127,7 @@ class OpenSearchDatabase(AbstractABCD):
         self.db = db
         self.index_name = index_name
         self.create()
-        self.parser = OpenSearchQuery(self.client, self.index_name)
+        self.parser = OpenSearchQuery(self.client, self.index_name, analyse_schema)
 
     def info(self):
         host = self.client.transport.hosts[0]["host"]

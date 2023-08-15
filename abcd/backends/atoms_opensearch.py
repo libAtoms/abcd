@@ -48,16 +48,25 @@ class OpenSearchQuery(AbstractQuerySet):
         else:
             self.query_builder = ElasticsearchQueryBuilder()
 
-    def __call__(self, ast):
-        logger.info('parsed ast: {}'.format(ast))
+    def __call__(self, query):
+        logger.info('parsed query: {}'.format(query))
 
-        if isinstance(ast, dict):
-            return ast
-        elif isinstance(ast, str):
-            tree = parser.parse(ast)
+        if not query:
+            query=self.get_default_query()
+
+        if isinstance(query, dict):
+            return query
+        elif isinstance(query, str):
+            tree = parser.parse(query)
             return self.query_builder(tree)
 
-        return ast if ast else None
+        return query if query else None
+
+    @staticmethod
+    def get_default_query():
+        return {
+            "match_all": {}
+        }
 
 
 class AtomsModel(AbstractModel):
@@ -145,16 +154,13 @@ class OpenSearchDatabase(AbstractABCD):
 
     def delete(self, query=None):
         query = self.parser(query)
-        if not query:
-            query = {
-                "match_all": {}
-            }
+        body = {
+            "query": query
+        }
 
         self.client.delete_by_query(
             index=self.index_name,
-            body={
-                "query": query,
-            },
+            body=body,
         )
 
     def destroy(self):
@@ -202,12 +208,9 @@ class OpenSearchDatabase(AbstractABCD):
 
     def get_atoms(self, query=None):
         query = self.parser(query)
-        if not query:
-            query = {
-                "query": {
-                    "match_all": {}
-                }
-            }
+        query = {
+            "query": query,
+        }
 
         for hit in helpers.scan(
             self.client,
@@ -217,42 +220,31 @@ class OpenSearchDatabase(AbstractABCD):
             yield AtomsModel(None, None, hit["_source"]).to_ase()
 
     def count(self, query=None):
-        query = self.parser(query)
         logger.info("query; {}".format(query))
+        query = self.parser(query)
+        body = {
+            "query": query,
+        }
 
-        if not query:
-            query = {
-                "match_all": {}
-            }
-
-        return self.client.count(index=self.index_name, body={"query": query})["count"]
+        return self.client.count(index=self.index_name, body=body)["count"]
 
     # Slow - use count_property where possible!
     def property(self, name, query=None):
         query = self.parser(query)
-        if not query:
-            query = {
-                "match_all": {}
-            }
-
-        body = {
+        query = {
             "query": query,
         }
 
         return [hit["_source"][format(name)] for hit in helpers.scan(
             self.client,
             index=self.index_name,
-            query=body,
+            query=query,
             stored_fields=format(name),
             _source=format(name),
         )]
 
     def count_property(self, name, query=None):
         query = self.parser(query)
-        if not query:
-            query = {
-                "match_all": {}
-            }
 
         body = {
             "size" : 0,
@@ -279,10 +271,6 @@ class OpenSearchDatabase(AbstractABCD):
 
     def properties(self, query=None):
         query = self.parser(query)
-        if not query:
-            query = {
-                "match_all": {}
-            }
 
         properties = {}
 
@@ -368,10 +356,6 @@ class OpenSearchDatabase(AbstractABCD):
 
     def count_properties(self, query=None):
         query = self.parser(query)
-        if not query:
-            query = {
-                "match_all": {}
-            }
 
         properties = {}
 

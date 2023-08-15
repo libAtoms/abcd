@@ -206,6 +206,19 @@ class OpenSearchDatabase(AbstractABCD):
         data = iread(str(file))
         self.push(data, extra_info, store_calc=store_calc)
 
+    def get_items(self, query=None):
+        query = self.parser(query)
+        query = {
+            "query": query,
+        }
+
+        for hit in helpers.scan(
+            self.client,
+            index=self.index_name,
+            query=query,
+        ):
+            yield {'_id': hit['_id'], **hit['_source']}
+
     def get_atoms(self, query=None):
         query = self.parser(query)
         query = {

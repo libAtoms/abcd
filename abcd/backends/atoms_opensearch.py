@@ -94,6 +94,10 @@ class AtomsModel(AbstractModel):
             body["derived"] = self.derived
             self._client.index(index=self._index_name, body=body)
 
+    def remove(self):
+        if self._id:
+            self._client.delete(index=self._index_name, id=self._id)
+            self.clear()
 
 class OpenSearchDatabase(AbstractABCD):
     """Wrapper to make database operations easy"""

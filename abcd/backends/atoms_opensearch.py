@@ -6,7 +6,7 @@ from os import linesep
 from datetime import datetime
 from collections import Counter
 from operator import itemgetter
-
+from pathlib import Path
 
 import numpy as np
 
@@ -18,8 +18,6 @@ from abcd.model import AbstractModel
 from abcd.database import AbstractABCD
 from abcd.queryset import AbstractQuerySet
 from abcd.parsers import extras
-
-from pathlib import Path
 
 from opensearchpy import OpenSearch, helpers, AuthenticationException, ConnectionTimeout
 
@@ -88,11 +86,15 @@ class AtomsModel(AbstractModel):
         return self.get("_id", None)
 
     def save(self):
+        body = {}
+        body.update(self.data)
+        body["derived"] = self.derived
         if not self._id:
-            body = {}
-            body.update(self.data)
-            body["derived"] = self.derived
             self._client.index(index=self._index_name, body=body)
+        else:
+            body.pop('_id', None)
+            body = {"doc": body}
+            self._client.update(index=self._index_name, id=self._id, body=body)
 
     def remove(self):
         if self._id:

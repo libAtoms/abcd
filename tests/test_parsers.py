@@ -52,6 +52,7 @@ class TestParsingExtras:
             ("true_value", {"true_value": True}),
             ("true_value_long = true", {"true_value_long": True}),
             ("false_value = F", {"false_value": False}),
+            ("false_value_colon: F", {"false_value_colon": False}),
         ],
     )
     def test_boolean(self, parser, string, expected):
@@ -65,6 +66,7 @@ class TestParsingExtras:
             ("floating=1.1", {"floating": 1.1}),
             ("scientific_float=1.2e7", {"scientific_float": 1.2e7}),
             ("scientific_float_2=5e-6", {"scientific_float_2": 5e-6}),
+            ("floating_colon: 3.14", {"floating_colon": 3.14}),
         ],
     )
     def test_numbers(self, parser, string, expected):
@@ -86,6 +88,7 @@ class TestParsingExtras:
                 "array_bool_commas=[T, T, F, T]",
                 {"array_bool_commas": [True, True, False, True]},
             ),
+            ("int_array_colon: {4 2}", {"int_array_colon": [4, 2]}),
         ],
     )
     def test_arrays(self, parser, string, expected):
@@ -123,6 +126,17 @@ class TestParsingExtras:
 
         out = parser.parse(composite_string)
         assert out == composite_expected
+
+    @pytest.mark.parametrize(
+        "string, expected",
+        [
+            ('colon_string:"astring"', {'colon_string': 'astring'}),
+            ('colon_string_spaces : "astring"', {'colon_string_spaces': 'astring'}),
+        ],
+    )
+    def test_colon_key_value_pairs(self, parser, string, expected):
+        """Key value pairs separated by colons"""
+        assert expected == parser.parse(string)
 
     @pytest.mark.skip
     @pytest.mark.parametrize(
@@ -164,6 +178,12 @@ class TestParsingQueries:
     def test_operators(self, parser, string, expected):
         """Operators"""
         assert parser.parse(string)
+
+
+    def test_colon_key_value_pairs(self, parser, string, expected):
+        """Key value pairs separated by colons"""
+        assert expected == parser.parse(string)
+
 
     @pytest.mark.parametrize(
         "string, expected",

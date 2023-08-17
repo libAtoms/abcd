@@ -6,7 +6,7 @@ grammar = r"""
     start: ( key | key_value )*
 
     key: NAME
-    key_value: NAME "=" value
+    key_value: NAME ("="|":") value
 
     NAME: ("_"|LETTER|DIGIT) ("_"|"-"|LETTER|DIGIT)*
 

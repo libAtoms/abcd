@@ -1,6 +1,8 @@
-import types
+from __future__ import annotations
+
 import logging
 
+from collections.abc import Generator
 from typing import Union, Iterable
 from os import linesep
 from datetime import datetime
@@ -37,16 +39,60 @@ map_types = {
 
 
 class OpenSearchQuery(AbstractQuerySet):
+    """
+    Class to parse and build queries for OpenSearch.
 
-    def __init__(self, client, index_name, analyse_schema=True):
-        if analyse_schema:
+    Attributes
+    ----------
+    query_builder: ElasticsearchQueryBuilder
+        Query builder to convert a Tree in an OpenSearch query.
+    """
+    def __init__(self,
+                 client: Union[OpenSearch, None] = None,
+                 index_name: Union[str, None] = None,
+                 analyse_schema: bool = False
+    ):
+        """"
+        Initialises class.
+
+        Parameters
+        ----------
+        client: Union[OpenSearch, None]
+            OpenSearch client, used for if analyse_schema is `True` to
+            characterise the schema. Default is `None`.
+        index_name: Union[str, None]
+            Name of OpenSearch index to be analysed, used if analyse_schema
+            is `True` to characterise the schema. Default is `None`.
+        analyse_schema: bool, optional
+            Whether to analyse the schema, as defined by the index_name and client.
+            Default is `False`.
+        """
+        if analyse_schema and client is not None and index_name is not None:
             schema = client.indices.get_mapping()[index_name]
             schema_analizer = SchemaAnalyzer(schema)
             self.query_builder = ElasticsearchQueryBuilder(**schema_analizer.query_builder_options())
         else:
             self.query_builder = ElasticsearchQueryBuilder()
 
-    def __call__(self, query):
+    def __call__(
+            self,
+            query: Union[dict, str, None]
+    ) -> Union[dict, None]:
+        """
+        Parses and builds queries from strings using ElasticsearchQueryBuilder.
+
+        Parameters
+        ----------
+        query: Union[dict, str, None]
+            Query to be parsed for OpenSearch. If given as a dictionary,
+            the query is left unchanged. If given as a string, the
+            ElasticsearchQueryBuilder is used to build the query.
+
+        Returns
+        -------
+        Union[dict, None]
+            The parsed query for OpenSearch.
+        """
         logger.info('parsed query: {}'.format(query))
 
         if not query:
@@ -61,21 +107,84 @@ class OpenSearchQuery(AbstractQuerySet):
         return query if query else None
 
     @staticmethod
-    def get_default_query():
+    def get_default_query() -> dict:
+        """
+        Defines a default OpenSearch query. Currently, matches all documents.
+
+        Returns
+        -------
+        The default query for OpenSearch.
+        """
         return {
             "match_all": {}
         }
 
 
 class AtomsModel(AbstractModel):
-    def __init__(self, client=None, index_name=None, dict=None):
+    """
+    Class to interface between Atoms data and OpenSearch.
+
+    Attributes
+    ----------
+    _client: Union[OpenSearch, None]
+        OpenSearch client.
+    _index_name: Union[str, None]
+        OpenSearch index name.
+    """
+    def __init__(
+            self,
+            client: Union[OpenSearch, None] = None,
+            index_name: Union[str, None] = None,
+            dict: Union[dict, None] = None
+    ):
+        """
+        Initialises class.
+
+        Parameters
+        ----------
+        client: Union[OpenSearch, None]
+            OpenSearch client.
+        index_name: Union[str, None]
+            OpenSearch index name.
+        dict: dict
+            Dictionary of atoms data.
+        """
         super().__init__(dict)
 
         self._client = client
         self._index_name = index_name
 
     @classmethod
-    def from_atoms(cls, client, index_name, atoms: Atoms, extra_info=None, store_calc=True):
+    def from_atoms(
+        cls,
+        client: OpenSearch,
+        index_name: str,
+        atoms: Atoms,
+        extra_info: Union[dict, None] = None,
+        store_calc: bool = True
+    ) -> AtomsModel:
+        """
+        Reads and prepares atoms data and extra information for OpenSearch.
+
+        Parameters
+        ----------
+        client: OpenSearch
+            OpenSearch client.
+        index_name: str
+            OpenSearch index name.
+        atoms: Atoms
+            Atoms data to be stored.
+        extra_info: Union[dict, None], optional
+            Extra information to store in the document with the atoms data.
+            Default is `None`.
+        store_calc: bool, optional
+            Whether to store data from the calculator attached to atoms.
+            Default is `True`.
+
+        Returns
+        -------
+        Data from atoms and extra information to be saved in OpenSearch.
+        """
         obj = super().from_atoms(atoms, extra_info, store_calc)
         obj._client = client
         obj._index_name = index_name
@@ -83,38 +192,90 @@ class AtomsModel(AbstractModel):
 
     @property
     def _id(self):
+        """
+        Gets the OpenSearch document ID stored in data.
+
+        Returns
+        -------
+        Current document ID.
+        """
         return self.get("_id", None)
 
     def save(self):
+        """
+        Saves data in OpenSearch. If the data being saved includes a document
+        ID, updates the matching document in OpenSearch with the current data.
+        """
         body = {}
         body.update(self.data)
         body["derived"] = self.derived
-        if not self._id:
-            self._client.index(index=self._index_name, body=body)
-        else:
-            body.pop('_id', None)
-            body = {"doc": body}
-            self._client.update(index=self._index_name, id=self._id, body=body)
+        if self._client is not None:
+            if not self._id:
+                self._client.index(index=self._index_name, body=body)
+            else:
+                body.pop('_id', None)
+                body = {"doc": body}
+                self._client.update(index=self._index_name, id=self._id, body=body)
 
     def remove(self):
-        if self._id:
+        """
+        If current data includes a document ID, deletes the matching document
+        OpenSearch.
+        """
+        if self._client is not None and self._id:
             self._client.delete(index=self._index_name, id=self._id)
             self.clear()
 
+
 class OpenSearchDatabase(AbstractABCD):
-    """Wrapper to make database operations easy"""
+    """
+    Wrapper to make OpenSearch operations easy.
+
+    Attributes
+    ----------
+    client: OpenSearch
+        OpenSearch client.
+    db: str
+        Database name.
+    index_name: str
+        OpenSearch index name.
+    parser: OpenSearchQuery
+        Query parser and builder for OpenSearch queries.
+    """
 
     def __init__(
-            self,
-            host="localhost",
-            port=9200,
-            db="abcd",
-            index_name="atoms",
-            username="admin",
-            password="admin",
-            analyse_schema=True,
-            **kwargs):
+        self,
+        host: str = "localhost",
+        port: int = 9200,
+        db: str = "abcd",
+        index_name: str = "atoms",
+        username: str = "admin",
+        password: str = "admin",
+        analyse_schema: bool = True,
+        **kwargs
+    ):
+        """
+        Initialises class.
 
+        Parameters
+        ----------
+        host: str, optional
+            Name of OpenSearch host. Default is `localhost`.
+        port: int, optional
+            OpenSearch port. Default is `9200`.
+        db: str, optional
+            Label for OpenSearch database. Used only when printing information.
+            Default is `abcd`.
+        index_name: str, optional
+            Name of OpenSearch index. Default is `atoms`.
+        username: str, optional
+            OpenSearch username. Default is `admin`.
+        password: str, optional
+            OpenSearch password. Default is `admin`.
+        analyse_schema: bool, optional
+            Whether to analyse the OpenSearch schema when building queries.
+            Default is `True`.
+        """
         super().__init__()
 
         logger.info((host, port, index_name, username, password, kwargs))
@@ -145,6 +306,13 @@ class OpenSearchDatabase(AbstractABCD):
         self.parser = OpenSearchQuery(self.client, self.index_name, analyse_schema)
 
     def info(self):
+        """
+        Gets information from OpenSearch client about the database.
+
+        Returns
+        -------
+        Dictionary of database information.
+        """
         host = self.client.transport.hosts[0]["host"]
         port = self.client.transport.hosts[0]["port"]
 
@@ -158,7 +326,18 @@ class OpenSearchDatabase(AbstractABCD):
             "type": "opensearch"
         }
 
-    def delete(self, query=None):
+    def delete(
+        self,
+        query: Union[dict, str, None] = None
+    ):
+        """
+        Deletes documents from the database.
+
+        Parameters
+        ----------
+        query: Union[dict, str, None]
+            Query to filter documents to be deleted. Default is `None`.
+        """
         query = self.parser(query)
         body = {
             "query": query
@@ -170,16 +349,49 @@ class OpenSearchDatabase(AbstractABCD):
         )
 
     def destroy(self):
+        """
+        Deletes the current index in OpenSearch.
+        Ignores errors if the index does not exist.
+        """
         self.client.indices.delete(index=self.index_name, ignore=404)
 
     def create(self):
+        """
+        Creates a new index in OpenSearch.
+        Ignores errors if the index already exists.
+        """
         self.client.indices.create(index=self.index_name, ignore=400)
 
     def save_bulk(self, actions: Iterable):
+        """
+        Save a collection of documents in bulk.
+
+        Parameters
+        ----------
+        actions: Iterable
+            Documents to be saved.
+        """
         helpers.bulk(client=self.client, actions=actions, index=self.index_name)
 
-    def push(self, atoms: Union[Atoms, Iterable], extra_info=None, store_calc=True):
+    def push(
+        self,
+        atoms: Union[Atoms, Iterable],
+        extra_info: Union[dict, None] = None,
+        store_calc: bool = True
+    ):
+        """
+        Save data from atoms object(s) to database.
 
+        Parameters
+        ----------
+        atoms: Union[Atoms, Iterable]
+        extra_info: Union[dict, None], optional
+            Extra information to store in the document with the atoms data.
+            Default is `None`.
+        store_calc: bool, optional
+            Whether to store data from the calculator attached to atoms.
+            Default is `True`.
+        """
         if extra_info and isinstance(extra_info, str):
             extra_info = extras.parser.parse(extra_info)
 
@@ -188,7 +400,7 @@ class OpenSearchDatabase(AbstractABCD):
             data = AtomsModel.from_atoms(self.client, self.index_name, atoms, extra_info=extra_info, store_calc=store_calc)
             data.save()
 
-        elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
+        elif isinstance(atoms, Generator) or isinstance(atoms, list):
 
             actions = []
             for item in atoms:
@@ -197,7 +409,26 @@ class OpenSearchDatabase(AbstractABCD):
                 actions[-1]["derived"] = data.derived
             self.save_bulk(actions)
 
-    def upload(self, file: Path, extra_infos=None, store_calc=True):
+    def upload(
+        self,
+        file: Path,
+        extra_infos: Union[Iterable, dict, None] = None,
+        store_calc: bool = True
+    ):
+        """
+        Upload data from a file to the database.
+
+        Parameters
+        ----------
+        file: Path
+            Path to file to be uploaded
+        extra_infos: Union[Iterable, dict, None], optional
+            Extra information to store in the document with the atoms data.
+            Default is `None`.
+        store_calc: bool, optional
+            Whether to store data from the calculator attached to atoms.
+            Default is `True`.
+        """
 
         if isinstance(file, str):
             file = Path(file)
@@ -212,7 +443,22 @@ class OpenSearchDatabase(AbstractABCD):
         data = iread(str(file))
         self.push(data, extra_info, store_calc=store_calc)
 
-    def get_items(self, query=None):
+    def get_items(
+        self,
+        query: Union[dict, str, None] = None
+    ) -> Generator[dict, None, None]:
+        """
+        Get data as a dictionary from documents in the database.
+
+        Parameters
+        ----------
+        query: Union[dict, str, None]
+            Query to filter documents to get data from. Default is `None`.
+
+        Returns
+        -------
+        Generator for dictionary of data.
+        """
         query = self.parser(query)
         query = {
             "query": query,
@@ -225,7 +471,22 @@ class OpenSearchDatabase(AbstractABCD):
         ):
             yield {'_id': hit['_id'], **hit['_source']}
 
-    def get_atoms(self, query=None):
+    def get_atoms(
+        self,
+        query: Union[dict, str, None] = None
+    ) -> Generator[Atoms, None, None]:
+        """
+        Get data as Atoms object from documents in the database.
+
+        Parameters
+        ----------
+        query: Union[dict, str, None]
+            Query to filter documents to get data from. Default is `None`.
+
+        Returns
+        -------
+        Generator for AtomsModel object of data.
+        """
         query = self.parser(query)
         query = {
             "query": query,
@@ -238,7 +499,22 @@ class OpenSearchDatabase(AbstractABCD):
         ):
             yield AtomsModel(None, None, hit["_source"]).to_ase()
 
-    def count(self, query=None):
+    def count(
+        self,
+        query: Union[dict, str, None] = None
+    ) -> int:
+        """
+        Counts number of documents in the database.
+
+        Parameters
+        ----------
+        query: Union[dict, str, None]
+            Query to filter documents to be counted. Default is `None`.
+
+        Returns
+        -------
+        Count of number of documents.
+        """
         logger.info("query; {}".format(query))
         query = self.parser(query)
         body = {
@@ -247,8 +523,21 @@ class OpenSearchDatabase(AbstractABCD):
 
         return self.client.count(index=self.index_name, body=body)["count"]
 
-    # Slow - use count_property where possible!
-    def property(self, name, query=None):
+    def property(self, name, query: Union[dict, str, None] = None) -> list:
+        """
+        Gets all values of a specified property for matching documents in the
+        database. This method is very slow, so it is preferable to use
+        alternative methods where possible, such as count_property.
+
+        Parameters
+        ----------
+        query: Union[dict, str, None]
+            Query to filter documents to get properties from. Default is `None`.
+
+        Returns
+        -------
+        List of values for the specified property for all matching documents.
+        """
         query = self.parser(query)
         query = {
             "query": query,
@@ -262,7 +551,22 @@ class OpenSearchDatabase(AbstractABCD):
             _source=format(name),
         )]
 
-    def count_property(self, name, query=None):
+    def count_property(self, name, query: Union[dict, str, None] = None) -> dict:
+        """
+        Counts values of a specified property for matching documents in the
+        database. This method much faster than performing a Count on the list
+        returned by self.property, so this method should be used preferentially.
+
+        Parameters
+        ----------
+        query: Union[dict, str, None]
+            Query to filter documents to count properties from. Default is `None`.
+
+        Returns
+        -------
+        Dictionary of values and counts for the specified property for all
+        matching documents.
+        """
         query = self.parser(query)
 
         body = {
@@ -288,12 +592,29 @@ class OpenSearchDatabase(AbstractABCD):
 
         return prop
 
-    def properties(self, query=None):
+    def properties(self, query: Union[dict, str, None] = None) -> dict:
+        """
+        Gets lists of all properties from matching documents, separated into
+        info, derived, and array properties.
+
+        Parameters
+        ----------
+        query: Union[dict, str, None]
+            Query to filter documents to get properties from. Default is `None`.
+
+        Returns
+        -------
+        Dictionary of properties, with keys corresponding to info, derived,
+        and arrays of properties, and values corresponding to a list of
+        the properties of that type.
+        """
         query = self.parser(query)
 
         properties = {}
 
-        for prop in self.client.indices.get_mapping(self.index_name)[self.index_name]["mappings"]["properties"].keys():
+        for prop in self.client.indices.get_mapping(
+            index=self.index_name
+        )[self.index_name]["mappings"]["properties"].keys():
 
             body = {
                 "size" : 0,
@@ -340,7 +661,22 @@ class OpenSearchDatabase(AbstractABCD):
 
         return properties
 
-    def get_type_of_property(self, prop, category):
+    def get_type_of_property(self, prop: str, category: str) -> str:
+        """
+        Gets type of a property, given its category.
+
+        Parameters
+        ----------
+        prop: str
+            Name of the property.
+        catagory: str
+            Name of property's category. Current options are `info`, `derived`,
+            and `arrays`.
+
+        Returns
+        -------
+        Type of the property.
+        """
         # TODO: Probably it would be nicer to store the type info in the database from the beginning.
         atoms = self.client.search(
             index=self.index_name,
@@ -373,13 +709,27 @@ class OpenSearchDatabase(AbstractABCD):
         else:
             return "scalar({})".format(map_types[type(data)])
 
-    def count_properties(self, query=None):
-        query = self.parser(query)
+    def count_properties(self, query: Union[dict, str, None] = None) -> dict:
+        """
+        Counts all properties from matching documents.
 
+        Parameters
+        ----------
+        query: Union[dict, str, None]
+            Query to filter documents to count properties from. Default is `None`.
+
+        Returns
+        -------
+        Dictionary of properties, with keys property names, and values
+        corresponding to their counts, categories and data types.
+        """
+        query = self.parser(query)
         properties = {}
 
         try:
-            keys = self.client.indices.get_mapping(self.index_name)[self.index_name]["mappings"]["properties"].keys()
+            keys = self.client.indices.get_mapping(
+                index=self.index_name
+            )[self.index_name]["mappings"]["properties"].keys()
         except KeyError:
             return properties
 
@@ -430,7 +780,17 @@ class OpenSearchDatabase(AbstractABCD):
 
         return properties
 
-    def add_property(self, data, query=None):
+    def add_property(self, data: dict, query: Union[dict, str, None] = None):
+        """
+        Adds properties to matching documents.
+
+        Parameters
+        ----------
+        data: dict
+            Property key-value pairs to be added to matching documents.
+        query: Union[dict, str, None]
+            Query to filter documents to add properties to. Default is `None`.
+        """
         logger.info('add: data={}, query={}'.format(data, query))
         query = self.parser(query)
 
@@ -454,7 +814,24 @@ class OpenSearchDatabase(AbstractABCD):
             body=body,
         )
 
-    def rename_property(self, name, new_name, query=None):
+    def rename_property(
+        self,
+        name: str,
+        new_name: str,
+        query: Union[dict, str, None] = None
+    ):
+        """
+        Renames property for all matching documents.
+
+        Parameters
+        ----------
+        name: str
+            Current name of property to be renamed.
+        new_name: str
+            New name of property to be renamed.
+        query: Union[dict, str, None]
+            Query to filter documents to rename property. Default is `None`.
+        """
         logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))
         query = self.parser(query)
 
@@ -482,7 +859,17 @@ class OpenSearchDatabase(AbstractABCD):
             body=body
         )
 
-    def delete_property(self, name, query=None):
+    def delete_property(self, name: str, query: Union[dict, str, None] = None):
+        """
+        Deletes property from all matching documents.
+
+        Parameters
+        ----------
+        name: str
+            Name of property to be deleted from documents.
+        query: Union[dict, str, None]
+            Query to filter documents to have property deleted. Default is `None`.
+        """
         logger.info('delete: query={}, porperty={}'.format(name, query))
         query = self.parser(query)
 
@@ -508,13 +895,41 @@ class OpenSearchDatabase(AbstractABCD):
             body=body
         )
 
-    def hist(self, name, query=None, **kwargs):
+    def hist(
+        self,
+        name: str,
+        query: Union[dict, str, None] = None,
+        **kwargs
+    ) -> Union[dict, None]:
+        """
+        Calculate histogram statistics for a property from all matching documents.
+
+        Parameters
+        ----------
+        name: str
+            Name of property.
+        query: Union[dict, str, None]
+            Query to filter documents. Default is `None`.
+
+        Returns
+        -------
+        Dictionary containing histogram statistics, including the number of
+        bins, edges, counts, min, max, and standard deviation.
+        """
         query = self.parser(query)
 
         data = self.property(name, query)
         return histogram(name, data, **kwargs)
 
     def __repr__(self):
+        """
+        OpenSearch class representation.
+
+        Returns
+        -------
+        String for OpenSearch class representation, containing the connected
+        database host, port, and index name.
+        """
         host = self.client.transport.hosts[0]["host"]
         port = self.client.transport.hosts[0]["port"]
 
@@ -523,12 +938,19 @@ class OpenSearchDatabase(AbstractABCD):
                "index={}) ".format(self.index_name)
 
     def _repr_html_(self):
-        """Jupyter notebook representation"""
+        """
+        Jupyter notebook representation of OpenSearch class.
+
+        Returns
+        -------
+        String for HTML representation.
+        """
         return "<b>ABCD OpenSearch database</b>"
 
     def print_info(self):
-        """shows basic information about the connected database"""
-
+        """
+        Show basic information about the connected OpenSearch database.
+        """
         out = linesep.join(["{:=^50}".format(" ABCD OpenSearch "),
                             "{:>10}: {}".format("type", "opensearch"),
                             linesep.join("{:>10}: {}".format(k, v) for k, v in self.info().items())])

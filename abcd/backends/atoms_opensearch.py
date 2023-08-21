@@ -313,8 +313,11 @@ class OpenSearchDatabase(AbstractABCD):
         -------
         Dictionary of database information.
         """
-        host = self.client.transport.hosts[0]["host"]
-        port = self.client.transport.hosts[0]["port"]
+        if self.client.transport.hosts is not None:
+            host = self.client.transport.hosts[0]["host"]
+            port = self.client.transport.hosts[0]["port"]
+        else:
+            host, port = None, None
 
         self.client.indices.refresh(index=self.index_name)
         return {
@@ -376,7 +379,7 @@ class OpenSearchDatabase(AbstractABCD):
     def push(
         self,
         atoms: Union[Atoms, Iterable],
-        extra_info: Union[dict, None] = None,
+        extra_info: Union[dict, str, None] = None,
         store_calc: bool = True
     ):
         """
@@ -385,7 +388,7 @@ class OpenSearchDatabase(AbstractABCD):
         Parameters
         ----------
         atoms: Union[Atoms, Iterable]
-        extra_info: Union[dict, None], optional
+        extra_info: Union[dict, str, None], optional
             Extra information to store in the document with the atoms data.
             Default is `None`.
         store_calc: bool, optional
@@ -393,18 +396,28 @@ class OpenSearchDatabase(AbstractABCD):
             Default is `True`.
         """
         if extra_info and isinstance(extra_info, str):
-            extra_info = extras.parser.parse(extra_info)
+            extra_info = extras.parser.parse(extra_info) # type: ignore
 
-        # Could combine into single data.save, but keep separate for option of bulk insertion?
         if isinstance(atoms, Atoms):
-            data = AtomsModel.from_atoms(self.client, self.index_name, atoms, extra_info=extra_info, store_calc=store_calc)
+            data = AtomsModel.from_atoms(
+                self.client,
+                self.index_name,
+                atoms,
+                extra_info=extra_info, # type: ignore
+                store_calc=store_calc
+            )
             data.save()
 
         elif isinstance(atoms, Generator) or isinstance(atoms, list):
-
             actions = []
             for item in atoms:
-                data = AtomsModel.from_atoms(self.client, self.index_name, item, extra_info=extra_info, store_calc=store_calc)
+                data = AtomsModel.from_atoms(
+                    self.client,
+                    self.index_name,
+                    item,
+                    extra_info=extra_info, # type: ignore
+                    store_calc=store_calc
+                )
                 actions.append(data.data)
                 actions[-1]["derived"] = data.derived
             self.save_bulk(actions)
@@ -436,7 +449,7 @@ class OpenSearchDatabase(AbstractABCD):
         extra_info = {}
         if extra_infos:
             for info in extra_infos:
-                extra_info.update(extras.parser.parse(info))
+                extra_info.update(extras.parser.parse(info)) # type: ignore
 
         extra_info["filename"] = str(file)
 
@@ -930,8 +943,11 @@ class OpenSearchDatabase(AbstractABCD):
         String for OpenSearch class representation, containing the connected
         database host, port, and index name.
         """
-        host = self.client.transport.hosts[0]["host"]
-        port = self.client.transport.hosts[0]["port"]
+        if self.client.transport.hosts is not None:
+            host = self.client.transport.hosts[0]["host"]
+            port = self.client.transport.hosts[0]["port"]
+        else:
+            host, port = None, None
 
         return "{}(".format(self.__class__.__name__) + \
                "url={}:{}, ".format(host, port) + \

@@ -23,6 +23,8 @@ class Properties():
         Dataframe containing loaded property data from csv file.
     units: Union[dict, None], optional
         Units.
+    struct_files: list[str]
+        List containing a filename for each structure in the dataframe.
     """
     def __init__(
         self,
@@ -30,7 +32,8 @@ class Properties():
         store_struct_file: bool = False,
         struct_file_template: Union[str, None] = None,
         struct_name_label: Union[str, None] = None,
-        units: Union[dict, None] = None
+        units: Union[dict, None] = None,
+        infer_units: bool = False
     ):
         """
         Initialises class.
@@ -53,8 +56,27 @@ class Properties():
         units: Union[dict, None], optional
             Units for fields in csv file. If unspecified, _separate_units()
             is used to identify units in field names. Default is `None`.
+        infer_units: bool, optional
+            Whether to attempt to infer units from field names in the
+            dataframe. Unused if units is not `None`. Default is `False`.
         """
         self.csv_file = csv_file
+        self.df = pd.read_csv(self.csv_file)
+        self.df.replace({np.nan: None}, inplace=True)
+
+        if units is not None:
+            for key in units.keys():
+                if key not in self.df.columns.values:
+                    raise ValueError((
+                        f"Invalid field name: {key}. Keys in `units` must "
+                        f"correspond to field names in the loaded data."
+                    ))
+            self.units = units
+        elif infer_units:
+            self._separate_units()
+        else:
+            self.units = None
+
         self.store_struct_file = store_struct_file
         if self.store_struct_file:
             if struct_file_template is not None:
@@ -70,20 +92,7 @@ class Properties():
                 raise ValueError(
                     "`struct_name_label` must be specified if store_struct_file is True."
                 )
-
-        self.df = pd.read_csv(self.csv_file)
-        self.df.replace({np.nan: None}, inplace=True)
-
-        if units is not None:
-            for key in units.keys():
-                if key not in self.df.columns.values:
-                    raise ValueError((
-                        f"Invalid field name: {key}. Keys in `units` must "
-                        f"correspond to field names in the loaded data."
-                    ))
-            self.units = units
-        else:
-            self._separate_units()
+            self.set_struct_files()
 
     def _separate_units(self):
         """
@@ -101,9 +110,26 @@ class Properties():
             else:
                 column_name = column
 
-            columns.append(column)
+            columns.append(column_name)
 
         self.df.columns = columns
+
+    def set_struct_files(self):
+        """
+        Sets a list containing a filename for each structure in the dataframe.
+        """
+        self.struct_files = []
+
+        for i in range(len(self.df)):
+            try:
+                struct_name = self.df.iloc[i][self.struct_name_label]
+            except KeyError as e:
+                raise ValueError((
+                    f"{self.struct_name_label} is not a valid column in "
+                    f"the data loaded."
+                ))
+            struct_file = self.get_struct_file(struct_name)
+            self.struct_files.append(struct_file)
 
     def get_struct_file(self, struct_name: str) -> str:
         """
@@ -138,22 +164,10 @@ class Properties():
         List of property dictionaries for each structure in the dataframe.
         """
         properties_list = []
-        self.struct_files = []
         for i in range(len(self.df)):
             properties = self.df.iloc[i].to_dict()
-            properties["units"] = self.units
-
-            if self.store_struct_file:
-                try:
-                    struct_name = self.df.iloc[i][self.struct_name_label]
-                except KeyError as e:
-                    raise ValueError((
-                        f"{self.struct_name_label} is not a valid column in "
-                        f"the data loaded."
-                    ))
-                struct_file = self.get_struct_file(struct_name)
-                properties["struct_file"] = struct_file
-
+            if self.units is not None:
+                properties["units"] = self.units
             properties_list.append(
                 {key: value for key, value in properties.items() if value is not None}
             )

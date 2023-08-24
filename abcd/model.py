@@ -4,6 +4,7 @@ import logging
 from hashlib import md5
 from collections import Counter, UserDict
 from ase.calculators.singlepoint import SinglePointCalculator
+from ase.spacegroup.spacegroup import Spacegroup
 
 import numpy as np
 from ase import Atoms
@@ -190,6 +191,8 @@ class AbstractModel(UserDict):
         for key, value in atoms.info.items():
             if isinstance(value, np.ndarray):
                 dct[key] = value.tolist()
+            elif isinstance(value, Spacegroup):
+                dct[key] = value.todict()
             else:
                 dct[key] = value
 

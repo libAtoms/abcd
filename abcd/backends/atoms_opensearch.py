@@ -670,7 +670,8 @@ class OpenSearchDatabase(AbstractABCD):
         -------
         Type of the property.
         """
-        # TODO: Probably it would be nicer to store the type info in the database from the beginning.
+        # TODO: Probably it would be nicer to store the type info in the database
+        # from the beginning.
         atoms = self.client.search(
             index=self.index_name,
             body={"size": 1, "query": {"exists": {"field": prop}}},
@@ -810,11 +811,10 @@ class OpenSearchDatabase(AbstractABCD):
         script_txt += (
             f"ctx._source.{new_name} = ctx._source.{name};"
             " ctx._source.remove('params.name');"
+            " for (int i=0; i<ctx._source.derived.info_keys.length; i++) {"
+            " if (ctx._source.derived.info_keys[i] == params.name) { "
+            " ctx._source.derived.info_keys[i] = params.new_name;}}}"
         )
-
-        script_txt += f"for (int i=0; i<ctx._source.derived.info_keys.length; i++) {{"
-        script_txt += f"if (ctx._source.derived.info_keys[i] == params.name) {{ "
-        script_txt += f"ctx._source.derived.info_keys[i] = params.new_name;}}}}}}"
 
         body = {
             "script": {
@@ -842,10 +842,10 @@ class OpenSearchDatabase(AbstractABCD):
         query = self.parser(query)
 
         script_txt = f"if (ctx._source.containsKey('{name}')) {{ "
-        script_txt += f"ctx._source.remove('params.name');"
-        script_txt += f"for (int i=0; i<ctx._source.derived.info_keys.length; i++) {{"
-        script_txt += f"if (ctx._source.derived.info_keys[i] == params.name) {{ "
-        script_txt += f"ctx._source.derived.info_keys.remove(i);}}}}}}"
+        script_txt += "ctx._source.remove('params.name');"
+        script_txt += "for (int i=0; i<ctx._source.derived.info_keys.length; i++) {"
+        script_txt += "if (ctx._source.derived.info_keys[i] == params.name) { "
+        script_txt += "ctx._source.derived.info_keys.remove(i);}}}"
 
         body = {
             "script": {

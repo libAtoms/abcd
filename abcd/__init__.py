@@ -74,11 +74,3 @@ if __name__ == "__main__":
     url = "mongodb://mongoadmin:secret@localhost:27017/abcd_new"
     abcd = ABCD.from_url(url)
     abcd.print_info()
-
-    # from ase.io import iread
-    # for atoms in iread('../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
-    #     # Hack to fix the representation of forces
-    #     atoms.calc.results['forces'] = atoms.arrays['force']
-    #
-    #     abcd.push(atoms)
-    #     print(atoms)

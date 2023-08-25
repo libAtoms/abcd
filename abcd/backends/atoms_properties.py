@@ -126,7 +126,7 @@ class Properties:
         for i in range(len(self.df)):
             try:
                 struct_name = self.df.iloc[i][self.struct_name_label]
-            except KeyError as e:
+            except KeyError:
                 raise ValueError(
                     f"{self.struct_name_label} is not a valid column in "
                     "the data loaded."

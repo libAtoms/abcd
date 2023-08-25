@@ -113,8 +113,8 @@ class OpenSearch(unittest.TestCase):
             None,
             self.abcd.client.search(index="test_index")["hits"]["hits"][0]["_source"],
         ).to_ase()
-        assert atoms_1 == result
-        assert atoms_2 != result
+        self.assertEqual(atoms_1, result)
+        self.assertNotEqual(atoms_2, result)
 
     def test_bulk(self):
         from io import StringIO
@@ -149,7 +149,7 @@ class OpenSearch(unittest.TestCase):
         atoms_list.append(atoms_1)
         atoms_list.append(atoms_2)
         self.abcd.push(atoms_list)
-        assert self.abcd.count() == 2
+        self.assertEqual(self.abcd.count(), 2)
 
         result_1 = AtomsModel(
             None,
@@ -161,8 +161,8 @@ class OpenSearch(unittest.TestCase):
             None,
             self.abcd.client.search(index="test_index")["hits"]["hits"][1]["_source"],
         ).to_ase()
-        assert atoms_1 == result_1
-        assert atoms_2 == result_2
+        self.assertEqual(atoms_1, result_1)
+        self.assertEqual(atoms_2, result_2)
 
     def test_count(self):
         from io import StringIO
@@ -184,7 +184,7 @@ class OpenSearch(unittest.TestCase):
         atoms.set_cell([1, 1, 1])
         self.abcd.push(atoms)
         self.abcd.push(atoms)
-        assert self.abcd.count() == 2
+        self.assertEqual(self.abcd.count(), 2)
 
 
 if __name__ == "__main__":

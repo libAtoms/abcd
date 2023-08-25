@@ -179,12 +179,6 @@ class TestParsingQueries:
         """Operators"""
         assert parser.parse(string)
 
-
-    def test_colon_key_value_pairs(self, parser, string, expected):
-        """Key value pairs separated by colons"""
-        assert expected == parser.parse(string)
-
-
     @pytest.mark.parametrize(
         "string, expected",
         [

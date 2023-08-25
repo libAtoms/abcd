@@ -46,16 +46,3 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 88
-extend-exclude = '''
-/(
-    abcd/backends/atoms_pymongo.py
-    | abcd/frontends
-    | abcd/model.py
-    | abcd/parsers/queries_new.py
-    | abcd/parsers/queries.py
-    | abcd/parsers/extras.py
-    | abcd/server
-    | tests/__init__.py
-
-)/
-'''

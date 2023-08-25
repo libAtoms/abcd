@@ -4,7 +4,8 @@ import numpy as np
 from typing import Union
 from pathlib import Path
 
-class Properties():
+
+class Properties:
     """
     Wrapper to identify and manipulate properties to be passed
     as extra_info to the database.
@@ -26,6 +27,7 @@ class Properties():
     struct_files: list[str]
         List containing a filename for each structure in the dataframe.
     """
+
     def __init__(
         self,
         csv_file: Union[str, Path],
@@ -33,7 +35,7 @@ class Properties():
         struct_file_template: Union[str, None] = None,
         struct_name_label: Union[str, None] = None,
         units: Union[dict, None] = None,
-        infer_units: bool = False
+        infer_units: bool = False,
     ):
         """
         Initialises class.
@@ -67,10 +69,10 @@ class Properties():
         if units is not None:
             for key in units.keys():
                 if key not in self.df.columns.values:
-                    raise ValueError((
+                    raise ValueError(
                         f"Invalid field name: {key}. Keys in `units` must "
-                        f"correspond to field names in the loaded data."
-                    ))
+                        "correspond to field names in the loaded data."
+                    )
             self.units = units
         elif infer_units:
             self._separate_units()
@@ -82,15 +84,16 @@ class Properties():
             if struct_file_template is not None:
                 self.struct_file_template = struct_file_template
             else:
-                raise ValueError((
+                raise ValueError(
                     "`struct_file_template` must be specified if "
                     "store_struct_file is True."
-                ))
+                )
             if struct_name_label is not None:
                 self.struct_name_label = struct_name_label
             else:
                 raise ValueError(
-                    "`struct_name_label` must be specified if store_struct_file is True."
+                    "`struct_name_label` must be specified if store_struct_file is"
+                    " True."
                 )
             self.set_struct_files()
 
@@ -124,34 +127,34 @@ class Properties():
             try:
                 struct_name = self.df.iloc[i][self.struct_name_label]
             except KeyError as e:
-                raise ValueError((
+                raise ValueError(
                     f"{self.struct_name_label} is not a valid column in "
-                    f"the data loaded."
-                ))
+                    "the data loaded."
+                )
             struct_file = self.get_struct_file(struct_name)
             self.struct_files.append(struct_file)
 
     def get_struct_file(self, struct_name: str) -> str:
         """
-            Evaluate struct_file_template to determine structure filename
-            for current structure.
+        Evaluate struct_file_template to determine structure filename
+        for current structure.
 
-            Parameters
-            ----------
-            struct_name: str
-                Name of current structure.
+        Parameters
+        ----------
+        struct_name: str
+            Name of current structure.
 
-            Returns
-            -------
-            Filename for the current structure.
+        Returns
+        -------
+        Filename for the current structure.
         """
         if struct_name is None:
             raise ValueError("`struct_name` must be specified")
         if "{struct_name}" not in self.struct_file_template:
-            raise ValueError((
-                f"'struct_name' must be a variable in the template file: "
+            raise ValueError(
+                "'struct_name' must be a variable in the template file: "
                 f"{self.struct_file_template}"
-            ))
+            )
         else:
             return eval(f"f'{self.struct_file_template}'")
 

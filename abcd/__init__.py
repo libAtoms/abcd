@@ -50,10 +50,11 @@ class ABCD(object):
                 "password": r.password,
             }
 
-            db = r.path.split('/')[1] if r.path else None
+            db = r.path.split("/")[1] if r.path else None
             db = db if db else "abcd"
 
             from abcd.backends.atoms_opensearch import OpenSearchDatabase
+
             return OpenSearchDatabase(db_name=db, **conn_settings, **kwargs)
 
         elif r.scheme == "http" or r.scheme == "https":

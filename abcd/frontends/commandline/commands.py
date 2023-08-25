@@ -278,8 +278,8 @@ class Formater(object):
     def describe(self, data):
         if data["type"] == "hist_float":
             print(
-                "{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} var:{"
-                ":11.4e}".format(
+                "{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e}"
+                " var:{:11.4e}".format(
                     data["name"],
                     sum(data["counts"]),
                     data["min"],

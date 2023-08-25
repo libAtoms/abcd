@@ -34,7 +34,7 @@ map_types = {
     int: "int",
     str: "str",
     datetime: "date",
-    dict: "dict"
+    dict: "dict",
 }
 
 
@@ -47,12 +47,14 @@ class OpenSearchQuery(AbstractQuerySet):
     query_builder: ElasticsearchQueryBuilder
         Query builder to convert a Tree in an OpenSearch query.
     """
-    def __init__(self,
-                 client: Union[OpenSearch, None] = None,
-                 index_name: Union[str, None] = None,
-                 analyse_schema: bool = False
+
+    def __init__(
+        self,
+        client: Union[OpenSearch, None] = None,
+        index_name: Union[str, None] = None,
+        analyse_schema: bool = False,
     ):
-        """"
+        """ "
         Initialises class.
 
         Parameters
@@ -70,14 +72,13 @@ class OpenSearchQuery(AbstractQuerySet):
         if analyse_schema and client is not None and index_name is not None:
             schema = client.indices.get_mapping()[index_name]
             schema_analizer = SchemaAnalyzer(schema)
-            self.query_builder = ElasticsearchQueryBuilder(**schema_analizer.query_builder_options())
+            self.query_builder = ElasticsearchQueryBuilder(
+                **schema_analizer.query_builder_options()
+            )
         else:
             self.query_builder = ElasticsearchQueryBuilder()
 
-    def __call__(
-            self,
-            query: Union[dict, str, None]
-    ) -> Union[dict, None]:
+    def __call__(self, query: Union[dict, str, None]) -> Union[dict, None]:
         """
         Parses and builds queries from strings using ElasticsearchQueryBuilder.
 
@@ -93,10 +94,10 @@ class OpenSearchQuery(AbstractQuerySet):
         Union[dict, None]
             The parsed query for OpenSearch.
         """
-        logger.info('parsed query: {}'.format(query))
+        logger.info("parsed query: {}".format(query))
 
         if not query:
-            query=self.get_default_query()
+            query = self.get_default_query()
 
         if isinstance(query, dict):
             return query
@@ -115,9 +116,7 @@ class OpenSearchQuery(AbstractQuerySet):
         -------
         The default query for OpenSearch.
         """
-        return {
-            "match_all": {}
-        }
+        return {"match_all": {}}
 
 
 class AtomsModel(AbstractModel):
@@ -131,11 +130,12 @@ class AtomsModel(AbstractModel):
     _index_name: Union[str, None]
         OpenSearch index name.
     """
+
     def __init__(
-            self,
-            client: Union[OpenSearch, None] = None,
-            index_name: Union[str, None] = None,
-            dict: Union[dict, None] = None
+        self,
+        client: Union[OpenSearch, None] = None,
+        index_name: Union[str, None] = None,
+        dict: Union[dict, None] = None,
     ):
         """
         Initialises class.
@@ -161,7 +161,7 @@ class AtomsModel(AbstractModel):
         index_name: str,
         atoms: Atoms,
         extra_info: Union[dict, None] = None,
-        store_calc: bool = True
+        store_calc: bool = True,
     ) -> AtomsModel:
         """
         Reads and prepares atoms data and extra information for OpenSearch.
@@ -213,7 +213,7 @@ class AtomsModel(AbstractModel):
             if not self._id:
                 self._client.index(index=self._index_name, body=body)
             else:
-                body.pop('_id', None)
+                body.pop("_id", None)
                 body = {"doc": body}
                 self._client.update(index=self._index_name, id=self._id, body=body)
 
@@ -252,7 +252,7 @@ class OpenSearchDatabase(AbstractABCD):
         username: str = "admin",
         password: str = "admin",
         analyse_schema: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialises class.
@@ -326,13 +326,10 @@ class OpenSearchDatabase(AbstractABCD):
             "db": self.db,
             "index": self.index_name,
             "number of confs": self.client.count(index=self.index_name)["count"],
-            "type": "opensearch"
+            "type": "opensearch",
         }
 
-    def delete(
-        self,
-        query: Union[dict, str, None] = None
-    ):
+    def delete(self, query: Union[dict, str, None] = None):
         """
         Deletes documents from the database.
 
@@ -342,9 +339,7 @@ class OpenSearchDatabase(AbstractABCD):
             Query to filter documents to be deleted. Default is `None`.
         """
         query = self.parser(query)
-        body = {
-            "query": query
-        }
+        body = {"query": query}
 
         self.client.delete_by_query(
             index=self.index_name,
@@ -380,7 +375,7 @@ class OpenSearchDatabase(AbstractABCD):
         self,
         atoms: Union[Atoms, Iterable],
         extra_info: Union[dict, str, None] = None,
-        store_calc: bool = True
+        store_calc: bool = True,
     ):
         """
         Save data from atoms object(s) to database.
@@ -396,15 +391,15 @@ class OpenSearchDatabase(AbstractABCD):
             Default is `True`.
         """
         if extra_info and isinstance(extra_info, str):
-            extra_info = extras.parser.parse(extra_info) # type: ignore
+            extra_info = extras.parser.parse(extra_info)  # type: ignore
 
         if isinstance(atoms, Atoms):
             data = AtomsModel.from_atoms(
                 self.client,
                 self.index_name,
                 atoms,
-                extra_info=extra_info, # type: ignore
-                store_calc=store_calc
+                extra_info=extra_info,  # type: ignore
+                store_calc=store_calc,
             )
             data.save()
 
@@ -415,8 +410,8 @@ class OpenSearchDatabase(AbstractABCD):
                     self.client,
                     self.index_name,
                     item,
-                    extra_info=extra_info, # type: ignore
-                    store_calc=store_calc
+                    extra_info=extra_info,  # type: ignore
+                    store_calc=store_calc,
                 )
                 actions.append(data.data)
                 actions[-1]["derived"] = data.derived
@@ -426,7 +421,7 @@ class OpenSearchDatabase(AbstractABCD):
         self,
         file: Path,
         extra_infos: Union[Iterable, dict, None] = None,
-        store_calc: bool = True
+        store_calc: bool = True,
     ):
         """
         Upload data from a file to the database.
@@ -449,7 +444,7 @@ class OpenSearchDatabase(AbstractABCD):
         extra_info = {}
         if extra_infos:
             for info in extra_infos:
-                extra_info.update(extras.parser.parse(info)) # type: ignore
+                extra_info.update(extras.parser.parse(info))  # type: ignore
 
         extra_info["filename"] = str(file)
 
@@ -457,8 +452,7 @@ class OpenSearchDatabase(AbstractABCD):
         self.push(data, extra_info, store_calc=store_calc)
 
     def get_items(
-        self,
-        query: Union[dict, str, None] = None
+        self, query: Union[dict, str, None] = None
     ) -> Generator[dict, None, None]:
         """
         Get data as a dictionary from documents in the database.
@@ -482,11 +476,10 @@ class OpenSearchDatabase(AbstractABCD):
             index=self.index_name,
             query=query,
         ):
-            yield {'_id': hit['_id'], **hit['_source']}
+            yield {"_id": hit["_id"], **hit["_source"]}
 
     def get_atoms(
-        self,
-        query: Union[dict, str, None] = None
+        self, query: Union[dict, str, None] = None
     ) -> Generator[Atoms, None, None]:
         """
         Get data as Atoms object from documents in the database.
@@ -512,10 +505,7 @@ class OpenSearchDatabase(AbstractABCD):
         ):
             yield AtomsModel(None, None, hit["_source"]).to_ase()
 
-    def count(
-        self,
-        query: Union[dict, str, None] = None
-    ) -> int:
+    def count(self, query: Union[dict, str, None] = None) -> int:
         """
         Counts number of documents in the database.
 
@@ -556,13 +546,16 @@ class OpenSearchDatabase(AbstractABCD):
             "query": query,
         }
 
-        return [hit["_source"][format(name)] for hit in helpers.scan(
-            self.client,
-            index=self.index_name,
-            query=query,
-            stored_fields=format(name),
-            _source=format(name),
-        )]
+        return [
+            hit["_source"][format(name)]
+            for hit in helpers.scan(
+                self.client,
+                index=self.index_name,
+                query=query,
+                stored_fields=format(name),
+                _source=format(name),
+            )
+        ]
 
     def count_property(self, name, query: Union[dict, str, None] = None) -> dict:
         """
@@ -583,24 +576,23 @@ class OpenSearchDatabase(AbstractABCD):
         query = self.parser(query)
 
         body = {
-            "size" : 0,
+            "size": 0,
             "query": query,
             "aggs": {
                 format(name): {
                     "terms": {
                         "field": format(name),
-                        "size": 10000, # Use composite for all results?
+                        "size": 10000,  # Use composite for all results?
                     },
                 },
-            }
+            },
         }
 
         prop = {}
 
-        for val in self.client.search(
-            index=self.index_name,
-            body=body,
-        )["aggregations"][format(name)]["buckets"]:
+        for val in self.client.search(index=self.index_name, body=body,)[
+            "aggregations"
+        ][format(name)]["buckets"]:
             prop[val["key"]] = val["doc_count"]
 
         return prop
@@ -625,36 +617,24 @@ class OpenSearchDatabase(AbstractABCD):
 
         properties = {}
 
-        for prop in self.client.indices.get_mapping(
-            index=self.index_name
-        )[self.index_name]["mappings"]["properties"].keys():
+        for prop in self.client.indices.get_mapping(index=self.index_name)[
+            self.index_name
+        ]["mappings"]["properties"].keys():
 
             body = {
-                "size" : 0,
+                "size": 0,
                 "query": query,
                 "aggs": {
                     "info_keys": {
-                        "filter": {
-                            "term": {
-                                "derived.info_keys.keyword": prop
-                            }
-                        },
+                        "filter": {"term": {"derived.info_keys.keyword": prop}},
                     },
                     "derived_keys": {
-                        "filter": {
-                            "term": {
-                                "derived.derived_keys.keyword": prop
-                            }
-                        },
+                        "filter": {"term": {"derived.derived_keys.keyword": prop}},
                     },
                     "arrays_keys": {
-                        "filter": {
-                            "term": {
-                                "derived.arrays_keys.keyword": prop
-                            }
-                        },
+                        "filter": {"term": {"derived.arrays_keys.keyword": prop}},
                     },
-                }
+                },
             }
 
             res = self.client.search(
@@ -693,21 +673,16 @@ class OpenSearchDatabase(AbstractABCD):
         # TODO: Probably it would be nicer to store the type info in the database from the beginning.
         atoms = self.client.search(
             index=self.index_name,
-            body = {
-                "size" : 1,
-                "query": {
-                   "exists" : {
-                        "field": prop
-                    }
-                }
-            }
+            body={"size": 1, "query": {"exists": {"field": prop}}},
         )
 
         data = atoms["hits"]["hits"][0]["_source"][prop]
 
         if category == "arrays":
             if type(data[0]) == list:
-                return "array({}, N x {})".format(map_types[type(data[0][0])], len(data[0]))
+                return "array({}, N x {})".format(
+                    map_types[type(data[0][0])], len(data[0])
+                )
             else:
                 return "vector({}, N)".format(map_types[type(data[0])])
 
@@ -740,40 +715,28 @@ class OpenSearchDatabase(AbstractABCD):
         properties = {}
 
         try:
-            keys = self.client.indices.get_mapping(
-                index=self.index_name
-            )[self.index_name]["mappings"]["properties"].keys()
+            keys = self.client.indices.get_mapping(index=self.index_name)[
+                self.index_name
+            ]["mappings"]["properties"].keys()
         except KeyError:
             return properties
 
         for key in keys:
 
             body = {
-                "size" : 0,
+                "size": 0,
                 "query": query,
                 "aggs": {
                     "info_keys": {
-                        "filter": {
-                            "term": {
-                                "derived.info_keys.keyword": key
-                            }
-                        },
+                        "filter": {"term": {"derived.info_keys.keyword": key}},
                     },
                     "derived_keys": {
-                        "filter": {
-                            "term": {
-                                "derived.derived_keys.keyword": key
-                            }
-                        },
+                        "filter": {"term": {"derived.derived_keys.keyword": key}},
                     },
                     "arrays_keys": {
-                        "filter": {
-                            "term": {
-                                "derived.arrays_keys.keyword": key
-                            }
-                        },
+                        "filter": {"term": {"derived.arrays_keys.keyword": key}},
                     },
-                }
+                },
             }
 
             res = self.client.search(
@@ -788,7 +751,7 @@ class OpenSearchDatabase(AbstractABCD):
                     properties[key] = {
                         "count": count,
                         "category": label.split("_")[0],
-                        "dtype": self.get_type_of_property(key, label.split("_")[0])
+                        "dtype": self.get_type_of_property(key, label.split("_")[0]),
                     }
 
         return properties
@@ -804,7 +767,7 @@ class OpenSearchDatabase(AbstractABCD):
         query: Union[dict, str, None]
             Query to filter documents to add properties to. Default is `None`.
         """
-        logger.info('add: data={}, query={}'.format(data, query))
+        logger.info("add: data={}, query={}".format(data, query))
         query = self.parser(query)
 
         script_txt = "ctx._source.derived.info_keys.addAll(params.keys);"
@@ -815,11 +778,9 @@ class OpenSearchDatabase(AbstractABCD):
             "script": {
                 "source": script_txt,
                 "lang": "painless",
-                "params" : {
-                    "keys" : list(data.keys())
-                },
+                "params": {"keys": list(data.keys())},
             },
-            "query": query
+            "query": query,
         }
 
         self.client.update_by_query(
@@ -828,10 +789,7 @@ class OpenSearchDatabase(AbstractABCD):
         )
 
     def rename_property(
-        self,
-        name: str,
-        new_name: str,
-        query: Union[dict, str, None] = None
+        self, name: str, new_name: str, query: Union[dict, str, None] = None
     ):
         """
         Renames property for all matching documents.
@@ -845,11 +803,14 @@ class OpenSearchDatabase(AbstractABCD):
         query: Union[dict, str, None]
             Query to filter documents to rename property. Default is `None`.
         """
-        logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))
+        logger.info("rename: query={}, old={}, new={}".format(query, name, new_name))
         query = self.parser(query)
 
         script_txt = f"if (!ctx._source.containsKey('{new_name}')) {{ "
-        script_txt += f"ctx._source.{new_name} = ctx._source.{name}; ctx._source.remove('params.name');"
+        script_txt += (
+            f"ctx._source.{new_name} = ctx._source.{name};"
+            " ctx._source.remove('params.name');"
+        )
 
         script_txt += f"for (int i=0; i<ctx._source.derived.info_keys.length; i++) {{"
         script_txt += f"if (ctx._source.derived.info_keys[i] == params.name) {{ "
@@ -859,18 +820,12 @@ class OpenSearchDatabase(AbstractABCD):
             "script": {
                 "source": script_txt,
                 "lang": "painless",
-                "params": {
-                    "name": name,
-                    "new_name": new_name
-                },
+                "params": {"name": name, "new_name": new_name},
             },
-            "query": query
+            "query": query,
         }
 
-        self.client.update_by_query(
-            index=self.index_name,
-            body=body
-        )
+        self.client.update_by_query(index=self.index_name, body=body)
 
     def delete_property(self, name: str, query: Union[dict, str, None] = None):
         """
@@ -883,7 +838,7 @@ class OpenSearchDatabase(AbstractABCD):
         query: Union[dict, str, None]
             Query to filter documents to have property deleted. Default is `None`.
         """
-        logger.info('delete: query={}, porperty={}'.format(name, query))
+        logger.info("delete: query={}, porperty={}".format(name, query))
         query = self.parser(query)
 
         script_txt = f"if (ctx._source.containsKey('{name}')) {{ "
@@ -900,19 +855,13 @@ class OpenSearchDatabase(AbstractABCD):
                     "name": name,
                 },
             },
-            "query": query
+            "query": query,
         }
 
-        self.client.update_by_query(
-            index=self.index_name,
-            body=body
-        )
+        self.client.update_by_query(index=self.index_name, body=body)
 
     def hist(
-        self,
-        name: str,
-        query: Union[dict, str, None] = None,
-        **kwargs
+        self, name: str, query: Union[dict, str, None] = None, **kwargs
     ) -> Union[dict, None]:
         """
         Calculate histogram statistics for a property from all matching documents.
@@ -949,9 +898,11 @@ class OpenSearchDatabase(AbstractABCD):
         else:
             host, port = None, None
 
-        return "{}(".format(self.__class__.__name__) + \
-               "url={}:{}, ".format(host, port) + \
-               "index={}) ".format(self.index_name)
+        return (
+            "{}(".format(self.__class__.__name__)
+            + "url={}:{}, ".format(host, port)
+            + "index={}) ".format(self.index_name)
+        )
 
     def _repr_html_(self):
         """
@@ -967,9 +918,13 @@ class OpenSearchDatabase(AbstractABCD):
         """
         Show basic information about the connected OpenSearch database.
         """
-        out = linesep.join(["{:=^50}".format(" ABCD OpenSearch "),
-                            "{:>10}: {}".format("type", "opensearch"),
-                            linesep.join("{:>10}: {}".format(k, v) for k, v in self.info().items())])
+        out = linesep.join(
+            [
+                "{:=^50}".format(" ABCD OpenSearch "),
+                "{:>10}: {}".format("type", "opensearch"),
+                linesep.join("{:>10}: {}".format(k, v) for k, v in self.info().items()),
+            ]
+        )
 
         print(out)
 
@@ -993,26 +948,36 @@ def histogram(name, data, **kwargs):
             return None
 
         if ptype == float:
-            bins = kwargs.get('bins', 10)
+            bins = kwargs.get("bins", 10)
             return _hist_float(name, data, bins)
 
         elif ptype == int:
-            bins = kwargs.get('bins', 10)
+            bins = kwargs.get("bins", 10)
             return _hist_int(name, data, bins)
 
         elif ptype == str:
             return _hist_str(name, data, **kwargs)
 
         elif ptype == datetime:
-            bins = kwargs.get('bins', 10)
+            bins = kwargs.get("bins", 10)
             return _hist_date(name, data, bins)
 
         else:
-            print('{}: Histogram for list of {} types are not supported!'.format(name, type(data[0])))
-            logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data[0])))
+            print(
+                "{}: Histogram for list of {} types are not supported!".format(
+                    name, type(data[0])
+                )
+            )
+            logger.info(
+                "{}: Histogram for list of {} types are not supported!".format(
+                    name, type(data[0])
+                )
+            )
 
     else:
-        logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))
+        logger.info(
+            "{}: Histogram for {} types are not supported!".format(name, type(data))
+        )
         return None
 
 
@@ -1021,16 +986,16 @@ def _hist_float(name, data, bins=10):
     hist, bin_edges = np.histogram(data, bins=bins)
 
     return {
-        'type': 'hist_float',
-        'name': name,
-        'bins': bins,
-        'edges': bin_edges,
-        'counts': hist,
-        'min': data.min(),
-        'max': data.max(),
-        'median': data.mean(),
-        'std': data.std(),
-        'var': data.var()
+        "type": "hist_float",
+        "name": name,
+        "bins": bins,
+        "edges": bin_edges,
+        "counts": hist,
+        "min": data.min(),
+        "max": data.max(),
+        "median": data.mean(),
+        "std": data.std(),
+        "var": data.var(),
     }
 
 
@@ -1041,16 +1006,16 @@ def _hist_date(name, data, bins=10):
     fromtimestamp = datetime.fromtimestamp
 
     return {
-        'type': 'hist_date',
-        'name': name,
-        'bins': bins,
-        'edges': [fromtimestamp(d) for d in bin_edges],
-        'counts': hist,
-        'min': fromtimestamp(hist_data.min()),
-        'max': fromtimestamp(hist_data.max()),
-        'median': fromtimestamp(hist_data.mean()),
-        'std': fromtimestamp(hist_data.std()),
-        'var': fromtimestamp(hist_data.var())
+        "type": "hist_date",
+        "name": name,
+        "bins": bins,
+        "edges": [fromtimestamp(d) for d in bin_edges],
+        "counts": hist,
+        "min": fromtimestamp(hist_data.min()),
+        "max": fromtimestamp(hist_data.max()),
+        "median": fromtimestamp(hist_data.mean()),
+        "std": fromtimestamp(hist_data.std()),
+        "var": fromtimestamp(hist_data.var()),
     }
 
 
@@ -1064,16 +1029,16 @@ def _hist_int(name, data, bins=10):
     hist, bin_edges = np.histogram(data, bins=bins)
 
     return {
-        'type': 'hist_int',
-        'name': name,
-        'bins': bins,
-        'edges': bin_edges,
-        'counts': hist,
-        'min': data.min(),
-        'max': data.max(),
-        'median': data.mean(),
-        'std': data.std(),
-        'var': data.var()
+        "type": "hist_int",
+        "name": name,
+        "bins": bins,
+        "edges": bin_edges,
+        "counts": hist,
+        "min": data.min(),
+        "max": data.max(),
+        "median": data.mean(),
+        "std": data.std(),
+        "var": data.var(),
     }
 
 
@@ -1082,7 +1047,9 @@ def _hist_str(name, data, bins=10, truncate=20):
 
     if truncate:
         # data = (item[:truncate] for item in data)
-        data = (item[:truncate] + '...' if len(item) > truncate else item for item in data)
+        data = (
+            item[:truncate] + "..." if len(item) > truncate else item for item in data
+        )
 
     data = Counter(data)
 
@@ -1092,12 +1059,12 @@ def _hist_str(name, data, bins=10, truncate=20):
         labels, counts = zip(*data.items())
 
     return {
-        'type': 'hist_str',
-        'name': name,
-        'total': sum(data.values()),
-        'unique': n_unique,
-        'labels': labels[:bins],
-        'counts': counts[:bins]
+        "type": "hist_str",
+        "name": name,
+        "total": sum(data.values()),
+        "unique": n_unique,
+        "labels": labels[:bins],
+        "counts": counts[:bins],
     }
 
 

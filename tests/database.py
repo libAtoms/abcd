@@ -32,8 +32,13 @@ class Mongo(unittest.TestCase):
         xyz = StringIO(
             """2
             Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t e s t _ s t r" pbc="F F F"
+<<<<<<< HEAD
             Si       0.00000000       0.00000000       0.00000000 
             Si       0.00000000       0.00000000       0.00000000 
+=======
+            Si       0.00000000       0.00000000       0.00000000
+            Si       0.00000000       0.00000000       0.00000000
+>>>>>>> c962bfe (Apply black formatting)
             """
         )
 

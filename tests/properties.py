@@ -1,6 +1,7 @@
 import unittest
 from abcd.backends.atoms_properties import Properties
 
+
 class PropertiesTests(unittest.TestCase):
     """Testing properties csv reader"""
 
@@ -10,6 +11,7 @@ class PropertiesTests(unittest.TestCase):
         Load example csv file.
         """
         import os
+
         class_path = os.path.normpath(os.path.abspath(__file__))
         csv_file = os.path.dirname(class_path) + "/examples.csv"
         cls.property = Properties(csv_file)
@@ -19,6 +21,7 @@ class PropertiesTests(unittest.TestCase):
         Test data correctly stored in pandas DataFrame.
         """
         from pandas import DataFrame
+
         assert isinstance(self.property.df, DataFrame)
         assert len(self.property.df) == 3
 
@@ -39,7 +42,7 @@ class PropertiesTests(unittest.TestCase):
                 csv_file=self.property.csv_file,
                 units=input_units_2,
             )
-  
+
     def test_infer_units(self):
         """
         Test units can be inferred from field names.
@@ -48,10 +51,7 @@ class PropertiesTests(unittest.TestCase):
             csv_file=self.property.csv_file,
             infer_units=True,
         )
-        expected_units = {
-            "Comma units": "m",
-            "Bracket units": "s"
-        }
+        expected_units = {"Comma units": "m", "Bracket units": "s"}
         expected_fields = [
             "Text",
             "Integers",
@@ -59,7 +59,7 @@ class PropertiesTests(unittest.TestCase):
             "Boolean",
             "Missing data",
             "Comma units",
-            "Bracket units"
+            "Bracket units",
         ]
         self.assertEqual(properties.units, expected_units)
         self.assertEqual(list(properties.df.columns.values), expected_fields)
@@ -74,12 +74,12 @@ class PropertiesTests(unittest.TestCase):
             csv_file=self.property.csv_file,
             store_struct_file=True,
             struct_file_template=struct_file_template,
-            struct_name_label=struct_name_label
+            struct_name_label=struct_name_label,
         )
         expected_struct_files = [
             "test_Some_file.txt",
             "test_test_file.txt",
-            "test_data_file.txt"
+            "test_data_file.txt",
         ]
         self.assertIsInstance(properties_1.struct_files, list)
         for i, file in enumerate(expected_struct_files):
@@ -91,7 +91,7 @@ class PropertiesTests(unittest.TestCase):
                 csv_file=self.property.csv_file,
                 store_struct_file=True,
                 struct_file_template=invalid_template,
-                struct_name_label=struct_name_label
+                struct_name_label=struct_name_label,
             )
 
         invalid_label = "label"
@@ -100,7 +100,7 @@ class PropertiesTests(unittest.TestCase):
                 csv_file=self.property.csv_file,
                 store_struct_file=True,
                 struct_file_template=struct_file_template,
-                struct_name_label=invalid_label
+                struct_name_label=invalid_label,
             )
 
     def test_to_list(self):
@@ -117,7 +117,7 @@ class PropertiesTests(unittest.TestCase):
             "Boolean": True,
             "Missing data": "Missing",
             "Comma units, m": 0,
-            "Bracket units (s)": 0
+            "Bracket units (s)": 0,
         }
         self.assertEqual(self.property.to_list()[0], expected_property)
 
@@ -131,7 +131,7 @@ class PropertiesTests(unittest.TestCase):
             "Floating": 0.1,
             "Boolean": False,
             "Comma units, m": 1,
-            "Bracket units (s)": 1
+            "Bracket units (s)": 1,
         }
         self.assertEqual(self.property.to_list()[1], expected_property)
 
@@ -143,10 +143,7 @@ class PropertiesTests(unittest.TestCase):
             csv_file=self.property.csv_file,
             infer_units=True,
         )
-        expected_units = {
-            "Comma units": "m",
-            "Bracket units": "s"
-        }
+        expected_units = {"Comma units": "m", "Bracket units": "s"}
         expected_property = {
             "Text": "Some",
             "Integers": 1,
@@ -155,9 +152,10 @@ class PropertiesTests(unittest.TestCase):
             "Missing data": "Missing",
             "Comma units": 0,
             "Bracket units": 0,
-            "units": expected_units
+            "units": expected_units,
         }
         self.assertEqual(properties_1.to_list()[0], expected_property)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -97,7 +97,7 @@ parser = Lark(
 if __name__ == "__main__":
     test_string = " ".join(
         [
-            " " "flag",  # start with a separator
+            " flag",  # start with a separator
             'quotedd_string="quoteddd value"',
             r'quotedddd_string_escaped="esc\"aped"',
             "false_value = F",
@@ -108,8 +108,9 @@ if __name__ == "__main__":
             "scientific_float_2=5e-6",
             'scientific_float_array="1.2 2.2e3 4e1 3.3e-1 2e-2"',
             'not_array="1.2 3.4 text"',
-            "array_nested=[[1,2],[3,4]] "  # gets flattented if not 3x3
-            "array_many_other_quotes=({[4 8 12]})",
+            (  # gets flattented if not 3x3
+                "array_nested=[[1,2],[3,4]] array_many_other_quotes=({[4 8 12]})"
+            ),
             "array_boolean={T F T F}",
             'array_boolean_2=" T, F, T " '  # leading spaces
             # 'not_bool_array=[T F S]',

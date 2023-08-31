@@ -563,6 +563,7 @@ class OpenSearchDatabase(AbstractABCD):
                 stored_fields=format(name),
                 _source=format(name),
             )
+            if format(name) in hit["_source"]
         ]
 
     def count_property(self, name, query: Union[dict, str, None] = None) -> dict:

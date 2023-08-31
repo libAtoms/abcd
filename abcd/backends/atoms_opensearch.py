@@ -280,14 +280,22 @@ class OpenSearchDatabase(AbstractABCD):
 
         logger.info((host, port, index_name, username, password, kwargs))
 
+        client_settings = {
+            "verify_certs": False,
+            "ca_certs": None,
+            "use_ssl": True,
+            "ssl_assert_hostname": False,
+            "ssl_show_warn": False,
+        }
+
+        for key in client_settings:
+            if key in kwargs:
+                client_settings[key] = kwargs[key]
+
         self.client = OpenSearch(
             hosts=[{"host": host, "port": port}],
             http_auth=(username, password),
-            verify_certs=False,
-            ca_certs=False,
-            use_ssl=True,
-            ssl_assert_hostname=False,
-            ssl_show_warn=False,
+            **client_settings,
         )
 
         try:

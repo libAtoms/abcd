@@ -50,9 +50,16 @@ class Mongo(unittest.TestCase):
 
 
 class OpenSearch(unittest.TestCase):
+    """
+    Testing mock OpenSearch database functions.
+    """
+
     @classmethod
     @openmock
     def setUpClass(cls):
+        """
+        Set up database connection.
+        """
         from abcd.backends.atoms_opensearch import OpenSearchDatabase
 
         logging.basicConfig(level=logging.INFO)
@@ -63,21 +70,33 @@ class OpenSearch(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        Delete index from database.
+        """
         cls.abcd.destroy()
 
     def test_destroy(self):
+        """
+        Test destroying database index.
+        """
         self.assertTrue(self.abcd.client.indices.exists("test_index"))
         self.abcd.destroy()
         self.assertFalse(self.abcd.client.indices.exists("test_index"))
         return
 
     def test_create(self):
+        """
+        Test creating database index.
+        """
         self.abcd.destroy()
         self.abcd.create()
         self.assertTrue(self.abcd.client.indices.exists("test_index"))
         self.assertFalse(self.abcd.client.indices.exists("fake_index"))
 
     def test_push(self):
+        """
+        Test pushing atoms objects to database individually.
+        """
         from io import StringIO
         from ase.io import read
         from ase.atoms import Atoms
@@ -117,6 +136,9 @@ class OpenSearch(unittest.TestCase):
         self.assertNotEqual(atoms_2, result)
 
     def test_bulk(self):
+        """
+        Test pushing atoms object to database together.
+        """
         from io import StringIO
         from ase.io import read
         from ase.atoms import Atoms
@@ -165,6 +187,9 @@ class OpenSearch(unittest.TestCase):
         self.assertEqual(atoms_2, result_2)
 
     def test_count(self):
+        """
+        Test counting the number of documents in the database.
+        """
         from io import StringIO
         from ase.io import read
         from ase.atoms import Atoms

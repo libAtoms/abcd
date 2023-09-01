@@ -368,6 +368,12 @@ class OpenSearchDatabase(AbstractABCD):
         """
         self.client.indices.create(index=self.index_name, ignore=400)
 
+    def refresh(self):
+        """
+        Refresh index to ensure recent operations performed are available for search.
+        """
+        self.client.indices.refresh(index=self.index_name)
+
     def save_bulk(self, actions: Iterable):
         """
         Save a collection of documents in bulk.

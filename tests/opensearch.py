@@ -34,7 +34,7 @@ class OpenSearch(unittest.TestCase):
     def test_info(self):
         self.abcd.destroy()
         self.abcd.create()
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         self.abcd.print_info()
 
         info = {
@@ -49,7 +49,7 @@ class OpenSearch(unittest.TestCase):
 
     def test_destroy(self):
         self.abcd.create()
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         self.assertTrue(self.abcd.client.indices.exists("test_index"))
 
         self.abcd.destroy()
@@ -58,7 +58,7 @@ class OpenSearch(unittest.TestCase):
     
     def test_delete(self):
         self.abcd.create()
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         self.assertTrue(self.abcd.client.indices.exists("test_index"))
 
         from io import StringIO
@@ -79,12 +79,12 @@ class OpenSearch(unittest.TestCase):
         self.abcd.push(atoms)
         self.abcd.push(atoms)
 
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         self.assertEqual(self.abcd.count(), 2)
 
         self.abcd.delete()
         self.assertTrue(self.abcd.client.indices.exists("test_index"))
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         self.assertEqual(self.abcd.count(), 0)
         return
 
@@ -92,7 +92,7 @@ class OpenSearch(unittest.TestCase):
         self.abcd.destroy()
         self.abcd.create()
 
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         self.assertTrue(self.abcd.client.indices.exists("test_index"))
         self.assertFalse(self.abcd.client.indices.exists("fake_index"))
 
@@ -127,7 +127,7 @@ class OpenSearch(unittest.TestCase):
         assert isinstance(atoms_2, Atoms)
         atoms_2.set_cell([1, 1, 1])
 
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         result = AtomsModel(
             None,
             None,
@@ -170,7 +170,7 @@ class OpenSearch(unittest.TestCase):
         atoms_list.append(atoms_2)
         self.abcd.push(atoms_list)
 
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         self.assertEqual(self.abcd.count(), 2)
         result_1 = AtomsModel(
             None,
@@ -206,7 +206,7 @@ class OpenSearch(unittest.TestCase):
         self.abcd.push(atoms)
         self.abcd.push(atoms)
 
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         self.assertEqual(self.abcd.count(), 2)
 
     def test_property(self):
@@ -243,7 +243,7 @@ class OpenSearch(unittest.TestCase):
         atoms_2.set_cell([1, 1, 1])
         self.abcd.push(atoms_2)
 
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         prop = self.abcd.property('test_prop_1')
         expected_prop = ['test_prop_1']
         self.assertEqual(prop, expected_prop)
@@ -269,7 +269,7 @@ class OpenSearch(unittest.TestCase):
         atoms.set_cell([1, 1, 1])
         self.abcd.push(atoms)
 
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         props = self.abcd.properties()
         expected_props = {
             'info': ['_vtk_test', 'cell', 'formula', 'n_atoms', 'pbc', 's', 'volume'],
@@ -320,7 +320,7 @@ class OpenSearch(unittest.TestCase):
         atoms_2.set_cell([1, 1, 1])
         self.abcd.push(atoms_2)
 
-        self.abcd.client.indices.refresh(index="test_index")
+        self.abcd.refresh()
         props = self.abcd.count_properties()
         expected_counts = {
             'test_prop_1': {'count': 1, 'category': 'info', 'dtype': 'scalar(str)'},

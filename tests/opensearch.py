@@ -14,6 +14,9 @@ class OpenSearch(unittest.TestCase):
         Set up database connection.
         """
         import os
+        from time import sleep
+        from abcd.backends.atoms_opensearch import OpenSearchDatabase
+        from opensearchpy.exceptions import ConnectionError
 
         if os.getenv("GITHUB_ACTIONS") != "true":
             raise unittest.SkipTest("Only runs via GitHub Actions")
@@ -21,17 +24,25 @@ class OpenSearch(unittest.TestCase):
         cls.port = int(os.environ["port"])
         cls.host = "localhost"
 
-        from abcd.backends.atoms_opensearch import OpenSearchDatabase
-
         logging.basicConfig(level=logging.INFO)
 
         url = f"opensearch://admin:admin@{cls.host}:{cls.port}"
-        abcd = ABCD.from_url(
-            url,
-            index_name="test_index",
-            analyse_schema=False,
-            use_ssl=cls.security_enabled,
-        )
+        try:
+            abcd = ABCD.from_url(
+                url,
+                index_name="test_index",
+                analyse_schema=False,
+                use_ssl=cls.security_enabled,
+            )
+        except ConnectionError or ConnectionResetError:
+            sleep(10)
+            abcd = ABCD.from_url(
+                url,
+                index_name="test_index",
+                analyse_schema=False,
+                use_ssl=cls.security_enabled,
+            )
+
         assert isinstance(abcd, OpenSearchDatabase)
         cls.abcd = abcd
 

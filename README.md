@@ -17,13 +17,53 @@ Main features:
 
 ## Installation
 
+### General Setup
+
 creating tables and views
+
 ```
 $ pip install git+https://github.com/libAtoms/abcd.git
 ```
 
-## Setup
+Example Docker installation on Ubuntu:
+```
+sudo apt-get update
+sudo apt upgrade
+sudo apt install docker.io
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker # or exit and log in
+```
 
+Docker can be tested by running:
+
+```
+docker run hello-world
+```
+
+Example Python setup on Ubuntu (pip must be updated for poetry to be used successfully):
+
+```
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt install python3.10
+sudo apt-get install python3.10-distutils
+sudo apt install python3-virtualenv
+virtualenv -p /usr/bin/python3.10 venv_10
+source venv_10/bin/activate
+curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
+```
+
+Building and installing ABCD dependencies via poetry:
+
+```
+git clone https://github.com/libAtoms/abcd.git
+curl -sSL https://install.python-poetry.org | python3 -
+export PATH="/home/ubuntu/.local/bin:$PATH"
+cd abcd
+poetry install
+poetry build
+```
 
 ### MongoDB
 
@@ -56,11 +96,18 @@ The above login command will place create an `~/.abcd` file with the following c
 If you have an already running OpenSearch server, or install your own, then you are ready to go. Alternatively,
 
 ```
+sudo swapoff -a # optional
+sudo sysctl -w vm.swappiness=1 # optional
+sudo sysctl -w fs.file-max=262144 # optional
 sudo sysctl -w vm.max_map_count=262144
-docker run -d --rm --name abcd-opensearch -v <path-on-your-machine-to-store-database>:/data/db -p 9200:9200 -it opensearchproject/opensearch:latest
+docker run -d --rm --name abcd-opensearch -v <path-on-your-machine-to-store-database>:/data/db -p 9200:9200  --env discovery.type=single-node -it opensearchproject/opensearch:latest
 ```
 
-will download and install a docker and run a database in it.
+will download and install an OpenSearch image and run it. The connection can be tested with:
+
+```
+curl -vvv -s --insecure -u admin:admin --fail https://localhost:9200
+```
 
 To connect to an OpenSearch database that is already running, use
 ```
@@ -113,4 +160,12 @@ After usage, for cleanup:
 docker stop visualiser-dev abcd-mongodb-net         # stop the containers
 docker rm visualiser-dev abcd-mongodb-net           # remove them if --rm did not
 docker network rm abcd-network                      # remove the docker network
+```
+
+## Testing
+
+Unit tests are automatically run on push and creation of pull requests. Unit testing using mock databases can also be run in the command line using:
+
+```
+python -m unittest tests
 ```

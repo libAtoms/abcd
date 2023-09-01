@@ -857,7 +857,7 @@ class OpenSearchDatabase(AbstractABCD):
         query = self.parser(query)
 
         script_txt = f"if (ctx._source.containsKey('{name}')) {{ "
-        script_txt += "ctx._source.remove('params.name');"
+        script_txt += "ctx._source.remove(params.name);"
         script_txt += "for (int i=0; i<ctx._source.derived.info_keys.length; i++) {"
         script_txt += "if (ctx._source.derived.info_keys[i] == params.name) { "
         script_txt += "ctx._source.derived.info_keys.remove(i);}}}"

@@ -635,7 +635,6 @@ class OpenSearchDatabase(AbstractABCD):
         for prop in self.client.indices.get_mapping(index=self.index_name)[
             self.index_name
         ]["mappings"]["properties"].keys():
-
             body = {
                 "size": 0,
                 "query": query,
@@ -738,7 +737,6 @@ class OpenSearchDatabase(AbstractABCD):
             return properties
 
         for key in keys:
-
             body = {
                 "size": 0,
                 "query": query,
@@ -955,7 +953,6 @@ def histogram(name, data, **kwargs):
         return None
 
     elif data and isinstance(data, list):
-
         ptype = type(data[0])
 
         if not all(isinstance(x, ptype) for x in data):

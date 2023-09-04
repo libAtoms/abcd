@@ -164,7 +164,6 @@ class BootstrapRenderer(Renderer):
         return item
 
     def visit_Subgroup(self, node):
-
         if self._in_dropdown:
             raise RuntimeError("Cannot render nested Subgroups")
 

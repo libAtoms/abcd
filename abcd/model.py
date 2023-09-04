@@ -17,7 +17,6 @@ class Hasher(object):
         self.method = method
 
     def update(self, value):
-
         if isinstance(value, int):
             self.update(str(value).encode("ascii"))
 
@@ -81,14 +80,12 @@ class AbstractModel(UserDict):
         }
 
     def __getitem__(self, key):
-
         if key == "derived":
             return self.derived
 
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-
         if key == "derived":
             # raise KeyError('Please do not use "derived" as key because it is protected!')
             # Silent return to avoid raising error in pymongo package
@@ -108,7 +105,6 @@ class AbstractModel(UserDict):
         return value
 
     def update_key_category(self, key, value):
-
         if key == "_id":
             # raise KeyError('Please do not use "derived" as key because it is protected!')
             return
@@ -202,7 +198,6 @@ class AbstractModel(UserDict):
             info_keys.update({"calculator_name", "calculator_parameters"})
 
             for key, value in atoms.calc.results.items():
-
                 if isinstance(value, np.ndarray):
                     if value.shape[0] == n_atoms:
                         arrays_keys.update(key)

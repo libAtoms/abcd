@@ -222,7 +222,6 @@ class MongoDatabase(AbstractABCD):
         self.collection.drop()
 
     def push(self, atoms: Union[Atoms, Iterable], extra_info=None, store_calc=True):
-
         if extra_info and isinstance(extra_info, str):
             extra_info = extras.parser.parse(extra_info)
 
@@ -234,7 +233,6 @@ class MongoDatabase(AbstractABCD):
             # self.collection.insert_one(data)
 
         elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-
             for item in atoms:
                 data = AtomsModel.from_atoms(
                     self.collection, item, extra_info=extra_info, store_calc=store_calc
@@ -242,7 +240,6 @@ class MongoDatabase(AbstractABCD):
                 data.save()
 
     def upload(self, file: Path, extra_infos=None, store_calc=True):
-
         if isinstance(file, str):
             file = Path(file)
 
@@ -435,7 +432,6 @@ class MongoDatabase(AbstractABCD):
         )
 
     def hist(self, name, query=None, **kwargs):
-
         data = self.property(name, query)
         return histogram(name, data, **kwargs)
 
@@ -485,7 +481,6 @@ def histogram(name, data, **kwargs):
         return None
 
     elif data and isinstance(data, list):
-
         ptype = type(data[0])
 
         if not all(isinstance(x, ptype) for x in data):

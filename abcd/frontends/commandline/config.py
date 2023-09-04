@@ -20,7 +20,6 @@ class Config(dict):
 
     @classmethod
     def load(cls):
-
         if (
             os.environ.get("ABCD_CONFIG")
             and Path(os.environ.get("ABCD_CONFIG")).is_file()

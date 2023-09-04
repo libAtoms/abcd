@@ -25,7 +25,6 @@ class ABCD(object):
         logger.info(r)
 
         if r.scheme == "mongodb":
-
             conn_settings = {
                 "host": r.hostname,
                 "port": r.port,
@@ -42,7 +41,6 @@ class ABCD(object):
             return MongoDatabase(db_name=db, **conn_settings, **kwargs)
 
         if r.scheme == "opensearch":
-
             conn_settings = {
                 "host": r.hostname,
                 "port": r.port,

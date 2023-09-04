@@ -121,7 +121,6 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 
     f = Formater()
     if props_list is None:
-
         props = db.count_properties(query=query)
 
         labels, categories, dtypes, counts = [], [], [], []
@@ -321,7 +320,6 @@ class Formater(object):
             )
 
     def hist_int(self, bin_edges, counts, width_hist=40):
-
         ratio = width_hist / max(counts)
         width_count = len(str(max(counts)))
 
@@ -373,7 +371,6 @@ class Formater(object):
             )
 
     def hist_labels(self, counts, categories, dtypes, labels, width_hist=40):
-
         width_count = len(str(max(counts)))
         ratio = width_hist / max(counts)
         for label, count, dtype in zip(labels, counts, dtypes):

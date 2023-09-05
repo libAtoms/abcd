@@ -1,9 +1,13 @@
 [tool.poetry]
 name = "abcd"
-version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
+version = "0.6.0"
+description = "This is a package which helps to store and share atomistic data."
+authors = ["Adam Fekete", "Gabor Csanyi"]
+keywords=["ase", "database", "mongo", "flask", "opensearch"]
 readme = "README.md"
+homepage = "https://libatoms.github.io/abcd/"
+repository = "https://github.com/libatoms/abcd"
+documentation = "https://libatoms.github.io/abcd/"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -17,6 +21,13 @@ lark = "^1.1.5"
 
 [tool.poetry.group.dev.dependencies]
 mongomock = "^4.1.2"
+
+[tool.poetry.extras]
+tests = ["mongomock"]
+mongo = ["pymongo"]
+http = ["requests"]
+server-api = ["flask"]
+server-app = ["flask", "Flask-Nav", "Flask-MongoEngine", "gunicorn", "flask-paginate"]
 
 [build-system]
 requires = ["poetry-core"]

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from typing import Union
 from pathlib import Path
+import chardet
 
 
 class Properties:
@@ -12,38 +13,44 @@ class Properties:
 
     Attributes
     ----------
-    csv_file: Union[str, Path]
-        Name or path to csv file containing properties.
+    data_file: Union[str, Path]
+        Name or path to data file containing properties. Treated as a csv file
+        by default, but Excel spreadsheets may also be read.
     store_struct_file: bool
         Whether to construct a filename for each structure.
     struct_file_template: str
         Template string for path to files containing structure.
     struct_name_label: str
-        Field name in csv file containing values for `struct_name`.
+        Field name in data file containing values for `struct_name`.
     df: pd.Dataframe
-        Dataframe containing loaded property data from csv file.
+        Dataframe containing loaded property data from data file.
     units: Union[dict, None], optional
         Units.
     struct_files: list[str]
         List containing a filename for each structure in the dataframe.
+    encoding: str, optional
+        Encoding of csv file to be read. Default is `utf-8`.
     """
 
     def __init__(
         self,
-        csv_file: Union[str, Path],
+        data_file: Union[str, Path],
         store_struct_file: bool = False,
         struct_file_template: Union[str, None] = None,
         struct_name_label: Union[str, None] = None,
         units: Union[dict, None] = None,
         infer_units: bool = False,
+        encoding: str = "utf-8",
     ):
         """
         Initialises class.
 
         Parameters
         ----------
-        csv_file: Union[str, Path]
-            Path or filename of csv file containing properties to be loaded.
+        data_file: Union[str, Path]
+            Path or filename of data file containing properties to be loaded.
+            Assumed to be a csv file by default, but Excel spreadsheets may
+            also be read.
         store_struct_file: bool, optional
             If true, use struct_file_template and struct_name_label to
             construct filename for each structure. Default is `False`.
@@ -53,17 +60,38 @@ class Properties:
             Template must contain `{struct_name}`, to ensure a unique file
             for each structure. Default is `None`.
         struct_name_label: Union[str, None], optional
-            Field name in csv file containing values for `struct_name`.
+            Field name in data file containing values for `struct_name`.
             Required only if store_struct_file is True. Default is `None`.
         units: Union[dict, None], optional
-            Units for fields in csv file. If unspecified, _separate_units()
+            Units for fields in data file. If unspecified, _separate_units()
             is used to identify units in field names. Default is `None`.
         infer_units: bool, optional
             Whether to attempt to infer units from field names in the
             dataframe. Unused if units is not `None`. Default is `False`.
+        encoding: str, optional
+            Encoding of file to be read. Default is `utf-8`.
+            For pandas==1.2, setting this to `None` means `errors='replace'`
+            is passed to `open()`, which replaces invalid characters with
+            the replacement character. Otherwise, `errors='strict'` is passed
+            to `open()`, which means UnicodeDecodeError are thrown if the
+            encoding is wrong.
+            For pandas==1.3, `encoding` no longer defines how errors are
+            handled. `encoding_errors` instead defaults to `strict`, which has
+            the same effect as non-None values of `encoding` for pandas==1.2.
         """
-        self.csv_file = csv_file
-        self.df = pd.read_csv(self.csv_file)
+        self.data_file = data_file
+        self.encoding = encoding
+        try:
+            self.df = pd.read_csv(self.data_file, encoding=self.encoding)
+        except UnicodeDecodeError:
+            detected = chardet.detect(Path(self.data_file).read_bytes())
+            raise ValueError(
+                f"File cannot be decoded using encoding: {self.encoding}."
+                f" Detected encoding: {detected}."
+            )
+        except pd.errors.ParserError:
+            self.df = pd.read_excel(self.data_file, header=0)
+
         self.df.replace({np.nan: None}, inplace=True)
 
         if units is not None:

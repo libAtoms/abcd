@@ -3,18 +3,18 @@ from abcd.backends.atoms_properties import Properties
 
 
 class PropertiesTests(unittest.TestCase):
-    """Testing properties csv reader"""
+    """Testing properties data reader"""
 
     @classmethod
     def setUpClass(cls):
         """
-        Load example csv file.
+        Load example data file.
         """
         import os
 
         class_path = os.path.normpath(os.path.abspath(__file__))
-        csv_file = os.path.dirname(class_path) + "/examples.csv"
-        cls.property = Properties(csv_file)
+        data_file = os.path.dirname(class_path) + "/examples.csv"
+        cls.property = Properties(data_file)
 
     def test_dataframe(self):
         """
@@ -31,7 +31,7 @@ class PropertiesTests(unittest.TestCase):
         """
         input_units_1 = {"Integers": "items", "Floating": "seconds"}
         properties_1 = Properties(
-            csv_file=self.property.csv_file,
+            data_file=self.property.data_file,
             units=input_units_1,
         )
         self.assertEqual(properties_1.units, input_units_1)
@@ -39,7 +39,7 @@ class PropertiesTests(unittest.TestCase):
         input_units_2 = {"Fake": "m"}
         with self.assertRaises(ValueError):
             properties_1 = Properties(
-                csv_file=self.property.csv_file,
+                data_file=self.property.data_file,
                 units=input_units_2,
             )
 
@@ -48,7 +48,7 @@ class PropertiesTests(unittest.TestCase):
         Test units can be inferred from field names.
         """
         properties = Properties(
-            csv_file=self.property.csv_file,
+            data_file=self.property.data_file,
             infer_units=True,
         )
         expected_units = {"Comma units": "m", "Bracket units": "s"}
@@ -71,7 +71,7 @@ class PropertiesTests(unittest.TestCase):
         struct_file_template = "test_{struct_name}_file.txt"
         struct_name_label = "Text"
         properties_1 = Properties(
-            csv_file=self.property.csv_file,
+            data_file=self.property.data_file,
             store_struct_file=True,
             struct_file_template=struct_file_template,
             struct_name_label=struct_name_label,
@@ -88,7 +88,7 @@ class PropertiesTests(unittest.TestCase):
         invalid_template = "invalid_template"
         with self.assertRaises(ValueError):
             Properties(
-                csv_file=self.property.csv_file,
+                data_file=self.property.data_file,
                 store_struct_file=True,
                 struct_file_template=invalid_template,
                 struct_name_label=struct_name_label,
@@ -97,7 +97,7 @@ class PropertiesTests(unittest.TestCase):
         invalid_label = "label"
         with self.assertRaises(ValueError):
             Properties(
-                csv_file=self.property.csv_file,
+                data_file=self.property.data_file,
                 store_struct_file=True,
                 struct_file_template=struct_file_template,
                 struct_name_label=invalid_label,
@@ -140,7 +140,7 @@ class PropertiesTests(unittest.TestCase):
         Test units are included in properties when converting to a list.
         """
         properties_1 = Properties(
-            csv_file=self.property.csv_file,
+            data_file=self.property.data_file,
             infer_units=True,
         )
         expected_units = {"Comma units": "m", "Bracket units": "s"}

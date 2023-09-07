@@ -388,7 +388,7 @@ class OpenSearchDatabase(AbstractABCD):
     def push(
         self,
         atoms: Union[Atoms, Iterable],
-        extra_info: Union[dict, str, None] = None,
+        extra_info: Union[dict, str, list, None] = None,
         store_calc: bool = True,
     ):
         """
@@ -406,6 +406,10 @@ class OpenSearchDatabase(AbstractABCD):
         """
         if extra_info and isinstance(extra_info, str):
             extra_info = extras.parser.parse(extra_info)  # type: ignore
+        if extra_info and isinstance(extra_info, list):
+            for i, info in enumerate(extra_info):
+                if isinstance(info, str):
+                    extra_info[i] = extras.parser.parse(info)
 
         if isinstance(atoms, Atoms):
             data = AtomsModel.from_atoms(
@@ -419,12 +423,16 @@ class OpenSearchDatabase(AbstractABCD):
 
         elif isinstance(atoms, Generator) or isinstance(atoms, list):
             actions = []
-            for item in atoms:
+            for i, item in enumerate(atoms):
+                if isinstance(extra_info, list):
+                    info = extra_info[i]
+                else:
+                    info = extra_info
                 data = AtomsModel.from_atoms(
                     self.client,
                     self.index_name,
                     item,
-                    extra_info=extra_info,  # type: ignore
+                    extra_info=info,  # type: ignore
                     store_calc=store_calc,
                 )
                 actions.append(data.data)

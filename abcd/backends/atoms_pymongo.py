@@ -233,9 +233,13 @@ class MongoDatabase(AbstractABCD):
             # self.collection.insert_one(data)
 
         elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-            for item in atoms:
+            for i, item in enumerate(atoms):
+                if isinstance(extra_info, list):
+                    info = extra_info[i]
+                else:
+                    info = extra_info
                 data = AtomsModel.from_atoms(
-                    self.collection, item, extra_info=extra_info, store_calc=store_calc
+                    self.collection, item, extra_info=info, store_calc=store_calc
                 )
                 data.save()
 

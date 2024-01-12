@@ -78,13 +78,13 @@ class OpenSearchQuery(AbstractQuerySet):
         else:
             self.query_builder = ElasticsearchQueryBuilder()
 
-    def __call__(self, query: Union[dict, str, None]) -> Union[dict, None]:
+    def __call__(self, query: Union[dict, str, list, None]) -> Union[dict, None]:
         """
         Parses and builds queries from strings using ElasticsearchQueryBuilder.
 
         Parameters
         ----------
-        query: Union[dict, str, None]
+        query: Union[dict, str, list, None]
             Query to be parsed for OpenSearch. If given as a dictionary,
             the query is left unchanged. If given as a string, the
             ElasticsearchQueryBuilder is used to build the query.
@@ -103,6 +103,15 @@ class OpenSearchQuery(AbstractQuerySet):
             return query
         elif isinstance(query, str):
             tree = parser.parse(query)
+            return self.query_builder(tree)
+        elif isinstance(query, list):
+            if len(query) == 0:
+                return None
+            elif query[0] is None:
+                return None
+            separator = " AND "
+            joined_query = separator.join(query)
+            tree = parser.parse(joined_query)
             return self.query_builder(tree)
 
         return query if query else None

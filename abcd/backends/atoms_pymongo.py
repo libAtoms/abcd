@@ -135,6 +135,15 @@ class MongoQuery(AbstractQuerySet):
             p = parser(ast)
             return self.visit(p)
 
+        elif isinstance(ast, list):
+            from abcd.parsers.queries import parser
+
+            if len(ast) == 0:
+                return {}
+            else:
+                ast = ("AND", *[parser(q) for q in ast])
+                return self.visit(ast)
+
         return self.visit(ast) if ast else {}
 
 

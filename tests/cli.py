@@ -1,4 +1,5 @@
 import os
+import subprocess
 import unittest
 import logging
 from time import sleep
@@ -26,16 +27,19 @@ class CLI(unittest.TestCase):
         if not cls.security_enabled:
             url += " --disable_ssl"
         try:
-            os.system(f"abcd login {url}")
-        except (ConnectionError, ConnectionResetError):
+            subprocess.run(f"abcd login {url}", shell=True, check=True)
+        except subprocess.CalledProcessError:
             sleep(10)
-            os.system(f"abcd login {url}")
+            subprocess.run(f"abcd login {url}", shell=True, check=True)
 
     def test_summary(self):
         """
-        Test summary output of stored data.
+        Test summary output of uploaded data file.
         """
         class_path = os.path.normpath(os.path.abspath(__file__))
         data_file = os.path.dirname(class_path) + "/data/example.xyz"
-        os.system(f"abcd upload {data_file}")
-        os.system("abcd summary")
+        subprocess.run(f"abcd upload {data_file}", shell=True, check=True)
+        summary = subprocess.run(
+            "abcd summary", shell=True, check=True, capture_output=True, text=True
+        )
+        assert "Total number of configurations: 1" in summary.stdout

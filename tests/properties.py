@@ -1,4 +1,8 @@
+import os
 import unittest
+
+from pandas import DataFrame
+
 from abcd.backends.atoms_properties import Properties
 
 
@@ -10,18 +14,14 @@ class PropertiesTests(unittest.TestCase):
         """
         Load example data file.
         """
-        import os
-
         class_path = os.path.normpath(os.path.abspath(__file__))
-        data_file = os.path.dirname(class_path) + "/examples.csv"
+        data_file = os.path.dirname(class_path) + "/data/examples.csv"
         cls.property = Properties(data_file)
 
     def test_dataframe(self):
         """
         Test data correctly stored in pandas DataFrame.
         """
-        from pandas import DataFrame
-
         assert isinstance(self.property.df, DataFrame)
         assert len(self.property.df) == 3
 

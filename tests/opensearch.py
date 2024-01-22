@@ -1,6 +1,15 @@
-import unittest
-from abcd import ABCD
+from io import StringIO
 import logging
+import os
+from time import sleep
+import unittest
+
+from ase.atoms import Atoms
+from ase.io import read
+from opensearchpy.exceptions import ConnectionError
+
+from abcd import ABCD
+from abcd.backends.atoms_opensearch import AtomsModel, OpenSearchDatabase
 
 
 class OpenSearch(unittest.TestCase):
@@ -11,13 +20,8 @@ class OpenSearch(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """
-        Set up database connection.
+        Set up OpenSearch database connection.
         """
-        import os
-        from time import sleep
-        from abcd.backends.atoms_opensearch import OpenSearchDatabase
-        from opensearchpy.exceptions import ConnectionError
-
         if os.getenv("GITHUB_ACTIONS") != "true":
             raise unittest.SkipTest("Only runs via GitHub Actions")
         cls.security_enabled = os.getenv("security_enabled") == "true"
@@ -34,7 +38,7 @@ class OpenSearch(unittest.TestCase):
                 analyse_schema=False,
                 use_ssl=cls.security_enabled,
             )
-        except ConnectionError or ConnectionResetError:
+        except (ConnectionError, ConnectionResetError):
             sleep(10)
             abcd = ABCD.from_url(
                 url,
@@ -49,18 +53,14 @@ class OpenSearch(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """
-        Delete index from database.
+        Delete index from OpenSearch database.
         """
         cls.abcd.destroy()
 
     def push_data(self):
         """
-        Uploads an example xyz file to the database.
+        Helper function to upload an example xyz file to the database.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-
         xyz = StringIO(
             """2
             Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t _ e s t" pbc="F F F"
@@ -105,7 +105,6 @@ class OpenSearch(unittest.TestCase):
 
         self.abcd.destroy()
         self.assertFalse(self.abcd.client.indices.exists("test_index"))
-        return
 
     def test_create(self):
         """
@@ -121,11 +120,6 @@ class OpenSearch(unittest.TestCase):
         """
         Test pushing atoms objects to database individually.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-        from abcd.backends.atoms_opensearch import AtomsModel
-
         self.abcd.destroy()
         self.abcd.create()
         xyz_1 = StringIO(
@@ -172,17 +166,11 @@ class OpenSearch(unittest.TestCase):
         self.assertTrue(self.abcd.client.indices.exists("test_index"))
         self.abcd.refresh()
         self.assertEqual(self.abcd.count(), 0)
-        return
 
     def test_bulk(self):
         """
         Test pushing atoms object to database together.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-        from abcd.backends.atoms_opensearch import AtomsModel
-
         self.abcd.destroy()
         self.abcd.create()
         xyz_1 = StringIO(
@@ -240,10 +228,6 @@ class OpenSearch(unittest.TestCase):
         """
         Test getting values of a property from the database.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-
         self.abcd.destroy()
         self.abcd.create()
 
@@ -305,10 +289,6 @@ class OpenSearch(unittest.TestCase):
         """
         Test counting values of specified properties from the database.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-
         self.abcd.destroy()
         self.abcd.create()
 
@@ -346,10 +326,6 @@ class OpenSearch(unittest.TestCase):
         """
         Test counting appearences of each property in documents in the database.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-
         self.abcd.destroy()
         self.abcd.create()
 
@@ -548,8 +524,6 @@ class OpenSearch(unittest.TestCase):
         """
         Test getting values from documents in the database as Atoms objects.
         """
-        from ase.atoms import Atoms
-
         self.abcd.destroy()
         self.abcd.create()
         self.push_data()
@@ -560,10 +534,6 @@ class OpenSearch(unittest.TestCase):
         """
         Test querying documents in the database.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-
         self.abcd.destroy()
         self.abcd.create()
 

@@ -1,55 +1,19 @@
+from importlib import reload
+from io import StringIO
+import logging
+import os
 import unittest
-import mongomock
+
+from ase.atoms import Atoms
+from ase.io import read
 from openmock import openmock
 
 from abcd import ABCD
-import logging
+from abcd.backends import atoms_opensearch
+from abcd.backends.atoms_opensearch import AtomsModel
 
 
-class Mongo(unittest.TestCase):
-    @classmethod
-    @mongomock.patch(servers=(("localhost", 27017),))
-    def setUpClass(cls):
-        logging.basicConfig(level=logging.INFO)
-        url = "mongodb://localhost"
-        abcd = ABCD.from_url(url)
-        abcd.print_info()
-
-        cls.abcd = abcd
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.abcd.destroy()
-
-    def test_thing(self):
-        print(self.abcd.info())
-
-    def test_push(self):
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-
-        xyz = StringIO(
-            """2
-            Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t _ e s t" pbc="F F F"
-            Si       0.00000000       0.00000000       0.00000000
-            Si       0.00000000       0.00000000       0.00000000
-            """
-        )
-
-        atoms = read(xyz, format="extxyz")
-        assert isinstance(atoms, Atoms)
-        atoms.set_cell([1, 1, 1])
-
-        self.abcd.destroy()
-        self.abcd.push(atoms)
-        new = list(self.abcd.get_atoms())[0]
-
-        assert atoms == new
-        self.abcd.destroy()
-
-
-class OpenSearch(unittest.TestCase):
+class OpenSearchMock(unittest.TestCase):
     """
     Testing mock OpenSearch database functions.
     """
@@ -60,10 +24,18 @@ class OpenSearch(unittest.TestCase):
         """
         Set up database connection.
         """
+        reload(atoms_opensearch)
         from abcd.backends.atoms_opensearch import OpenSearchDatabase
 
+        if "port" in os.environ:
+            cls.port = int(os.environ["port"])
+        else:
+            cls.port = 9200
+        cls.host = "localhost"
+
         logging.basicConfig(level=logging.INFO)
-        url = "opensearch://admin:admin@localhost:9200"
+
+        url = f"opensearch://admin:admin@{cls.host}:{cls.port}"
         abcd = ABCD.from_url(url, index_name="test_index", analyse_schema=False)
         assert isinstance(abcd, OpenSearchDatabase)
         cls.abcd = abcd
@@ -82,7 +54,6 @@ class OpenSearch(unittest.TestCase):
         self.assertTrue(self.abcd.client.indices.exists("test_index"))
         self.abcd.destroy()
         self.assertFalse(self.abcd.client.indices.exists("test_index"))
-        return
 
     def test_create(self):
         """
@@ -97,11 +68,6 @@ class OpenSearch(unittest.TestCase):
         """
         Test pushing atoms objects to database individually.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-        from abcd.backends.atoms_opensearch import AtomsModel
-
         self.abcd.destroy()
         self.abcd.create()
         xyz_1 = StringIO(
@@ -139,11 +105,6 @@ class OpenSearch(unittest.TestCase):
         """
         Test pushing atoms object to database together.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-        from abcd.backends.atoms_opensearch import AtomsModel
-
         self.abcd.destroy()
         self.abcd.create()
         xyz_1 = StringIO(
@@ -190,10 +151,6 @@ class OpenSearch(unittest.TestCase):
         """
         Test counting the number of documents in the database.
         """
-        from io import StringIO
-        from ase.io import read
-        from ase.atoms import Atoms
-
         self.abcd.destroy()
         self.abcd.create()
         xyz = StringIO(

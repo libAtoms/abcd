@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 @init_config
-def login(*, config, name, url, **kwargs):
+def login(*, config, name, url, disable_ssl=False, **kwargs):
     logger.info(
         "login args: \nconfig:{}, name:{}, url:{}, kwargs:{}".format(
             config, name, url, kwargs
@@ -17,10 +17,11 @@ def login(*, config, name, url, **kwargs):
     )
     from abcd import ABCD
 
-    db = ABCD.from_url(url=url)
+    db = ABCD.from_url(url=url, use_ssl=(not disable_ssl))
     info = db.info()
 
     config["url"] = url
+    config["use_ssl"] = not disable_ssl
     config.save()
 
     print("Successfully connected to the database!")

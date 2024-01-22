@@ -36,6 +36,11 @@ login_parser.add_argument(
     help="url of abcd api (default: http://localhost)",
     default="http://localhost",
 )
+login_parser.add_argument(
+    "--disable_ssl",
+    action="store_true",
+    help="Disable SSL encryption",
+)
 
 download_parser = subparsers.add_parser(
     "download", help="download data from the database"

@@ -20,12 +20,17 @@ def init_db(func):
     @functools.wraps(func)
     def wrapper(*args, config, **kwargs):
         url = config.get("url", None)
+        use_ssl = config.get("use_ssl", None)
 
         if url is None:
             print("Please use abcd login first!")
             exit(1)
 
-        db = ABCD.from_url(url=url)
+        if use_ssl is None:
+            print("use_ssl has not been saved. Please login again")
+            exit(1)
+
+        db = ABCD.from_url(url=url, use_ssl=use_ssl)
 
         # TODO: AST.from_string() ?!
         # TODO: better ast optimisation

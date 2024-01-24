@@ -1,0 +1,32 @@
+name: 'Run OpenSearch'
+description: 'This action spins up an Opensearch instance that can be accessed and used in your subsequent steps.'
+
+inputs:
+  opensearch-version:
+    description: 'The version of the OpenSearch you want to run'
+    required: true
+  security-enabled:
+    description: 'Enable or disable HTTPS, enabled by default'
+    default: 'false'
+    required: false
+  nodes:
+    description: 'Number of nodes in the cluster'
+    required: false
+    default: 1
+  port:
+    description: 'Port where you want to run OpenSearch'
+    required: false
+    default: 9200
+  opensearch_password:
+    description: 'The password for the user admin in your cluster'
+    required: false
+    default: 'admin'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    OPENSEARCH_VERSION: ${{ inputs.opensearch-version }}
+    NODES: ${{ inputs.nodes }}
+    PORT: ${{ inputs.port }}
+    SECURITY_ENABLED: ${{ inputs.security-enabled }}

@@ -1,0 +1,47 @@
+name: OpenSearch Github Action
+
+on: [push, pull_request]
+
+jobs:
+  run-action:
+    name: Start OpenSearch
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        opensearch: ['1.0.1', '2.0.1', 'latest']
+        security-enabled: ["true", "false"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure sysctl limits
+        run: |
+          sudo swapoff -a
+          sudo sysctl -w vm.swappiness=1
+          sudo sysctl -w fs.file-max=262144
+          sudo sysctl -w vm.max_map_count=262144
+
+      - name: Start OpenSearch
+        uses: ./.ci/opensearch
+        with:
+          port: 9250
+          opensearch-version: ${{ matrix.opensearch }}
+          security-enabled: ${{ matrix.security-enabled }}
+
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - name: Install dependencies
+        run: |
+          poetry install --with dev
+      - name: Run unit tests
+        run: |
+          poetry run python -m unittest -v tests
+        env:
+          port: 9250
+          security_enabled: ${{ matrix.security-enabled }}

@@ -13,16 +13,15 @@ DictEncoder = json.JSONEncoder
 
 
 class Atoms(ase.Atoms):
-
     @classmethod
     def from_dict(cls, data):
-        return cls(numbers=data['numbers'], positions=data['positions'])
+        return cls(numbers=data["numbers"], positions=data["positions"])
 
 
 class HttpDatabase(Database):
     """client/local interface"""
 
-    def __init__(self, url='http://localhost'):
+    def __init__(self, url="http://localhost"):
         super().__init__()
 
         self.url = url
@@ -30,7 +29,9 @@ class HttpDatabase(Database):
     def push(self, atoms: ase.Atoms):
         # todo: list of Atoms, metadata(user, project, tags)
 
-        message = requests.put(self.url + '/calculation', json=DictEncoder().encode(atoms))
+        message = requests.put(
+            self.url + "/calculation", json=DictEncoder().encode(atoms)
+        )
         # message = json.dumps(atoms)
         # message_hash = hashlib.md5(message.encode('utf-8')).hexdigest()
         logger.info(message)
@@ -44,29 +45,33 @@ class HttpDatabase(Database):
         pass
 
     def search(self, query_string: str) -> List[str]:
-        results = requests.get(self.url + '/calculation').json()
+        results = requests.get(self.url + "/calculation").json()
         return results
 
     def get_atoms(self, id: str) -> Atoms:
-        data = requests.get(self.url + '/calculation/{}'.format(id)).json()
+        data = requests.get(self.url + "/calculation/{}".format(id)).json()
         atoms = Atoms.from_dict(data)
         return atoms
 
     def __repr__(self):
-        return 'ABCD(type={}, url={}, ...)'.format(self.__class__.__name__, self.url)
+        return "ABCD(type={}, url={}, ...)".format(self.__class__.__name__, self.url)
 
     def _repr_html_(self):
         """jupyter notebook representation"""
-        return '<b>ABCD database</b>'
+        return "<b>ABCD database</b>"
 
     def print_info(self):
         """shows basic information about the connected database"""
 
-        out = linesep.join([
-            '{:=^50}'.format(' ABCD Database '),
-            '{:>10}: {}'.format('type', 'remote (http/https)'),
-            linesep.join('{:>10}: {}'.format(k, v) for k, v in self.db.info().items())
-        ])
+        out = linesep.join(
+            [
+                "{:=^50}".format(" ABCD Database "),
+                "{:>10}: {}".format("type", "remote (http/https)"),
+                linesep.join(
+                    "{:>10}: {}".format(k, v) for k, v in self.db.info().items()
+                ),
+            ]
+        )
 
         print(out)
 
@@ -80,6 +85,6 @@ class HttpDatabase(Database):
         pass
 
 
-if __name__ == '__main__':
-    abcd = HttpDatabase(url='http://localhost:8080/api')
+if __name__ == "__main__":
+    abcd = HttpDatabase(url="http://localhost:8080/api")
     abcd.print_info()

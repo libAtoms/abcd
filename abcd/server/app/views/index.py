@@ -4,24 +4,24 @@ from flask import Blueprint, render_template, url_for
 # from flask import jsonify
 # import requests
 
-bp = Blueprint('index', __name__)
+bp = Blueprint("index", __name__)
 
 
-@bp.route('/')
+@bp.route("/")
 def index():
     return render_template("index.html")
 
 
-@bp.route('/login/')
+@bp.route("/login/")
 def login():
     return render_template("login.html")
 
 
-@bp.route('/new/')
+@bp.route("/new/")
 def new():
     return render_template("new.html")
 
 
-@bp.route('/graphql')
+@bp.route("/graphql")
 def graphql():
-    return render_template("graphql.html", url=url_for('api.graphql'))
+    return render_template("graphql.html", url=url_for("api.graphql"))

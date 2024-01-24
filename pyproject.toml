@@ -1,0 +1,48 @@
+[tool.poetry]
+name = "abcd"
+version = "0.6.0"
+description = "This is a package which helps to store and share atomistic data."
+authors = ["Adam Fekete", "Gabor Csanyi", "Elliott Kasoar"]
+keywords=["ase", "database", "mongo", "flask", "opensearch"]
+readme = "README.md"
+homepage = "https://libatoms.github.io/abcd/"
+repository = "https://github.com/libatoms/abcd"
+documentation = "https://libatoms.github.io/abcd/"
+
+[tool.poetry.dependencies]
+ase = "^3.22.1"
+lark = "^1.1.5"
+luqum = "^0.13.0"
+matplotlib = "^3.7.1"
+notebook = "^6.5.4"
+numpy = "^1.24.3"
+opensearch-py = "^2.2.0"
+pandas = "^2.0.3"
+pymongo = "^4.3.3"
+python = "^3.8"
+tqdm = "^4.65.0"
+chardet = "^5.2.0"
+openpyxl = "^3.1.2"
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.3.0"
+flake8 = "^3.7.9"
+mongomock = "^4.1.2"
+openmock = "^2.2"
+
+[tool.poetry.extras]
+tests = ["mongomock"]
+mongo = ["pymongo"]
+http = ["requests"]
+server-api = ["flask"]
+server-app = ["flask", "Flask-Nav", "Flask-MongoEngine", "gunicorn", "flask-paginate"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."console_scripts"]
+"abcd" = "abcd.frontends.commandline:main"
+
+[tool.black]
+line-length = 88

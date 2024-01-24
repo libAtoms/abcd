@@ -383,7 +383,7 @@ class OpenSearchDatabase(AbstractABCD):
         """
         self.client.indices.refresh(index=self.index_name)
 
-    def save_bulk(self, actions: Iterable):
+    def save_bulk(self, actions: Iterable, **kwargs):
         """
         Save a collection of documents in bulk.
 
@@ -392,13 +392,22 @@ class OpenSearchDatabase(AbstractABCD):
         actions: Iterable
             Documents to be saved.
         """
-        helpers.bulk(client=self.client, actions=actions, index=self.index_name)
+        request_timeout = kwargs.get("request_timeout", 30)
+        chunk_size = kwargs.get("chunk_size", 500)
+        helpers.bulk(
+            client=self.client,
+            actions=actions,
+            index=self.index_name,
+            chunk_size=chunk_size,
+            request_timeout=request_timeout,
+        )
 
     def push(
         self,
         atoms: Union[Atoms, Iterable],
         extra_info: Union[dict, str, list, None] = None,
         store_calc: bool = True,
+        **kwargs,
     ):
         """
         Save data from atoms object(s) to database.
@@ -446,7 +455,7 @@ class OpenSearchDatabase(AbstractABCD):
                 )
                 actions.append(data.data)
                 actions[-1]["derived"] = data.derived
-            self.save_bulk(actions)
+            self.save_bulk(actions, **kwargs)
 
     def upload(
         self,

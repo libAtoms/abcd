@@ -7,12 +7,18 @@ if [[ -z $OPENSEARCH_VERSION ]]; then
   exit 1
 fi
 
+OPENSEARCH_REQUIRED_VERSION="latest"
+# Starting in 2.12.0, security demo configuration script requires an initial admin password
+if [ "$OPENSEARCH_VERSION" != "$OPENSEARCH_REQUIRED_VERSION" ]; then
+  OPENSEARCH_INITIAL_ADMIN_PASSWORD="admin"
+fi
+
 for (( node=1; node<=${NODES-1}; node++ ))
 do
   port=$((PORT + $node - 1))
 
   if [[ "$SECURITY_ENABLED" == "true" ]]; then
-    healthcmd="curl -vvv -s --insecure -u admin:admin --fail https://localhost:$port/_cluster/health || exit 1"
+    healthcmd="curl -vvv -s --insecure -u admin:$OPENSEARCH_INITIAL_ADMIN_PASSWORD --fail https://localhost:$port/_cluster/health || exit 1"
     security=($(cat <<-END
 
 END
@@ -34,6 +40,7 @@ END
     --env discovery.type=single-node \
     --env bootstrap.memory_lock=true \
     --env "OPENSEARCH_JAVA_OPTS=-Xms4g -Xmx4g" \
+    --env OPENSEARCH_INITIAL_ADMIN_PASSWORD=$OPENSEARCH_INITIAL_ADMIN_PASSWORD \
     "${security[@]}" \
     --publish "${port}:${port}" \
     --ulimit nofile=65536:65536 \

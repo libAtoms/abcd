@@ -20,10 +20,14 @@ class CLI(unittest.TestCase):
         cls.security_enabled = os.getenv("security_enabled") == "true"
         cls.port = int(os.environ["port"])
         cls.host = "localhost"
+        if os.environ["opensearch-version"] == "latest":
+            cls.credential = "admin:myStrongPassword123!"
+        else:
+            cls.credential = "admin:admin"
 
         logging.basicConfig(level=logging.INFO)
 
-        url = f"opensearch://admin:admin@{cls.host}:{cls.port}"
+        url = f"opensearch://{cls.credential}@{cls.host}:{cls.port}"
         if not cls.security_enabled:
             url += " --disable_ssl"
         try:

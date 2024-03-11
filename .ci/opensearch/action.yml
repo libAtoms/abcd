@@ -17,10 +17,10 @@ inputs:
     description: 'Port where you want to run OpenSearch'
     required: false
     default: 9200
-  opensearch_password:
+  opensearch-initial-admin-password:
     description: 'The password for the user admin in your cluster'
     required: false
-    default: 'admin'
+    default: 'myStrongPassword123!'
 
 runs:
   using: 'docker'
@@ -30,3 +30,4 @@ runs:
     NODES: ${{ inputs.nodes }}
     PORT: ${{ inputs.port }}
     SECURITY_ENABLED: ${{ inputs.security-enabled }}
+    OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${{ inputs.opensearch-initial-admin-password }}

@@ -49,6 +49,7 @@ jobs:
         env:
           port: 9250
           security_enabled: ${{ matrix.security-enabled }}
+          opensearch-version: ${{ matrix.opensearch }}
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.4.1

@@ -39,7 +39,6 @@ class OpenSearch(unittest.TestCase):
             abcd = ABCD.from_url(
                 url,
                 index_name="test_index",
-                analyse_schema=False,
                 use_ssl=cls.security_enabled,
             )
         except (ConnectionError, ConnectionResetError):
@@ -47,7 +46,6 @@ class OpenSearch(unittest.TestCase):
             abcd = ABCD.from_url(
                 url,
                 index_name="test_index",
-                analyse_schema=False,
                 use_ssl=cls.security_enabled,
             )
 

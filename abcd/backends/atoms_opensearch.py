@@ -9,8 +9,6 @@ from pathlib import Path
 
 from ase import Atoms
 from ase.io import iread
-from luqum.parser import parser
-from luqum.elasticsearch import SchemaAnalyzer, ElasticsearchQueryBuilder
 from opensearchpy import OpenSearch, helpers, AuthenticationException, ConnectionTimeout
 
 from abcd.backends import utils
@@ -34,55 +32,18 @@ map_types = {
 
 
 class OpenSearchQuery(AbstractQuerySet):
-    """
-    Class to parse and build queries for OpenSearch.
-
-    Attributes
-    ----------
-    query_builder: ElasticsearchQueryBuilder
-        Query builder to convert a Tree in an OpenSearch query.
-    """
-
-    def __init__(
-        self,
-        client: Union[OpenSearch, None] = None,
-        index_name: Union[str, None] = None,
-        analyse_schema: bool = False,
-    ):
-        """ "
-        Initialises class.
-
-        Parameters
-        ----------
-        client: Union[OpenSearch, None]
-            OpenSearch client, used for if analyse_schema is `True` to
-            characterise the schema. Default is `None`.
-        index_name: Union[str, None]
-            Name of OpenSearch index to be analysed, used if analyse_schema
-            is `True` to characterise the schema. Default is `None`.
-        analyse_schema: bool, optional
-            Whether to analyse the schema, as defined by the index_name and client.
-            Default is `False`.
-        """
-        if analyse_schema and client is not None and index_name is not None:
-            schema = client.indices.get_mapping()[index_name]
-            schema_analizer = SchemaAnalyzer(schema)
-            self.query_builder = ElasticsearchQueryBuilder(
-                **schema_analizer.query_builder_options()
-            )
-        else:
-            self.query_builder = ElasticsearchQueryBuilder()
+    """Class to parse and build queries for OpenSearch."""
 
     def __call__(self, query: Union[dict, str, list, None]) -> Union[dict, None]:
         """
-        Parses and builds queries from strings using ElasticsearchQueryBuilder.
+        Parses and builds queries for OpenSearch.
 
         Parameters
         ----------
         query: Union[dict, str, list, None]
-            Query to be parsed for OpenSearch. If given as a dictionary,
-            the query is left unchanged. If given as a string, the
-            ElasticsearchQueryBuilder is used to build the query.
+            Query to be parsed for OpenSearch. If passed as a dictionary, the query is
+            left unchanged. If passed a string or list, the query is treated as a query
+            string, based on Lucene query syntax.
 
         Returns
         -------
@@ -91,13 +52,9 @@ class OpenSearchQuery(AbstractQuerySet):
         """
         if not query:
             query = self.get_default_query()
-        logger.info("parsed query: %s", query)
 
-        if isinstance(query, dict):
-            return query
         if isinstance(query, str):
-            tree = parser.parse(query)
-            return self.query_builder(tree)
+            return self.build_query_string(query)
         if isinstance(query, list):
             if len(query) == 0:
                 return None
@@ -105,10 +62,27 @@ class OpenSearchQuery(AbstractQuerySet):
                 return None
             separator = " AND "
             joined_query = separator.join(query)
-            tree = parser.parse(joined_query)
-            return self.query_builder(tree)
+            return self.build_query_string(joined_query)
 
+        logger.info("parsed query: %s", query)
         return query if query else None
+
+    @staticmethod
+    def build_query_string(query: str) -> dict:
+        """
+        Build query_string (Lucene syntax) query.
+
+        Parameters
+        ----------
+        query : str
+            Query with Lucene syntax.
+
+        Returns
+        -------
+        dict
+            Parsed query for query_string query.
+        """
+        return {"query_string": {"query": query}}
 
     @staticmethod
     def get_default_query() -> dict:
@@ -254,7 +228,6 @@ class OpenSearchDatabase(AbstractABCD):
         index_name: str = "atoms",
         username: str = "admin",
         password: str = "admin",
-        analyse_schema: bool = True,
         **kwargs,
     ):
         """
@@ -275,9 +248,6 @@ class OpenSearchDatabase(AbstractABCD):
             OpenSearch username. Default is `admin`.
         password: str, optional
             OpenSearch password. Default is `admin`.
-        analyse_schema: bool, optional
-            Whether to analyse the OpenSearch schema when building queries.
-            Default is `True`.
         """
         super().__init__()
 
@@ -314,7 +284,7 @@ class OpenSearchDatabase(AbstractABCD):
         self.db = db_name
         self.index_name = index_name
         self.create()
-        self.parser = OpenSearchQuery(self.client, self.index_name, analyse_schema)
+        self.parser = OpenSearchQuery()
 
     def info(self):
         """

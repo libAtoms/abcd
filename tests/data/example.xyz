@@ -1,4 +1,4 @@
 2
-Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t _ e s t" pbc="F F F"
+Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t _ e s t" pbc="F F F" energy=-101.9
 Si       0.00000000       1.00000000       2.00000000
 Si       4.00000000       5.00000000       6.00000000

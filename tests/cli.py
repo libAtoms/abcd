@@ -46,4 +46,22 @@ class CLI(unittest.TestCase):
         summary = subprocess.run(
             "abcd summary", shell=True, check=True, capture_output=True, text=True
         )
-        assert "Total number of configurations: 1" in summary.stdout
+        assert "Total number of configurations:" in summary.stdout
+
+    def test_query(self):
+        """
+        Test lucene-style query.
+        """
+        class_path = os.path.normpath(os.path.abspath(__file__))
+        data_file_1 = os.path.dirname(class_path) + "/data/example.xyz"
+        data_file_2 = os.path.dirname(class_path) + "/data/example_2.xyz"
+        subprocess.run(f"abcd upload {data_file_1}", shell=True, check=True)
+        subprocess.run(f"abcd upload {data_file_2}", shell=True, check=True)
+        summary = subprocess.run(
+            "abcd show -p n_atoms -q 'n_atoms : 2'", shell=True, check=True, capture_output=True, text=True
+        )
+        assert "2" in summary.stdout and "3" not in summary.stdout
+        summary = subprocess.run(
+            "abcd show -p n_atoms -q 'n_atoms : 3'", shell=True, check=True, capture_output=True, text=True
+        )
+        assert "3" in summary.stdout and "2" not in summary.stdout

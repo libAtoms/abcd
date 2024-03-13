@@ -203,6 +203,8 @@ server.add_argument(
     "-u", "--url", help="Url to run the server.", default="http://localhost:5000"
 )
 
+refresh_parser = subparsers.add_parser("refresh", help="refresh database")
+refresh_parser.set_defaults(callback_func=commands.refresh)
 
 def main(args=None):
     kwargs = parser.parse_args(args).__dict__

@@ -330,7 +330,7 @@ class OpenSearchDatabase(AbstractABCD):
         else:
             host, port = None, None
 
-        self.client.indices.refresh(index=self.index_name)
+        self.refresh()
         return {
             "host": host,
             "port": port,

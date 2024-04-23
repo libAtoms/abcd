@@ -9,7 +9,13 @@ from pathlib import Path
 
 from ase import Atoms
 from ase.io import iread
-from opensearchpy import OpenSearch, helpers, AuthenticationException, ConnectionTimeout
+from opensearchpy import (
+    OpenSearch,
+    helpers,
+    AuthenticationException,
+    ConnectionTimeout,
+    RequestError,
+)
 
 from abcd.backends import utils
 from abcd.database import AbstractABCD
@@ -533,8 +539,7 @@ class OpenSearchDatabase(AbstractABCD):
     def property(self, name, query: Union[dict, str, None] = None) -> list:
         """
         Gets all values of a specified property for matching documents in the
-        database. This method is very slow, so it is preferable to use
-        alternative methods where possible, such as count_property.
+        database. Alternative methods, such as count_property, may be faster.
 
         Parameters
         ----------
@@ -543,24 +548,39 @@ class OpenSearchDatabase(AbstractABCD):
 
         Returns
         -------
-        List of values for the specified property for all matching documents.
+        list
+            List of values for the specified property for all matching documents.
         """
         query = self.parser(query)
         query = {
             "query": query,
         }
 
-        return [
-            hit["_source"][format(name)]
-            for hit in helpers.scan(
-                self.client,
-                index=self.index_name,
-                query=query,
-                stored_fields=format(name),
-                _source=format(name),
-            )
-            if format(name) in hit["_source"]
-        ]
+        try:
+            return [
+                hit["fields"][format(name)][0]
+                for hit in helpers.scan(
+                    self.client,
+                    index=self.index_name,
+                    query=query,
+                    _source=False,
+                    stored_fields="_none_",
+                    docvalue_fields=[format(name)],
+                )
+                if "fields" in hit and format(name) in hit["fields"]
+            ]
+        except RequestError:
+            return [
+                hit["_source"][format(name)]
+                for hit in helpers.scan(
+                    self.client,
+                    index=self.index_name,
+                    query=query,
+                    stored_fields=format(name),
+                    _source=format(name),
+                )
+                if format(name) in hit["_source"]
+            ]
 
     def count_property(self, name, query: Union[dict, str, None] = None) -> dict:
         """

@@ -235,7 +235,7 @@ class OpenSearch(unittest.TestCase):
 
         xyz_1 = StringIO(
             """2
-            Properties=species:S:1:pos:R:3 s="sadf" prop_1="test_1" pbc="F F F"
+            Properties=species:S:1:pos:R:3 energy=-5.0 prop_1="test_1"
             Si       0.00000000       0.00000000       0.00000000
             Si       0.00000000       0.00000000       0.00000000
             """
@@ -244,11 +244,11 @@ class OpenSearch(unittest.TestCase):
         atoms_1 = read(xyz_1, format="extxyz")
         assert isinstance(atoms_1, Atoms)
         atoms_1.set_cell([1, 1, 1])
-        self.abcd.push(atoms_1)
+        self.abcd.push(atoms_1, store_calc=False)
 
         xyz_2 = StringIO(
             """2
-            Properties=species:S:1:pos:R:3 s="sadf" prop_2="test_2" pbc="F F F"
+            Properties=species:S:1:pos:R:3 energy=-10.0 prop_2="test_2"
             Si       0.00000000       0.00000000       0.00000000
             Si       0.00000000       0.00000000       0.00000000
             """
@@ -257,12 +257,17 @@ class OpenSearch(unittest.TestCase):
         atoms_2 = read(xyz_2, format="extxyz")
         assert isinstance(atoms_2, Atoms)
         atoms_2.set_cell([1, 1, 1])
-        self.abcd.push(atoms_2)
+        self.abcd.push(atoms_2, store_calc=False)
 
         self.abcd.refresh()
         prop = self.abcd.property("prop_1")
         expected_prop = ["test_1"]
         self.assertEqual(prop, expected_prop)
+
+        prop = self.abcd.property("energy")
+        expected_prop = [-5.0, -10.0]
+        self.assertEqual(prop[0], expected_prop[0])
+        self.assertEqual(prop[1], expected_prop[1])
 
     def test_properties(self):
         """

@@ -515,7 +515,7 @@ class OpenSearchDatabase(AbstractABCD):
         ):
             yield AtomsModel(None, None, hit["_source"]).to_ase()
 
-    def count(self, query: Union[dict, str, None] = None) -> int:
+    def count(self, query: Union[dict, str, None] = None, timeout=30.0) -> int:
         """
         Counts number of documents in the database.
 
@@ -523,6 +523,8 @@ class OpenSearchDatabase(AbstractABCD):
         ----------
         query: Union[dict, str, None]
             Query to filter documents to be counted. Default is `None`.
+        timeout: float
+            Timeout for request in seconds.
 
         Returns
         -------
@@ -534,7 +536,9 @@ class OpenSearchDatabase(AbstractABCD):
             "query": query,
         }
 
-        return self.client.count(index=self.index_name, body=body)["count"]
+        return self.client.count(index=self.index_name, body=body, timeout=timeout)[
+            "count"
+        ]
 
     def property(self, name, query: Union[dict, str, None] = None) -> list:
         """

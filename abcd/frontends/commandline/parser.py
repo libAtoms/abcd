@@ -206,6 +206,7 @@ server.add_argument(
 refresh_parser = subparsers.add_parser("refresh", help="refresh database")
 refresh_parser.set_defaults(callback_func=commands.refresh)
 
+
 def main(args=None):
     kwargs = parser.parse_args(args).__dict__
 

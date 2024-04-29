@@ -4,6 +4,7 @@ import os
 import numpy as np
 
 from abcd.frontends.commandline.decorators import check_remote, init_config, init_db
+from abcd.backends.atoms_opensearch import OpenSearchDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +222,13 @@ def key_delete(*, db, query, yes, keys, **kwargs):
     keys = " ".join(keys)
     data = parser.parse(keys)
 
-    query = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
+    if isinstance(db, OpenSearchDatabase):
+        query = [
+            f"{query} AND ({' OR '.join([f'{key}:*' for key in data.keys()])})"
+            for query in query
+        ]
+    else:
+        query = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
 
     if not yes:
         print(
@@ -231,7 +238,7 @@ def key_delete(*, db, query, yes, keys, **kwargs):
         )
         exit(1)
 
-    for k in keys:
+    for k in data.keys():
         db.delete_property(k, query=query)
 
 

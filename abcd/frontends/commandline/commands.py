@@ -185,9 +185,18 @@ def key_add(*, db, query, keys, **kwargs):
     data = parser.parse(keys)
 
     if query:
-        test = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
+        if isinstance(db, OpenSearchDatabase):
+            test = [
+                f"{query} AND ({' OR '.join([f'{key}:*' for key in data.keys()])})"
+                for query in query
+            ]
+        else:
+            test = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
     else:
-        test = ("OR", *(("NAME", key) for key in data.keys()))
+        if isinstance(db, OpenSearchDatabase):
+            test = ' OR '.join([f"{key}:*" for key in data.keys()])
+        else:
+            test = ("OR", *(("NAME", key) for key in data.keys()))
 
     if db.count(query=test):
         print(

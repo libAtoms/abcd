@@ -560,6 +560,8 @@ class OpenSearchDatabase(AbstractABCD):
             "query": query,
         }
 
+        # Try to use docvalue_fields to avoid loading entire document
+        # But not all datatypes supported by default
         try:
             return [
                 hit["fields"][format(name)][0]

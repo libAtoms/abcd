@@ -540,53 +540,109 @@ class OpenSearchDatabase(AbstractABCD):
             "count"
         ]
 
-    def property(self, name, query: Union[dict, str, None] = None) -> list:
+    def _get_props_from_source(
+        self,
+        names: Union[str, list[str]],
+        query: Union[dict, str, None] = None,
+    ) -> dict:
         """
-        Gets all values of a specified property for matching documents in the
-        database. Alternative methods, such as count_property, may be faster.
+        Gets all values of specified properties using the original data from _source.
 
         Parameters
         ----------
+        names: Union[str, list[str]]
+            Name or list of names of properties to return.
         query: Union[dict, str, None]
             Query to filter documents to get properties from. Default is `None`.
 
         Returns
         -------
-        list
-            List of values for the specified property for all matching documents.
+        dict
+            Dictionary of lists of values for the specified properties.
+        """
+        props = {}
+        hits = [
+            dict(hit["_source"].items())
+            for hit in helpers.scan(
+                self.client,
+                index=self.index_name,
+                query=query,
+                stored_fields=names,
+                _source=names,
+            )
+            if "_source" in hit and all(name in hit["_source"] for name in names)
+        ]
+        for name in names:
+            props[name] = [hit[name] for hit in hits]
+        return props
+
+    def property(
+        self,
+        names: Union[str, list[str]],
+        allow_flatten: bool = True,
+        query: Union[dict, str, None] = None,
+    ) -> Union[dict, list]:
+        """
+        Gets all values of specified properties for matching documents in the database.
+
+        Parameters
+        ----------
+        names: Union[str, list[str]]
+            Name or list of names of properties to return.
+        allow_flatten: bool = True
+            Whether to allow arrays to be returned flattened. There is no guarantee
+            for the order of returned values. Default is `True`.
+        query: Union[dict, str, None]
+            Query to filter documents to get properties from. Default is `None`.
+
+        Returns
+        -------
+        Union[dict, list]
+            Dictionary of lists of values for the specified properties, or list
+            if only one property is given.
         """
         query = self.parser(query)
         query = {
             "query": query,
         }
 
+        if isinstance(names, str):
+            names = [names]
+        names = [format(name) for name in names]
+
         # Try to use docvalue_fields to avoid loading entire document
         # But not all datatypes supported by default
-        try:
-            return [
-                hit["fields"][format(name)][0]
-                for hit in helpers.scan(
-                    self.client,
-                    index=self.index_name,
-                    query=query,
-                    _source=False,
-                    stored_fields="_none_",
-                    docvalue_fields=[format(name)],
-                )
-                if "fields" in hit and format(name) in hit["fields"]
-            ]
-        except RequestError:
-            return [
-                hit["_source"][format(name)]
-                for hit in helpers.scan(
-                    self.client,
-                    index=self.index_name,
-                    query=query,
-                    stored_fields=format(name),
-                    _source=format(name),
-                )
-                if format(name) in hit["_source"]
-            ]
+        if allow_flatten:
+            props = {}
+            try:
+                hits = [
+                    dict(hit["fields"].items())
+                    for hit in helpers.scan(
+                        self.client,
+                        index=self.index_name,
+                        query=query,
+                        _source=False,
+                        stored_fields="_none_",
+                        docvalue_fields=names,
+                    )
+                    if "fields" in hit and all(name in hit["fields"] for name in names)
+                ]
+                for name in names:
+                    props[name] = [
+                        hit[name][0] if len(hit[name]) == 1 else hit[name]
+                        for hit in hits
+                    ]
+
+            except RequestError:
+                props = self._get_props_from_source(names, query)
+
+        # Use _source to ensure arrays are not flattened
+        else:
+            props = self._get_props_from_source(names, query)
+
+        if len(names) == 1:
+            return props[names[0]]
+        return props
 
     def count_property(self, name, query: Union[dict, str, None] = None) -> dict:
         """

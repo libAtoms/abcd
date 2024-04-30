@@ -194,7 +194,7 @@ def key_add(*, db, query, keys, **kwargs):
             test = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
     else:
         if isinstance(db, OpenSearchDatabase):
-            test = ' OR '.join([f"{key}:*" for key in data.keys()])
+            test = " OR ".join([f"{key}:*" for key in data.keys()])
         else:
             test = ("OR", *(("NAME", key) for key in data.keys()))
 

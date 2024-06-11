@@ -2,7 +2,7 @@
 select = B,BLK,C,E,F,I,S,W
 max-complexity = 30
 max-line-length = 88
-ignore = E203,W503
+ignore = E203,W503 # ignore conflicts with black
 application-import-names =  abcd,tests
 import-order-style = google
 exclude = 

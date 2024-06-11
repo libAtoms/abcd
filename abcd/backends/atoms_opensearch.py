@@ -886,7 +886,7 @@ class OpenSearchDatabase(AbstractABCD):
         query = self.parser(query)
         logger.info("rename: query=%s, old=%s, new=%s", query, name, new_name)
 
-        script_txt = f"if (!ctx._source.containsKey(params.new_name)) {{ "
+        script_txt = "if (!ctx._source.containsKey(params.new_name)) {{ "
         script_txt += (
             f"ctx._source.{new_name} = ctx._source.{name};"
             " ctx._source.remove(params.name);"

@@ -190,12 +190,11 @@ def key_add(*, db, query, keys, **kwargs):
                 for query in query
             ]
         else:
-            test = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
+            test = ("AND", query, ("OR", *(("NAME", key) for key in data)))
+    elif isinstance(db, OpenSearchDatabase):
+        test = " OR ".join(f"{key}:*" for key in data)
     else:
-        if isinstance(db, OpenSearchDatabase):
-            test = " OR ".join(f"{key}:*" for key in data)
-        else:
-            test = ("OR", *(("NAME", key) for key in data.keys()))
+        test = ("OR", *(("NAME", key) for key in data))
 
     if db.count(query=test):
         print(
@@ -236,7 +235,7 @@ def key_delete(*, db, query, yes, keys, **kwargs):
             for query in query
         ]
     else:
-        query = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
+        query = ("AND", query, ("OR", *(("NAME", key) for key in data)))
 
     if not yes:
         print(
@@ -246,7 +245,7 @@ def key_delete(*, db, query, yes, keys, **kwargs):
         )
         exit(1)
 
-    for k in data.keys():
+    for k in data:
         db.delete_property(k, query=query)
 
 

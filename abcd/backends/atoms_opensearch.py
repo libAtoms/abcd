@@ -386,7 +386,7 @@ class OpenSearchDatabase(AbstractABCD):
         Parameters
         ----------
         atoms: Union[Atoms, Iterable]
-        extra_info: Optional[dict, str], optional
+        extra_info: Optional[Union[dict, str]], optional
             Extra information to store in the document with the atoms data.
             Default is `None`.
         store_calc: bool, optional

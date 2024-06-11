@@ -21,8 +21,7 @@ def login(*, config, name, url, disable_ssl=False, **kwargs):
     db = ABCD.from_url(url=url, use_ssl=(not disable_ssl))
     info = db.info()
 
-    config["url"] = url
-    config["use_ssl"] = not disable_ssl
+    config.update(url=url, use_ssl=not disable_ssl)
     config.save()
 
     print("Successfully connected to the database!")
@@ -187,21 +186,21 @@ def key_add(*, db, query, keys, **kwargs):
     if query:
         if isinstance(db, OpenSearchDatabase):
             test = [
-                f"{query} AND ({' OR '.join([f'{key}:*' for key in data.keys()])})"
+                f"{query} AND ({' OR '.join(f'{key}:*' for key in data)})"
                 for query in query
             ]
         else:
             test = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
     else:
         if isinstance(db, OpenSearchDatabase):
-            test = " OR ".join([f"{key}:*" for key in data.keys()])
+            test = " OR ".join(f"{key}:*" for key in data)
         else:
             test = ("OR", *(("NAME", key) for key in data.keys()))
 
     if db.count(query=test):
         print(
-            "The new key already exist for the given query! "
-            "Please make sure that the target key name don't exist"
+            "The new key already exists for the given query! "
+            "Please make sure that the target key name doesn't exist"
         )
         exit(1)
 
@@ -233,7 +232,7 @@ def key_delete(*, db, query, yes, keys, **kwargs):
 
     if isinstance(db, OpenSearchDatabase):
         query = [
-            f"{query} AND ({' OR '.join([f'{key}:*' for key in data.keys()])})"
+            f"{query} AND ({' OR '.join(f'{key}:*' for key in data)})"
             for query in query
         ]
     else:

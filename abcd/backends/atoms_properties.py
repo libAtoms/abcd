@@ -121,7 +121,7 @@ class Properties:
                     "`struct_name_label` must be specified if store_struct_file is"
                     " True."
                 )
-            self.struct_name_label = struct_name_label            
+            self.struct_name_label = struct_name_label
             self.set_struct_files()
 
     def _separate_units(self):
@@ -175,15 +175,12 @@ class Properties:
         -------
         Filename for the current structure.
         """
-        if struct_name is None:
-            raise ValueError("`struct_name` must be specified")
         if "{struct_name}" not in self.struct_file_template:
             raise ValueError(
                 "'struct_name' must be a variable in the template file: "
                 f"{self.struct_file_template}"
             )
-        else:
-            return eval(f"f'{self.struct_file_template}'")
+        return eval(f"f'{self.struct_file_template}'")
 
     def to_list(self) -> list[dict]:
         """

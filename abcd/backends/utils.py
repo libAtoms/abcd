@@ -12,7 +12,7 @@ def histogram(name, data, **kwargs):
     if not data:
         return None
 
-    if data and isinstance(data, list):
+    if isinstance(data, list):
         ptype = type(data[0])
 
         if not all(isinstance(x, ptype) for x in data):

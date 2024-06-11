@@ -267,9 +267,7 @@ def server(*, abcd_url, url, api_only, **kwargs):
     from urllib.parse import urlparse
     from abcd.server.app import create_app
 
-    logger.info(
-        "SERVER -  abcd: %s, url: %s, api_only: %s", abcd_url, url, api_only
-    )
+    logger.info("SERVER -  abcd: %s, url: %s, api_only: %s", abcd_url, url, api_only)
 
     if api_only:
         print("Not implemented yet!")

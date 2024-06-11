@@ -174,13 +174,14 @@ class AtomsModel(AbstractModel):
         return obj
 
     @property
-    def _id(self):
+    def _id(self) -> Union[str, None]:
         """
-        Gets the OpenSearch document ID stored in data.
+        Get the OpenSearch document ID stored in data.
 
         Returns
         -------
-        Current document ID.
+        Union[str, None]
+            Current document ID.
         """
         return self.get("_id", None)
 

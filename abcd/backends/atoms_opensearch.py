@@ -196,7 +196,7 @@ class AtomsModel(AbstractModel):
             if not self._id:
                 self._client.index(index=self._index_name, body=body)
             else:
-                body.pop("_id", None)
+                del body["_id"]
                 body = {"doc": body}
                 self._client.update(index=self._index_name, id=self._id, body=body)
 
@@ -281,11 +281,11 @@ class OpenSearchDatabase(AbstractABCD):
             info = self.client.info()
             logger.info("DB info: %s", info)
 
-        except AuthenticationException:
-            raise abcd.errors.AuthenticationError()
+        except AuthenticationException as err:
+            raise abcd.errors.AuthenticationError() from err
 
-        except ConnectionTimeout:
-            raise abcd.errors.TimeoutError()
+        except ConnectionTimeout as err:
+            raise abcd.errors.TimeoutError() from err
 
         self.db = db_name
         self.index_name = index_name
@@ -677,9 +677,9 @@ class OpenSearchDatabase(AbstractABCD):
 
         prop = {}
 
-        for val in self.client.search(index=self.index_name, body=body,)[
-            "aggregations"
-        ][format(name)]["buckets"]:
+        for val in self.client.search(
+                index=self.index_name, body=body
+        )["aggregations"][format(name)]["buckets"]:
             prop[val["key"]] = val["doc_count"]
 
         return prop
@@ -728,8 +728,7 @@ class OpenSearchDatabase(AbstractABCD):
                 body=body,
             )
 
-            derived = ["info_keys", "derived_keys", "arrays_keys"]
-            for label in derived:
+            for label in ("info_keys", "derived_keys", "arrays_keys"):
                 count = res["aggregations"][label]["doc_count"]
                 if count > 0:
                     key = label.split("_", maxsplit=1)[0]
@@ -824,8 +823,7 @@ class OpenSearchDatabase(AbstractABCD):
                 body=body,
             )
 
-            derived = ["info_keys", "derived_keys", "arrays_keys"]
-            for label in derived:
+            for label in ("info_keys", "derived_keys", "arrays_keys"):
                 count = res["aggregations"][label]["doc_count"]
                 if count > 0:
                     properties[key] = {
@@ -980,9 +978,9 @@ class OpenSearchDatabase(AbstractABCD):
             host, port = None, None
 
         return (
-            "{}(".format(self.__class__.__name__)
-            + "url={}:{}, ".format(host, port)
-            + "index={}) ".format(self.index_name)
+            f"{self.__class__.__name__}("
+            f"url={host}:{port}, "
+            f"index={self.index_name}) "
         )
 
     def _repr_html_(self):

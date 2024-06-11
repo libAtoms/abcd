@@ -95,7 +95,7 @@ class Properties:
         self.df.replace({np.nan: None}, inplace=True)
 
         if units is not None:
-            for key in units.keys():
+            for key in units:
                 if key not in self.df.columns.values:
                     raise ValueError(
                         f"Invalid field name: {key}. Keys in `units` must "
@@ -109,20 +109,19 @@ class Properties:
 
         self.store_struct_file = store_struct_file
         if self.store_struct_file:
-            if struct_file_template is not None:
-                self.struct_file_template = struct_file_template
-            else:
+            if struct_file_template is None:
                 raise ValueError(
                     "`struct_file_template` must be specified if "
                     "store_struct_file is True."
                 )
-            if struct_name_label is not None:
-                self.struct_name_label = struct_name_label
-            else:
+            self.struct_file_template = struct_file_template
+
+            if struct_name_label is None:
                 raise ValueError(
                     "`struct_name_label` must be specified if store_struct_file is"
                     " True."
                 )
+            self.struct_name_label = struct_name_label            
             self.set_struct_files()
 
     def _separate_units(self):

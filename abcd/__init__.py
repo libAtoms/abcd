@@ -40,7 +40,8 @@ class ABCD(object):
 
             return MongoDatabase(db_name=db, **conn_settings, **kwargs)
 
-        if r.scheme == "opensearch":
+        r.scheme = ConnectionType[r.scheme]
+        if r.scheme is ConnectionType.opensearch:
             conn_settings = {
                 "host": r.hostname,
                 "port": r.port,

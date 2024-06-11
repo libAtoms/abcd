@@ -317,13 +317,13 @@ class OpenSearchDatabase(AbstractABCD):
             "type": "opensearch",
         }
 
-    def delete(self, query: Optional[dict, str] = None):
+    def delete(self, query: Optional[Union[dict, str]] = None):
         """
         Deletes documents from the database.
 
         Parameters
         ----------
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to be deleted. Default is `None`.
         """
         query = self.parser(query)
@@ -376,7 +376,7 @@ class OpenSearchDatabase(AbstractABCD):
     def push(
         self,
         atoms: Union[Atoms, Iterable],
-        extra_info: Optional[dict, str, list] = None,
+        extra_info: Optional[Union[dict, str, list]] = None,
         store_calc: bool = True,
         **kwargs,
     ):
@@ -386,7 +386,7 @@ class OpenSearchDatabase(AbstractABCD):
         Parameters
         ----------
         atoms: Union[Atoms, Iterable]
-        extra_info: Optional[Union[dict, str]], optional
+        extra_info: Optional[Union[dict, str, list]]
             Extra information to store in the document with the atoms data.
             Default is `None`.
         store_calc: bool, optional
@@ -431,7 +431,7 @@ class OpenSearchDatabase(AbstractABCD):
     def upload(
         self,
         file: Path,
-        extra_infos: Optional[Iterable, dict] = None,
+        extra_infos: Optional[Union[Iterable, dict]] = None,
         store_calc: bool = True,
     ):
         """
@@ -441,7 +441,7 @@ class OpenSearchDatabase(AbstractABCD):
         ----------
         file: Path
             Path to file to be uploaded
-        extra_infos: Optional[Iterable, dict]
+        extra_infos: Optional[Union[Iterable, dict]]
             Extra information to store in the document with the atoms data.
             Default is `None`.
         store_calc: bool, optional
@@ -463,14 +463,14 @@ class OpenSearchDatabase(AbstractABCD):
         self.push(data, extra_info, store_calc=store_calc)
 
     def get_items(
-        self, query: Optional[dict, str] = None
+        self, query: Optional[Union[dict, str]] = None
     ) -> Generator[dict, None, None]:
         """
         Get data as a dictionary from documents in the database.
 
         Parameters
         ----------
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to get data from. Default is `None`.
 
         Returns
@@ -490,14 +490,14 @@ class OpenSearchDatabase(AbstractABCD):
             yield {"_id": hit["_id"], **hit["_source"]}
 
     def get_atoms(
-        self, query: Optional[dict, str] = None
+        self, query: Optional[Union[dict, str]] = None
     ) -> Generator[Atoms, None, None]:
         """
         Get data as Atoms object from documents in the database.
 
         Parameters
         ----------
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to get data from. Default is `None`.
 
         Returns
@@ -516,13 +516,13 @@ class OpenSearchDatabase(AbstractABCD):
         ):
             yield AtomsModel(None, None, hit["_source"]).to_ase()
 
-    def count(self, query: Optional[dict, str] = None, timeout=30.0) -> int:
+    def count(self, query: Optional[Union[dict, str]] = None, timeout=30.0) -> int:
         """
         Counts number of documents in the database.
 
         Parameters
         ----------
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to be counted. Default is `None`.
         timeout: float
             Timeout for request in seconds.
@@ -544,7 +544,7 @@ class OpenSearchDatabase(AbstractABCD):
     def _get_props_from_source(
         self,
         names: Union[str, list[str]],
-        query: Optional[dict, str] = None,
+        query: Optional[Union[dict, str]] = None,
     ) -> dict:
         """
         Gets all values of specified properties using the original data from _source.
@@ -553,7 +553,7 @@ class OpenSearchDatabase(AbstractABCD):
         ----------
         names: Union[str, list[str]]
             Name or list of names of properties to return.
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to get properties from. Default is `None`.
 
         Returns
@@ -581,7 +581,7 @@ class OpenSearchDatabase(AbstractABCD):
         self,
         names: Union[str, list[str]],
         allow_flatten: bool = True,
-        query: Optional[dict, str] = None,
+        query: Optional[Union[dict, str]] = None,
     ) -> Union[dict, list]:
         """
         Gets all values of specified properties for matching documents in the database.
@@ -593,7 +593,7 @@ class OpenSearchDatabase(AbstractABCD):
         allow_flatten: bool = True
             Whether to allow arrays to be returned flattened. There is no guarantee
             for the order of returned values. Default is `True`.
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to get properties from. Default is `None`.
 
         Returns
@@ -645,7 +645,7 @@ class OpenSearchDatabase(AbstractABCD):
             return props[names[0]]
         return props
 
-    def count_property(self, name, query: Optional[dict, str] = None) -> dict:
+    def count_property(self, name, query: Optional[Union[dict, str]] = None) -> dict:
         """
         Counts values of a specified property for matching documents in the
         database. This method much faster than performing a Count on the list
@@ -653,7 +653,7 @@ class OpenSearchDatabase(AbstractABCD):
 
         Parameters
         ----------
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to count properties from. Default is `None`.
 
         Returns
@@ -685,14 +685,14 @@ class OpenSearchDatabase(AbstractABCD):
 
         return prop
 
-    def properties(self, query: Optional[dict, str] = None) -> dict:
+    def properties(self, query: Optional[Union[dict, str]] = None) -> dict:
         """
         Gets lists of all properties from matching documents, separated into
         info, derived, and array properties.
 
         Parameters
         ----------
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to get properties from. Default is `None`.
 
         Returns
@@ -778,13 +778,13 @@ class OpenSearchDatabase(AbstractABCD):
             return "vector({})".format(map_types[type(data[0])])
         return "scalar({})".format(map_types[type(data)])
 
-    def count_properties(self, query: Optional[dict, str] = None) -> dict:
+    def count_properties(self, query: Optional[Union[dict, str]] = None) -> dict:
         """
         Counts all properties from matching documents.
 
         Parameters
         ----------
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to count properties from. Default is `None`.
 
         Returns
@@ -837,7 +837,7 @@ class OpenSearchDatabase(AbstractABCD):
 
         return properties
 
-    def add_property(self, data: dict, query: Optional[dict, str] = None):
+    def add_property(self, data: dict, query: Optional[Union[dict, str]] = None):
         """
         Adds properties to matching documents.
 
@@ -845,7 +845,7 @@ class OpenSearchDatabase(AbstractABCD):
         ----------
         data: dict
             Property key-value pairs to be added to matching documents.
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to add properties to. Default is `None`.
         """
         query = self.parser(query)
@@ -870,7 +870,7 @@ class OpenSearchDatabase(AbstractABCD):
         )
 
     def rename_property(
-        self, name: str, new_name: str, query: Optional[dict, str] = None
+        self, name: str, new_name: str, query: Optional[Union[dict, str]] = None
     ):
         """
         Renames property for all matching documents.
@@ -881,7 +881,7 @@ class OpenSearchDatabase(AbstractABCD):
             Current name of property to be renamed.
         new_name: str
             New name of property to be renamed.
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to rename property. Default is `None`.
         """
         query = self.parser(query)
@@ -907,7 +907,7 @@ class OpenSearchDatabase(AbstractABCD):
 
         self.client.update_by_query(index=self.index_name, body=body)
 
-    def delete_property(self, name: str, query: Optional[dict, str] = None):
+    def delete_property(self, name: str, query: Optional[Union[dict, str]] = None):
         """
         Deletes property from all matching documents.
 
@@ -915,7 +915,7 @@ class OpenSearchDatabase(AbstractABCD):
         ----------
         name: str
             Name of property to be deleted from documents.
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents to have property deleted. Default is `None`.
         """
         query = self.parser(query)
@@ -941,7 +941,7 @@ class OpenSearchDatabase(AbstractABCD):
         self.client.update_by_query(index=self.index_name, body=body)
 
     def hist(
-        self, name: str, query: Optional[dict, str] = None, **kwargs
+        self, name: str, query: Optional[Union[dict, str]] = None, **kwargs
     ) -> Union[dict, None]:
         """
         Calculate histogram statistics for a property from all matching documents.
@@ -950,7 +950,7 @@ class OpenSearchDatabase(AbstractABCD):
         ----------
         name: str
             Name of property.
-        query: Optional[dict, str]
+        query: Optional[Union[dict, str]]
             Query to filter documents. Default is `None`.
 
         Returns

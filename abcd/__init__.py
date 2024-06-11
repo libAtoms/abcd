@@ -24,7 +24,7 @@ class ABCD(object):
         r = parse.urlparse(url)
         logger.info(r)
 
-        if r.scheme == "mongodb":
+        if ConnectionType[r.scheme] is ConnectionType.mongodb:
             conn_settings = {
                 "host": r.hostname,
                 "port": r.port,
@@ -40,8 +40,7 @@ class ABCD(object):
 
             return MongoDatabase(db_name=db, **conn_settings, **kwargs)
 
-        r.scheme = ConnectionType[r.scheme]
-        if r.scheme is ConnectionType.opensearch:
+        if ConnectionType[r.scheme] is ConnectionType.opensearch:
             conn_settings = {
                 "host": r.hostname,
                 "port": r.port,

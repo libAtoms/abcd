@@ -24,6 +24,9 @@ class ABCD(object):
         r = parse.urlparse(url)
         logger.info(r)
 
+        db = r.path.split("/")[1] if r.path else None
+        db = db if db else "abcd"
+
         if ConnectionType[r.scheme] is ConnectionType.mongodb:
             conn_settings = {
                 "host": r.hostname,
@@ -32,9 +35,6 @@ class ABCD(object):
                 "password": r.password,
                 "authSource": "admin",
             }
-
-            db = r.path.split("/")[1] if r.path else None
-            db = db if db else "abcd"
 
             from abcd.backends.atoms_pymongo import MongoDatabase
 
@@ -47,9 +47,6 @@ class ABCD(object):
                 "username": r.username,
                 "password": r.password,
             }
-
-            db = r.path.split("/")[1] if r.path else None
-            db = db if db else "abcd"
 
             from abcd.backends.atoms_opensearch import OpenSearchDatabase
 

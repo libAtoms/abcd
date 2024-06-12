@@ -15,6 +15,7 @@ NOT_GTHUB_ACTIONS = True
 if os.getenv("GITHUB_ACTIONS") == "true":
     NOT_GTHUB_ACTIONS = False
 
+
 @pytest.mark.skipif(NOT_GTHUB_ACTIONS, reason="Not running via GitHub Actions")
 class TestOpenSearch:
     """Testing live OpenSearch database functions."""
@@ -370,7 +371,10 @@ class TestOpenSearch:
         abcd.refresh()
         data = abcd.client.search(index="test_index")
         assert data["hits"]["hits"][0]["_source"]["TEST_PROPERTY"] == "TEST_VALUE"
-        assert "TEST_PROPERTY" in data["hits"]["hits"][0]["_source"]["derived"]["info_keys"]
+        assert (
+            "TEST_PROPERTY"
+            in data["hits"]["hits"][0]["_source"]["derived"]["info_keys"]
+        )
 
     def test_rename_property(self, abcd):
         """Test renaming a property for documents in the database."""
@@ -399,10 +403,11 @@ class TestOpenSearch:
         abcd.delete_property("TEST_PROPERTY")
         abcd.refresh()
         data = abcd.client.search(index="test_index")
-        with self.assertRaises(KeyError):
+        with pytest.raises(KeyError):
             data["hits"]["hits"][0]["_source"]["TEST_PROPERTY"]
-        self.assertNotIn(
-            "TEST_PROPERTY", data["hits"]["hits"][0]["_source"]["derived"]["info_keys"]
+        assert (
+            "TEST_PROPERTY"
+            not in data["hits"]["hits"][0]["_source"]["derived"]["info_keys"]
         )
 
     def test_get_items(self, abcd):
@@ -467,7 +472,9 @@ class TestOpenSearch:
                 if isinstance(expected_items[key], dict):
                     for dict_key in expected_items[key]:
                         if isinstance(expected_items[key][dict_key], list):
-                            assert set(expected_items[key][dict_key]) == set(items[key][dict_key])
+                            assert set(expected_items[key][dict_key]) == set(
+                                items[key][dict_key]
+                            )
                         else:
                             assert expected_items[key][dict_key] == items[key][dict_key]
                 else:

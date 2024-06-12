@@ -1,8 +1,11 @@
-import os
-import subprocess
-import unittest
 import logging
+import os
+from pathlib import Path
+import subprocess
 from time import sleep
+import unittest
+
+DATA_PATH = Path(__file__).parent / "data"
 
 
 class CLI(unittest.TestCase):
@@ -40,8 +43,7 @@ class CLI(unittest.TestCase):
         """
         Test summary output of uploaded data file.
         """
-        class_path = os.path.normpath(os.path.abspath(__file__))
-        data_file = os.path.dirname(class_path) + "/data/example.xyz"
+        data_file = DATA_PATH / "example.xyz"
 
         subprocess.run(
             f"abcd upload {data_file} -i -e 'test_data'", shell=True, check=True
@@ -58,9 +60,8 @@ class CLI(unittest.TestCase):
         """
         Test lucene-style query.
         """
-        class_path = os.path.normpath(os.path.abspath(__file__))
-        data_file_1 = os.path.dirname(class_path) + "/data/example.xyz"
-        data_file_2 = os.path.dirname(class_path) + "/data/example_2.xyz"
+        data_file_1 = DATA_PATH / "example.xyz"
+        data_file_2 = DATA_PATH / "example_2.xyz"
 
         subprocess.run(
             f"abcd upload {data_file_1} -i -e 'test_data'", shell=True, check=True
@@ -92,9 +93,8 @@ class CLI(unittest.TestCase):
         """
         Test lucene-style ranged query.
         """
-        class_path = os.path.normpath(os.path.abspath(__file__))
-        data_file_1 = os.path.dirname(class_path) + "/data/example.xyz"
-        data_file_2 = os.path.dirname(class_path) + "/data/example_2.xyz"
+        data_file_1 = DATA_PATH / "example.xyz"
+        data_file_2 = DATA_PATH / "example_2.xyz"
 
         subprocess.run(
             f"abcd upload {data_file_1} -i -e 'test_data'", shell=True, check=True

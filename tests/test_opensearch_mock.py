@@ -28,7 +28,7 @@ class TestOpenSearchMock:
         logging.basicConfig(level=logging.INFO)
 
         url = f"opensearch://admin:admin@{host}:{port}"
-        opensearch_abcd = ABCD.from_url(url, index_name="test_index", analyse_schema=False)
+        opensearch_abcd = ABCD.from_url(url, index_name="test_index", use_ssl=False)
         assert isinstance(opensearch_abcd, OpenSearchDatabase)
         return opensearch_abcd
 

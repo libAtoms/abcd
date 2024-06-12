@@ -13,6 +13,7 @@ NOT_GTHUB_ACTIONS = True
 if os.getenv("GITHUB_ACTIONS") == "true":
     NOT_GTHUB_ACTIONS = False
 
+
 @pytest.mark.skipif(NOT_GTHUB_ACTIONS, reason="Not running via GitHub Actions")
 class TestCli:
     """Testing OpenSearch database CLI integration."""
@@ -38,7 +39,7 @@ class TestCli:
         except subprocess.CalledProcessError:
             sleep(10)
             subprocess.run(f"abcd login {url}", shell=True, check=True)
-            
+
     def test_summary(self, abcd):
         """
         Test summary output of uploaded data file.

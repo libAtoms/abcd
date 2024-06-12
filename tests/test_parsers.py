@@ -130,8 +130,8 @@ class TestParsingExtras:
     @pytest.mark.parametrize(
         "string, expected",
         [
-            ('colon_string:"astring"', {'colon_string': 'astring'}),
-            ('colon_string_spaces : "astring"', {'colon_string_spaces': 'astring'}),
+            ('colon_string:"astring"', {"colon_string": "astring"}),
+            ('colon_string_spaces : "astring"', {"colon_string_spaces": "astring"}),
         ],
     )
     def test_colon_key_value_pairs(self, parser, string, expected):

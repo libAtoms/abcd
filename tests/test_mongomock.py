@@ -5,29 +5,25 @@ import unittest
 from ase.io import read
 from ase.atoms import Atoms
 import mongomock
+import pytest
 
 from abcd import ABCD
 
 
-class MongoMock(unittest.TestCase):
-    @classmethod
+class TestMongoMock:
+    @pytest.fixture(autouse=True)
     @mongomock.patch(servers=(("localhost", 27017),))
-    def setUpClass(cls):
+    def abcd(self):
         logging.basicConfig(level=logging.INFO)
         url = "mongodb://localhost"
-        abcd = ABCD.from_url(url)
-        abcd.print_info()
+        mongo_abcd = ABCD.from_url(url)
+        mongo_abcd.print_info()
+        return mongo_abcd
 
-        cls.abcd = abcd
+    def test_info(self, abcd):
+        print(abcd.info())
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.abcd.destroy()
-
-    def test_thing(self):
-        print(self.abcd.info())
-
-    def test_push(self):
+    def test_push(self, abcd):
         xyz = StringIO(
             """2
             Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t _ e s t" pbc="F F F"
@@ -40,13 +36,9 @@ class MongoMock(unittest.TestCase):
         assert isinstance(atoms, Atoms)
         atoms.set_cell([1, 1, 1])
 
-        self.abcd.destroy()
-        self.abcd.push(atoms)
-        new = list(self.abcd.get_atoms())[0]
+        abcd.destroy()
+        abcd.push(atoms)
+        new = list(abcd.get_atoms())[0]
 
         assert atoms == new
-        self.abcd.destroy()
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=1, exit=False)
+        abcd.destroy()

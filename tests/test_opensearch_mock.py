@@ -1,75 +1,60 @@
-from importlib import reload
 from io import StringIO
 import logging
 import os
-import unittest
 
 from ase.atoms import Atoms
 from ase.io import read
 from openmock import openmock
+import pytest
 
 from abcd import ABCD
-from abcd.backends import atoms_opensearch
-from abcd.backends.atoms_opensearch import AtomsModel
+from abcd.backends.atoms_opensearch import AtomsModel, OpenSearchDatabase
 
 
-class OpenSearchMock(unittest.TestCase):
-    """
-    Testing mock OpenSearch database functions.
-    """
+class TestOpenSearchMock:
+    """Testing mock OpenSearch database functions."""
 
-    @classmethod
+    @pytest.fixture(autouse=True)
     @openmock
-    def setUpClass(cls):
-        """
-        Set up database connection.
-        """
-        reload(atoms_opensearch)
-        from abcd.backends.atoms_opensearch import OpenSearchDatabase
+    def abcd(self):
+        """Set up database connection."""
 
         if "port" in os.environ:
-            cls.port = int(os.environ["port"])
+            port = int(os.environ["port"])
         else:
-            cls.port = 9200
-        cls.host = "localhost"
+            port = 9200
+        host = "localhost"
 
         logging.basicConfig(level=logging.INFO)
 
-        url = f"opensearch://admin:admin@{cls.host}:{cls.port}"
-        abcd = ABCD.from_url(url, index_name="test_index", analyse_schema=False)
-        assert isinstance(abcd, OpenSearchDatabase)
-        cls.abcd = abcd
+        url = f"opensearch://admin:admin@{host}:{port}"
+        opensearch_abcd = ABCD.from_url(url, index_name="test_index", analyse_schema=False)
+        assert isinstance(opensearch_abcd, OpenSearchDatabase)
+        return opensearch_abcd
 
-    @classmethod
-    def tearDownClass(cls):
-        """
-        Delete index from database.
-        """
-        cls.abcd.destroy()
-
-    def test_destroy(self):
+    def test_destroy(self, abcd):
         """
         Test destroying database index.
         """
-        self.assertTrue(self.abcd.client.indices.exists("test_index"))
-        self.abcd.destroy()
-        self.assertFalse(self.abcd.client.indices.exists("test_index"))
+        assert abcd.client.indices.exists("test_index") is True
+        abcd.destroy()
+        assert abcd.client.indices.exists("test_index") is False
 
-    def test_create(self):
+    def test_create(self, abcd):
         """
         Test creating database index.
         """
-        self.abcd.destroy()
-        self.abcd.create()
-        self.assertTrue(self.abcd.client.indices.exists("test_index"))
-        self.assertFalse(self.abcd.client.indices.exists("fake_index"))
+        abcd.destroy()
+        abcd.create()
+        assert abcd.client.indices.exists("test_index") is True
+        abcd.client.indices.exists("fake_index") is False
 
-    def test_push(self):
+    def test_push(self, abcd):
         """
         Test pushing atoms objects to database individually.
         """
-        self.abcd.destroy()
-        self.abcd.create()
+        abcd.destroy()
+        abcd.create()
         xyz_1 = StringIO(
             """2
             Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t _ e s t" pbc="F F F"
@@ -80,7 +65,7 @@ class OpenSearchMock(unittest.TestCase):
         atoms_1 = read(xyz_1, format="extxyz")
         assert isinstance(atoms_1, Atoms)
         atoms_1.set_cell([1, 1, 1])
-        self.abcd.push(atoms_1)
+        abcd.push(atoms_1)
 
         xyz_2 = StringIO(
             """2
@@ -96,17 +81,17 @@ class OpenSearchMock(unittest.TestCase):
         result = AtomsModel(
             None,
             None,
-            self.abcd.client.search(index="test_index")["hits"]["hits"][0]["_source"],
+            abcd.client.search(index="test_index")["hits"]["hits"][0]["_source"],
         ).to_ase()
-        self.assertEqual(atoms_1, result)
-        self.assertNotEqual(atoms_2, result)
+        assert atoms_1 == result
+        assert atoms_2 != result
 
-    def test_bulk(self):
+    def test_bulk(self, abcd):
         """
         Test pushing atoms object to database together.
         """
-        self.abcd.destroy()
-        self.abcd.create()
+        abcd.destroy()
+        abcd.create()
         xyz_1 = StringIO(
             """2
             Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t _ e s t" pbc="F F F"
@@ -131,28 +116,28 @@ class OpenSearchMock(unittest.TestCase):
         atoms_list = []
         atoms_list.append(atoms_1)
         atoms_list.append(atoms_2)
-        self.abcd.push(atoms_list)
-        self.assertEqual(self.abcd.count(), 2)
+        abcd.push(atoms_list)
+        assert abcd.count() == 2
 
         result_1 = AtomsModel(
             None,
             None,
-            self.abcd.client.search(index="test_index")["hits"]["hits"][0]["_source"],
+            abcd.client.search(index="test_index")["hits"]["hits"][0]["_source"],
         ).to_ase()
         result_2 = AtomsModel(
             None,
             None,
-            self.abcd.client.search(index="test_index")["hits"]["hits"][1]["_source"],
+            abcd.client.search(index="test_index")["hits"]["hits"][1]["_source"],
         ).to_ase()
-        self.assertEqual(atoms_1, result_1)
-        self.assertEqual(atoms_2, result_2)
+        assert atoms_1 == result_1
+        assert atoms_2 == result_2
 
-    def test_count(self):
+    def test_count(self, abcd):
         """
         Test counting the number of documents in the database.
         """
-        self.abcd.destroy()
-        self.abcd.create()
+        abcd.destroy()
+        abcd.create()
         xyz = StringIO(
             """2
             Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t _ e s t" pbc="F F F"
@@ -164,10 +149,6 @@ class OpenSearchMock(unittest.TestCase):
         atoms = read(xyz, format="extxyz")
         assert isinstance(atoms, Atoms)
         atoms.set_cell([1, 1, 1])
-        self.abcd.push(atoms)
-        self.abcd.push(atoms)
-        self.assertEqual(self.abcd.count(), 2)
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=1, exit=False)
+        abcd.push(atoms)
+        abcd.push(atoms)
+        assert abcd.count() == 2

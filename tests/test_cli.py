@@ -3,43 +3,43 @@ import os
 from pathlib import Path
 import subprocess
 from time import sleep
-import unittest
+
+import pytest
+
 
 DATA_PATH = Path(__file__).parent / "data"
 
+NOT_GTHUB_ACTIONS = True
+if os.getenv("GITHUB_ACTIONS") == "true":
+    NOT_GTHUB_ACTIONS = False
 
-class CLI(unittest.TestCase):
-    """
-    Testing OpenSearch database CLI integration.
-    """
+@pytest.mark.skipif(NOT_GTHUB_ACTIONS, reason="Not running via GitHub Actions")
+class TestCli:
+    """Testing OpenSearch database CLI integration."""
 
-    @classmethod
-    def setUpClass(cls):
-        """
-        Set up OpenSearch database connection and login with CLI.
-        """
-        if os.getenv("GITHUB_ACTIONS") != "true":
-            raise unittest.SkipTest("Only runs via GitHub Actions")
-        cls.security_enabled = os.getenv("security_enabled") == "true"
-        cls.port = int(os.environ["port"])
-        cls.host = "localhost"
+    @pytest.fixture(autouse=True)
+    def abcd(self):
+        """Set up OpenSearch database connection and login with CLI."""
+        security_enabled = os.getenv("security_enabled") == "true"
+        port = int(os.environ["port"])
+        host = "localhost"
         if os.environ["opensearch-version"] == "latest":
-            cls.credential = "admin:myStrongPassword123!"
+            credential = "admin:myStrongPassword123!"
         else:
-            cls.credential = "admin:admin"
+            credential = "admin:admin"
 
         logging.basicConfig(level=logging.INFO)
 
-        url = f"opensearch://{cls.credential}@{cls.host}:{cls.port}"
-        if not cls.security_enabled:
+        url = f"opensearch://{credential}@{host}:{port}"
+        if not security_enabled:
             url += " --disable_ssl"
         try:
             subprocess.run(f"abcd login {url}", shell=True, check=True)
         except subprocess.CalledProcessError:
             sleep(10)
             subprocess.run(f"abcd login {url}", shell=True, check=True)
-
-    def test_summary(self):
+            
+    def test_summary(self, abcd):
         """
         Test summary output of uploaded data file.
         """
@@ -56,7 +56,7 @@ class CLI(unittest.TestCase):
         assert "Total number of configurations" in summary.stdout
         subprocess.run(f"abcd delete -q 'test_data' -y", shell=True)
 
-    def test_query(self):
+    def test_query(self, abcd):
         """
         Test lucene-style query.
         """
@@ -89,7 +89,7 @@ class CLI(unittest.TestCase):
         assert "3" in summary.stdout and "2" not in summary.stdout
         subprocess.run(f"abcd delete -q 'test_data' -y", shell=True)
 
-    def test_range_query(self):
+    def test_range_query(self, abcd):
         """
         Test lucene-style ranged query.
         """

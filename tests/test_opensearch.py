@@ -140,8 +140,11 @@ class TestOpenSearch:
 
     def test_delete(self, abcd):
         """Test deleting all documents from database."""
+        abcd.destroy()
+        abcd.create()
         self.push_data(abcd)
         self.push_data(abcd)
+        abcd.refresh()
 
         assert abcd.count() == 2
         abcd.delete()

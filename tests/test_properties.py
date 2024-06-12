@@ -1,54 +1,52 @@
 import os
-import unittest
 
 from pandas import DataFrame
+import pytest
 
 from abcd.backends.atoms_properties import Properties
 
 
-class PropertiesTests(unittest.TestCase):
+class TestProperties:
     """Testing properties data reader"""
 
-    @classmethod
-    def setUpClass(cls):
-        """
-        Load example data file.
-        """
+    @pytest.fixture(autouse=True)
+    def property(self):
+        """Load example data file."""
         class_path = os.path.normpath(os.path.abspath(__file__))
         data_file = os.path.dirname(class_path) + "/data/examples.csv"
-        cls.property = Properties(data_file)
+        return Properties(data_file)
 
-    def test_dataframe(self):
+    def test_dataframe(self, property):
         """
         Test data correctly stored in pandas DataFrame.
         """
-        assert isinstance(self.property.df, DataFrame)
-        assert len(self.property.df) == 3
+        assert isinstance(property.df, DataFrame)
+        assert len(property.df) == 3
 
-    def test_specify_units(self):
+    def test_specify_units(self, property):
         """
         Test units can be specified manually, if they match existing fields.
         """
         input_units_1 = {"Integers": "items", "Floating": "seconds"}
         properties_1 = Properties(
-            data_file=self.property.data_file,
+            data_file=property.data_file,
             units=input_units_1,
         )
-        self.assertEqual(properties_1.units, input_units_1)
+        assert properties_1.units == input_units_1
 
         input_units_2 = {"Fake": "m"}
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             properties_1 = Properties(
-                data_file=self.property.data_file,
+                data_file=property.data_file,
                 units=input_units_2,
             )
 
-    def test_infer_units(self):
+    def test_infer_units(self, property):
         """
         Test units can be inferred from field names.
         """
         properties = Properties(
-            data_file=self.property.data_file,
+            data_file=property.data_file,
             infer_units=True,
         )
         expected_units = {"Comma units": "m", "Bracket units": "s"}
@@ -61,17 +59,17 @@ class PropertiesTests(unittest.TestCase):
             "Comma units",
             "Bracket units",
         ]
-        self.assertEqual(properties.units, expected_units)
-        self.assertEqual(list(properties.df.columns.values), expected_fields)
+        assert properties.units == expected_units
+        assert list(properties.df.columns.values) == expected_fields
 
-    def test_struct_file(self):
+    def test_struct_file(self, property):
         """
         Test structure file names can be inferred from a field.
         """
         struct_file_template = "test_{struct_name}_file.txt"
         struct_name_label = "Text"
         properties_1 = Properties(
-            data_file=self.property.data_file,
+            data_file=property.data_file,
             store_struct_file=True,
             struct_file_template=struct_file_template,
             struct_name_label=struct_name_label,
@@ -81,35 +79,35 @@ class PropertiesTests(unittest.TestCase):
             "test_test_file.txt",
             "test_data_file.txt",
         ]
-        self.assertIsInstance(properties_1.struct_files, list)
+        assert isinstance(properties_1.struct_files, list)
         for i, file in enumerate(expected_struct_files):
-            self.assertEqual(properties_1.struct_files[i], file)
+            assert properties_1.struct_files[i] == file
 
         invalid_template = "invalid_template"
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Properties(
-                data_file=self.property.data_file,
+                data_file=property.data_file,
                 store_struct_file=True,
                 struct_file_template=invalid_template,
                 struct_name_label=struct_name_label,
             )
 
         invalid_label = "label"
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Properties(
-                data_file=self.property.data_file,
+                data_file=property.data_file,
                 store_struct_file=True,
                 struct_file_template=struct_file_template,
                 struct_name_label=invalid_label,
             )
 
-    def test_to_list(self):
+    def test_to_list(self, property):
         """
         Test dataframe can be converted into a list of properties.
         """
-        self.assertEqual(len(self.property.to_list()), 3)
-        self.assertIsInstance(self.property.to_list(), list)
-        self.assertIsInstance(self.property.to_list()[0], dict)
+        assert len(property.to_list()) == 3
+        assert isinstance(property.to_list(), list)
+        assert isinstance(property.to_list()[0], dict)
         expected_property = {
             "Text": "Some",
             "Integers": 1,
@@ -119,9 +117,9 @@ class PropertiesTests(unittest.TestCase):
             "Comma units, m": 0,
             "Bracket units (s)": 0,
         }
-        self.assertEqual(self.property.to_list()[0], expected_property)
+        assert property.to_list()[0] == expected_property
 
-    def test_missing_data(self):
+    def test_missing_data(self, property):
         """
         Test missing data is not included in properties.
         """
@@ -133,14 +131,14 @@ class PropertiesTests(unittest.TestCase):
             "Comma units, m": 1,
             "Bracket units (s)": 1,
         }
-        self.assertEqual(self.property.to_list()[1], expected_property)
+        assert property.to_list()[1] == expected_property
 
-    def test_to_list_units(self):
+    def test_to_list_units(self, property):
         """
         Test units are included in properties when converting to a list.
         """
         properties_1 = Properties(
-            data_file=self.property.data_file,
+            data_file=property.data_file,
             infer_units=True,
         )
         expected_units = {"Comma units": "m", "Bracket units": "s"}
@@ -154,8 +152,4 @@ class PropertiesTests(unittest.TestCase):
             "Bracket units": 0,
             "units": expected_units,
         }
-        self.assertEqual(properties_1.to_list()[0], expected_property)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert properties_1.to_list()[0] == expected_property

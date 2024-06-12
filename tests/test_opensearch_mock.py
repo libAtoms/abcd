@@ -24,11 +24,20 @@ class TestOpenSearchMock:
         else:
             port = 9200
         host = "localhost"
+        security_enabled = os.getenv("security_enabled") == "true"
+        if os.environ["opensearch-version"] == "latest":
+            credential = "admin:myStrongPassword123!"
+        else:
+            credential = "admin:admin"
 
         logging.basicConfig(level=logging.INFO)
 
-        url = f"opensearch://admin:admin@{host}:{port}"
-        opensearch_abcd = ABCD.from_url(url, index_name="test_index", use_ssl=False)
+        url = f"opensearch://{credential}@{host}:{port}"
+        opensearch_abcd = ABCD.from_url(
+            url,
+            index_name="test_index",
+            use_ssl=security_enabled,
+        )
         assert isinstance(opensearch_abcd, OpenSearchDatabase)
         return opensearch_abcd
 
@@ -78,10 +87,9 @@ class TestOpenSearchMock:
         assert isinstance(atoms_2, Atoms)
         atoms_2.set_cell([1, 1, 1])
 
+        abcd.refresh()
         result = AtomsModel(
-            None,
-            None,
-            abcd.client.search(index="test_index")["hits"]["hits"][0]["_source"],
+            dict=abcd.client.search(index="test_index")["hits"]["hits"][0]["_source"],
         ).to_ase()
         assert atoms_1 == result
         assert atoms_2 != result
@@ -117,17 +125,14 @@ class TestOpenSearchMock:
         atoms_list.append(atoms_1)
         atoms_list.append(atoms_2)
         abcd.push(atoms_list)
+        abcd.refresh()
         assert abcd.count() == 2
 
         result_1 = AtomsModel(
-            None,
-            None,
-            abcd.client.search(index="test_index")["hits"]["hits"][0]["_source"],
+            dict=abcd.client.search(index="test_index")["hits"]["hits"][0]["_source"],
         ).to_ase()
         result_2 = AtomsModel(
-            None,
-            None,
-            abcd.client.search(index="test_index")["hits"]["hits"][1]["_source"],
+            dict=abcd.client.search(index="test_index")["hits"]["hits"][1]["_source"],
         ).to_ase()
         assert atoms_1 == result_1
         assert atoms_2 == result_2
@@ -151,4 +156,5 @@ class TestOpenSearchMock:
         atoms.set_cell([1, 1, 1])
         abcd.push(atoms)
         abcd.push(atoms)
+        abcd.refresh()
         assert abcd.count() == 2

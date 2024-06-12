@@ -3,7 +3,7 @@ name = "abcd"
 version = "0.6.0"
 description = "This is a package which helps to store and share atomistic data."
 authors = ["Adam Fekete", "Gabor Csanyi"]
-keywords=["ase", "database", "mongo", "flask", "opensearch"]
+keywords = ["ase", "database", "mongo", "flask", "opensearch"]
 readme = "README.md"
 homepage = "https://libatoms.github.io/abcd/"
 repository = "https://github.com/libatoms/abcd"
@@ -21,9 +21,11 @@ lark = "^1.1.9"
 
 [tool.poetry.group.dev.dependencies]
 mongomock = "^4.1.2"
+pytest = "^8.2.2"
+pytest-cov = "^5.0.0"
 
 [tool.poetry.extras]
-tests = ["mongomock"]
+tests = ["mongomock", "pytest", "pytest-cov"]
 mongo = ["pymongo"]
 http = ["requests"]
 server-api = ["flask"]

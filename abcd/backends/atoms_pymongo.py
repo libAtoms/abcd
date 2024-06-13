@@ -1,27 +1,23 @@
-import types
-import logging
-import numpy as np
-
-from typing import Union, Iterable
-from os import linesep
-from operator import itemgetter
-from collections import Counter
 from datetime import datetime
+import logging
+from os import linesep
+from pathlib import Path
+import types
+from typing import Union, Iterable
 
 from ase import Atoms
 from ase.io import iread
+from bson import ObjectId
+from pymongo import MongoClient
+import pymongo.errors
 
+from abcd.backends import utils
+from abcd.database import AbstractABCD
 import abcd.errors
 from abcd.model import AbstractModel
-from abcd.database import AbstractABCD
-from abcd.queryset import AbstractQuerySet
 from abcd.parsers import extras
+from abcd.queryset import AbstractQuerySet
 
-import pymongo.errors
-from pymongo import MongoClient
-from bson import ObjectId
-
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +131,15 @@ class MongoQuery(AbstractQuerySet):
             p = parser(ast)
             return self.visit(p)
 
+        elif isinstance(ast, list):
+            from abcd.parsers.queries import parser
+
+            if len(ast) == 0:
+                return {}
+            else:
+                ast = ("AND", *[parser(q) for q in ast])
+                return self.visit(ast)
+
         return self.visit(ast) if ast else {}
 
 
@@ -222,7 +227,6 @@ class MongoDatabase(AbstractABCD):
         self.collection.drop()
 
     def push(self, atoms: Union[Atoms, Iterable], extra_info=None, store_calc=True):
-
         if extra_info and isinstance(extra_info, str):
             extra_info = extras.parser.parse(extra_info)
 
@@ -234,15 +238,17 @@ class MongoDatabase(AbstractABCD):
             # self.collection.insert_one(data)
 
         elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-
-            for item in atoms:
+            for i, item in enumerate(atoms):
+                if isinstance(extra_info, list):
+                    info = extra_info[i]
+                else:
+                    info = extra_info
                 data = AtomsModel.from_atoms(
-                    self.collection, item, extra_info=extra_info, store_calc=store_calc
+                    self.collection, item, extra_info=info, store_calc=store_calc
                 )
                 data.save()
 
     def upload(self, file: Path, extra_infos=None, store_calc=True):
-
         if isinstance(file, str):
             file = Path(file)
 
@@ -435,9 +441,8 @@ class MongoDatabase(AbstractABCD):
         )
 
     def hist(self, name, query=None, **kwargs):
-
         data = self.property(name, query)
-        return histogram(name, data, **kwargs)
+        return utils.histogram(name, data, **kwargs)
 
     def exec(self, code, query=None):
         # TODO: Separate python environment with its own packages loaded
@@ -478,139 +483,6 @@ class MongoDatabase(AbstractABCD):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
-
-
-def histogram(name, data, **kwargs):
-    if not data:
-        return None
-
-    elif data and isinstance(data, list):
-
-        ptype = type(data[0])
-
-        if not all(isinstance(x, ptype) for x in data):
-            print("Mixed type error of the {} property!".format(name))
-            return None
-
-        if ptype == float:
-            bins = kwargs.get("bins", 10)
-            return _hist_float(name, data, bins)
-
-        elif ptype == int:
-            bins = kwargs.get("bins", 10)
-            return _hist_int(name, data, bins)
-
-        elif ptype == str:
-            return _hist_str(name, data, **kwargs)
-
-        elif ptype == datetime:
-            bins = kwargs.get("bins", 10)
-            return _hist_date(name, data, bins)
-
-        else:
-            print(
-                "{}: Histogram for list of {} types are not supported!".format(
-                    name, type(data[0])
-                )
-            )
-            logger.info(
-                "{}: Histogram for list of {} types are not supported!".format(
-                    name, type(data[0])
-                )
-            )
-
-    else:
-        logger.info(
-            "{}: Histogram for {} types are not supported!".format(name, type(data))
-        )
-        return None
-
-
-def _hist_float(name, data, bins=10):
-    data = np.array(data)
-    hist, bin_edges = np.histogram(data, bins=bins)
-
-    return {
-        "type": "hist_float",
-        "name": name,
-        "bins": bins,
-        "edges": bin_edges,
-        "counts": hist,
-        "min": data.min(),
-        "max": data.max(),
-        "median": data.mean(),
-        "std": data.std(),
-        "var": data.var(),
-    }
-
-
-def _hist_date(name, data, bins=10):
-    hist_data = np.array([t.timestamp() for t in data])
-    hist, bin_edges = np.histogram(hist_data, bins=bins)
-
-    fromtimestamp = datetime.fromtimestamp
-
-    return {
-        "type": "hist_date",
-        "name": name,
-        "bins": bins,
-        "edges": [fromtimestamp(d) for d in bin_edges],
-        "counts": hist,
-        "min": fromtimestamp(hist_data.min()),
-        "max": fromtimestamp(hist_data.max()),
-        "median": fromtimestamp(hist_data.mean()),
-        "std": fromtimestamp(hist_data.std()),
-        "var": fromtimestamp(hist_data.var()),
-    }
-
-
-def _hist_int(name, data, bins=10):
-    data = np.array(data)
-    delta = max(data) - min(data) + 1
-
-    if bins > delta:
-        bins = delta
-
-    hist, bin_edges = np.histogram(data, bins=bins)
-
-    return {
-        "type": "hist_int",
-        "name": name,
-        "bins": bins,
-        "edges": bin_edges,
-        "counts": hist,
-        "min": data.min(),
-        "max": data.max(),
-        "median": data.mean(),
-        "std": data.std(),
-        "var": data.var(),
-    }
-
-
-def _hist_str(name, data, bins=10, truncate=20):
-    n_unique = len(set(data))
-
-    if truncate:
-        # data = (item[:truncate] for item in data)
-        data = (
-            item[:truncate] + "..." if len(item) > truncate else item for item in data
-        )
-
-    data = Counter(data)
-
-    if bins:
-        labels, counts = zip(*sorted(data.items(), key=itemgetter(1, 0), reverse=True))
-    else:
-        labels, counts = zip(*data.items())
-
-    return {
-        "type": "hist_str",
-        "name": name,
-        "total": sum(data.values()),
-        "unique": n_unique,
-        "labels": labels[:bins],
-        "counts": counts[:bins],
-    }
 
 
 if __name__ == "__main__":

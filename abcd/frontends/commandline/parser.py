@@ -36,6 +36,11 @@ login_parser.add_argument(
     help="url of abcd api (default: http://localhost)",
     default="http://localhost",
 )
+login_parser.add_argument(
+    "--disable_ssl",
+    action="store_true",
+    help="Disable SSL encryption",
+)
 
 download_parser = subparsers.add_parser(
     "download", help="download data from the database"
@@ -197,6 +202,9 @@ server.add_argument("--api-only", action="store_true", help="Running only the AP
 server.add_argument(
     "-u", "--url", help="Url to run the server.", default="http://localhost:5000"
 )
+
+refresh_parser = subparsers.add_parser("refresh", help="refresh database")
+refresh_parser.set_defaults(callback_func=commands.refresh)
 
 
 def main(args=None):

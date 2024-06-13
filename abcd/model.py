@@ -4,6 +4,7 @@ import logging
 from hashlib import md5
 from collections import Counter, UserDict
 from ase.calculators.singlepoint import SinglePointCalculator
+from ase.spacegroup.spacegroup import Spacegroup
 
 import numpy as np
 from ase import Atoms
@@ -16,7 +17,6 @@ class Hasher(object):
         self.method = method
 
     def update(self, value):
-
         if isinstance(value, int):
             self.update(str(value).encode("ascii"))
 
@@ -44,7 +44,7 @@ class Hasher(object):
 
         else:
             raise ValueError(
-                "The {} type cannot be hashed! (Value: {})", format(type(value), value)
+                f"The {type(value)} type cannot be hashed! (Value: {value})"
             )
 
     def __call__(self):
@@ -80,14 +80,12 @@ class AbstractModel(UserDict):
         }
 
     def __getitem__(self, key):
-
         if key == "derived":
             return self.derived
 
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-
         if key == "derived":
             # raise KeyError('Please do not use "derived" as key because it is protected!')
             # Silent return to avoid raising error in pymongo package
@@ -107,7 +105,6 @@ class AbstractModel(UserDict):
         return value
 
     def update_key_category(self, key, value):
-
         if key == "_id":
             # raise KeyError('Please do not use "derived" as key because it is protected!')
             return
@@ -190,6 +187,8 @@ class AbstractModel(UserDict):
         for key, value in atoms.info.items():
             if isinstance(value, np.ndarray):
                 dct[key] = value.tolist()
+            elif isinstance(value, Spacegroup):
+                dct[key] = value.todict()
             else:
                 dct[key] = value
 
@@ -199,7 +198,6 @@ class AbstractModel(UserDict):
             info_keys.update({"calculator_name", "calculator_parameters"})
 
             for key, value in atoms.calc.results.items():
-
                 if isinstance(value, np.ndarray):
                     if value.shape[0] == n_atoms:
                         arrays_keys.update(key)

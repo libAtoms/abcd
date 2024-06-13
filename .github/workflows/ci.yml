@@ -7,11 +7,28 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: [ "3.9", "3.10", "3.11", "3.12" ]
+        opensearch: ['1.0.1', '2.0.1', 'latest']
+        security-enabled: ["true", "false"]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure sysctl limits
+        run: |
+          sudo swapoff -a
+          sudo sysctl -w vm.swappiness=1
+          sudo sysctl -w fs.file-max=262144
+          sudo sysctl -w vm.max_map_count=262144
+
+      - name: Start OpenSearch
+        uses: ./.ci/opensearch
+        with:
+          port: 9250
+          opensearch-version: ${{ matrix.opensearch }}
+          security-enabled: ${{ matrix.security-enabled }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -29,6 +46,10 @@ jobs:
       - name: Run unit tests
         run: |
           poetry run pytest --cov=abcd --cov-report xml --cov-report term:skip-covered
+        env:
+          port: 9250
+          security_enabled: ${{ matrix.security-enabled }}
+          opensearch-version: ${{ matrix.opensearch }}
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.4.1

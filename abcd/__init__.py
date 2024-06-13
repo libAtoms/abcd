@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 class ConnectionType(Enum):
     mongodb = 1
     http = 2
+    opensearch = 3
 
 
 class ABCD(object):
@@ -23,8 +24,10 @@ class ABCD(object):
         r = parse.urlparse(url)
         logger.info(r)
 
-        if r.scheme == "mongodb":
+        db = r.path.split("/")[1] if r.path else None
+        db = db if db else "abcd"
 
+        if ConnectionType[r.scheme] is ConnectionType.mongodb:
             conn_settings = {
                 "host": r.hostname,
                 "port": r.port,
@@ -33,12 +36,21 @@ class ABCD(object):
                 "authSource": "admin",
             }
 
-            db = r.path.split("/")[1] if r.path else None
-            db = db if db else "abcd"
-
             from abcd.backends.atoms_pymongo import MongoDatabase
 
             return MongoDatabase(db_name=db, **conn_settings, **kwargs)
+
+        if ConnectionType[r.scheme] is ConnectionType.opensearch:
+            conn_settings = {
+                "host": r.hostname,
+                "port": r.port,
+                "username": r.username,
+                "password": r.password,
+            }
+
+            from abcd.backends.atoms_opensearch import OpenSearchDatabase
+
+            return OpenSearchDatabase(db=db, **conn_settings, **kwargs)
 
         elif r.scheme == "http" or r.scheme == "https":
             raise NotImplementedError("http not yet supported! soon...")
@@ -57,11 +69,3 @@ if __name__ == "__main__":
     url = "mongodb://mongoadmin:secret@localhost:27017/abcd_new"
     abcd = ABCD.from_url(url)
     abcd.print_info()
-
-    # from ase.io import iread
-    # for atoms in iread('../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
-    #     # Hack to fix the representation of forces
-    #     atoms.calc.results['forces'] = atoms.arrays['force']
-    #
-    #     abcd.push(atoms)
-    #     print(atoms)

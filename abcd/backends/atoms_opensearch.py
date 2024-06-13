@@ -966,7 +966,7 @@ class OpenSearchDatabase(AbstractABCD):
         query = self.parser(query)
         logger.info("parsed query: %s", query)
 
-        data = self.property(name, query)
+        data = self.property(name, query=query)
         return utils.histogram(name, data, **kwargs)
 
     def __repr__(self):

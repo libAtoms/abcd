@@ -90,40 +90,43 @@ class TreeToDict(Transformer):
 
 
 # parser = Lark(grammar, parser='lalr', lexer='contextual', debug=False)
-parser = Lark(grammar, parser='lalr', lexer='contextual', transformer=TreeToDict(), debug=False)
+parser = Lark(
+    grammar, parser="lalr", lexer="contextual", transformer=TreeToDict(), debug=False
+)
 
-if __name__ == '__main__':
-    test_string = ' '.join([
-        ' '  # start with a separator
-        'flag',
-        'quotedd_string="quoteddd value"',
-        r'quotedddd_string_escaped="esc\"aped"',
-        'false_value = F',
-        'integer=22',
-        'floating=1.1',
-        'int_array={1 2 3}',
-        'scientific_float=1.2e7',
-        'scientific_float_2=5e-6',
-        'scientific_float_array="1.2 2.2e3 4e1 3.3e-1 2e-2"',
-        'not_array="1.2 3.4 text"',
-        'array_nested=[[1,2],[3,4]] '  # gets flattented if not 3x3
-        'array_many_other_quotes=({[4 8 12]})',
-        'array_boolean={T F T F}',
-        'array_boolean_2=" T, F, T " '  # leading spaces
-        # 'not_bool_array=[T F S]',
-        # # read and write
-        # u'\xfcnicode_key=val\xfce',
-        # # u'unquoted_special_value=a_to_Z_$%%^&*\xfc\u2615',
-        # '2body=33.3',
-        'hyphen-ated',
-        # # # parse only
-        'comma_separated="7, 4, -1"',
-        'array_bool_commas=[T, T, F, T]',
-        # # 'Properties=species:S:1:pos:R:3',
-        # 'double_equals=abc=xyz',
-        'multiple_separators      ',
-        'trailing'
-    ])
+if __name__ == "__main__":
+    test_string = " ".join(
+        [
+            " " "flag",  # start with a separator
+            'quotedd_string="quoteddd value"',
+            r'quotedddd_string_escaped="esc\"aped"',
+            "false_value = F",
+            "integer=22",
+            "floating=1.1",
+            "int_array={1 2 3}",
+            "scientific_float=1.2e7",
+            "scientific_float_2=5e-6",
+            'scientific_float_array="1.2 2.2e3 4e1 3.3e-1 2e-2"',
+            'not_array="1.2 3.4 text"',
+            "array_nested=[[1,2],[3,4]] "  # gets flattented if not 3x3
+            "array_many_other_quotes=({[4 8 12]})",
+            "array_boolean={T F T F}",
+            'array_boolean_2=" T, F, T " '  # leading spaces
+            # 'not_bool_array=[T F S]',
+            # # read and write
+            # u'\xfcnicode_key=val\xfce',
+            # # u'unquoted_special_value=a_to_Z_$%%^&*\xfc\u2615',
+            # '2body=33.3',
+            "hyphen-ated",
+            # # # parse only
+            'comma_separated="7, 4, -1"',
+            "array_bool_commas=[T, T, F, T]",
+            # # 'Properties=species:S:1:pos:R:3',
+            # 'double_equals=abc=xyz',
+            "multiple_separators      ",
+            "trailing",
+        ]
+    )
 
     j = parser.parse(test_string)
 

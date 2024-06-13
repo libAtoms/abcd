@@ -19,10 +19,10 @@ def init_config(func):
 
 def init_db(func):
     def wrapper(*args, config, **kwargs):
-        url = config.get('url', None)
+        url = config.get("url", None)
 
         if url is None:
-            print('Please use abcd login first!')
+            print("Please use abcd login first!")
             exit(1)
 
         db = ABCD.from_url(url=url)
@@ -32,10 +32,10 @@ def init_db(func):
         # TODO: better ast optimisation
 
         query_list = []
-        for q in kwargs.pop('default_query', []):
+        for q in kwargs.pop("default_query", []):
             query_list.append(parser(q))
 
-        for q in kwargs.pop('query', []):
+        for q in kwargs.pop("query", []):
             query_list.append(parser(q))
 
         if not query_list:
@@ -43,7 +43,7 @@ def init_db(func):
         elif len(query_list) == 1:
             query = query_list[0]
         else:
-            query = ('AND', *query_list)
+            query = ("AND", *query_list)
 
         func(*args, db=db, query=query, **kwargs)
 
@@ -52,8 +52,8 @@ def init_db(func):
 
 def check_remote(func):
     def wrapper(*args, **kwargs):
-        if kwargs.pop('remote'):
-            print('In read only mode, you can\'t modify the data in the database')
+        if kwargs.pop("remote"):
+            print("In read only mode, you can't modify the data in the database")
             exit(1)
 
         func(*args, **kwargs)

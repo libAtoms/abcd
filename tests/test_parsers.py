@@ -4,7 +4,6 @@ from abcd.parsers.queries import parser as queries_parser
 
 
 class TestParsingExtras:
-
     @pytest.fixture
     def parser(self):
         return extras_parser
@@ -140,16 +139,15 @@ class TestParsingExtras:
             'a3x3_array="1 4 7 2 5 8 3 6 9" '  # fortran ordering
             'Lattice="  4.3  0.0 0.0 0.0  3.3 0.0 0.0 0.0  7.0 " '  # spaces in array
             'comma_separated="7, 4, -1"',
-            'array_boolean_2=" T, F, T " '  # leading spaces
-            'not_array="1.2 3.4 text"',
+            'array_boolean_2=" T, F, T " ' 'not_array="1.2 3.4 text"',  # leading spaces
             "not_bool_array=[T F S]",
         ],
     )
-    def test_missing(self, string): ...
+    def test_missing(self, string):
+        ...
 
 
 class TestParsingQueries:
-
     @pytest.fixture
     def parser(self):
         return queries_parser
@@ -190,7 +188,8 @@ class TestParsingQueries:
             ("any(aa) > 3", {}),
         ],
     )
-    def test_expressions(self, case): ...
+    def test_expressions(self, case):
+        ...
 
     @pytest.mark.skip("known issues / future features")
     @pytest.mark.parametrize(
@@ -203,4 +202,5 @@ class TestParsingQueries:
             ("aa and (bb > 23.54 or (22 in cc and dd))", {}),
         ],
     )
-    def test_expressions(self, case): ...
+    def test_expressions(self, case):
+        ...

@@ -3,7 +3,7 @@ from ase.io import iread, read
 
 from abcd import ABCD
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # http requests
     # url = 'http://localhost:5000/api'
 
@@ -12,9 +12,9 @@ if __name__ == '__main__':
 
     # Mongoengine
     # https://stackoverflow.com/questions/36200288/mongolab-pymongo-connection-error
-    url = 'mongodb://root:example@localhost:27018/?authSource=admin'
+    url = "mongodb://root:example@localhost:27018/?authSource=admin"
 
-    abcd = ABCD(url, db='abcd', collection='default')
+    abcd = ABCD(url, db="abcd", collection="default")
     print(abcd)
 
     abcd.print_info()
@@ -24,8 +24,8 @@ if __name__ == '__main__':
 
     abcd.destroy()
 
-    direcotry = Path('../tutorials/data/')
-    file = direcotry / 'bcc_bulk_54_expanded_2_high.xyz'
+    direcotry = Path("../tutorials/data/")
+    file = direcotry / "bcc_bulk_54_expanded_2_high.xyz"
     # file = direcotry / 'GAP_6.xyz'
 
     traj = read(file.as_posix(), index=slice(None))

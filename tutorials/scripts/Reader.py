@@ -4,6 +4,7 @@ import json
 from ase.io import read, write
 from ase.geometry import crystal_structure_from_cell
 import numpy as np
+
 # import numpy.linalg as la
 
 import matplotlib.pyplot as plt
@@ -12,7 +13,7 @@ from scipy.interpolate import interp1d
 
 class Calculation(object):
     def __init__(self, *args, **kwargs):
-        self.filepath = kwargs.pop('filepath', None)
+        self.filepath = kwargs.pop("filepath", None)
         self.parameters = kwargs
 
     def get_data(self, index=-1):
@@ -20,19 +21,18 @@ class Calculation(object):
 
     @classmethod
     def from_path(cls, path: Path, index=-1):
-        with (path / 'gb.json').open() as data_file:
+        with (path / "gb.json").open() as data_file:
             gb_data = json.load(data_file)
 
-        with (path / 'subgb.json').open() as data_file:
+        with (path / "subgb.json").open() as data_file:
             subgb_data = json.load(data_file)
 
         # print(gb_data['angle'])
 
-        filename = subgb_data['name'] + "_traj.xyz"
+        filename = subgb_data["name"] + "_traj.xyz"
         filepath = (path / filename).resolve()
         # configuration = read(str((path / filename).resolve()), index=index)
         # # gb = read(str((path / filename).resolve()), index=-1)
-
 
         # print('{:=^60}'.format(' '+str(path)+' '))
         #
@@ -60,48 +60,60 @@ class Calculation(object):
         # print('Force mean: {:f}, std: {:f}'.format(force_mean, force_std))
         # pprint(gb_final.calc.results)
 
-
         return cls(**{**gb_data, **subgb_data}, filepath=filepath)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Read grain boundary database
-    dirpath = Path('../GB_alphaFe_001')
+    dirpath = Path("../GB_alphaFe_001")
 
     calculations = {
-        'tilt': [Calculation.from_path(calc_dir) for calc_dir in (dirpath / 'tilt').iterdir() if calc_dir.is_dir()],
-        'twist': [Calculation.from_path(calc_dir) for calc_dir in (dirpath / 'twist').iterdir() if calc_dir.is_dir()]
+        "tilt": [
+            Calculation.from_path(calc_dir)
+            for calc_dir in (dirpath / "tilt").iterdir()
+            if calc_dir.is_dir()
+        ],
+        "twist": [
+            Calculation.from_path(calc_dir)
+            for calc_dir in (dirpath / "twist").iterdir()
+            if calc_dir.is_dir()
+        ],
     }
 
     # potential energy of the perfect crystal according to a specific potential
-    potential_energy_per_atom = -4.01298214176      # alpha-Fe PotBH
+    potential_energy_per_atom = -4.01298214176  # alpha-Fe PotBH
     eV = 1.6021766208e-19
-    Angstrom = 1.e-10
+    Angstrom = 1.0e-10
 
     angles, energies = [], []
-    for calc in sorted(calculations['tilt'], key=lambda item: item.parameters['angle']):
-        angles.append(calc.parameters['angle'] * 180.0 / np.pi)
+    for calc in sorted(calculations["tilt"], key=lambda item: item.parameters["angle"]):
+        angles.append(calc.parameters["angle"] * 180.0 / np.pi)
 
-
-        energy = 16.02 / (2 * calc.parameters['A'] ) * \
-            (calc.parameters['E_gb'] - potential_energy_per_atom * calc.parameters['n_at'])
+        energy = (
+            16.02
+            / (2 * calc.parameters["A"])
+            * (
+                calc.parameters["E_gb"]
+                - potential_energy_per_atom * calc.parameters["n_at"]
+            )
+        )
 
         atoms = calc.get_data()
         cell = atoms.get_cell()
         A = cell[0, 0] * cell[1, 1]
 
         energy = (
-            eV / Angstrom**2 /
-            (2 * A) *
-            (atoms.get_total_energy() - potential_energy_per_atom * len(atoms))
+            eV
+            / Angstrom**2
+            / (2 * A)
+            * (atoms.get_total_energy() - potential_energy_per_atom * len(atoms))
         )
 
         print(energy)
         # print(data.get_potential_energy())  # data.get_total_energy() == data.get_potential_energy()
         # energies.append(calc.parameters['E_gb'] - data.get_total_energy())
         energies.append(energy)
-
 
     plt.bar(angles, energies)
 
@@ -186,7 +198,7 @@ if __name__ == '__main__':
 #   print at.get_potential_energy()
 #   print E_gb, 'eV/A^2'
 #   E_gb = 16.02*(at.get_potential_energy()-(at.n*(E_bulk)))/(2.*A)
-    #   print E_gb, 'J/m^2'
+#   print E_gb, 'J/m^2'
 #   return E_gb
 #
 # relax.py

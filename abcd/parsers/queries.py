@@ -90,17 +90,17 @@ class TreeTransformer(Transformer):
     def array(self, *items):
         return list(items)
 
-    true = lambda _: ('VALUE', True)
-    false = lambda _: ('VALUE', False)
+    true = lambda _: ("VALUE", True)
+    false = lambda _: ("VALUE", False)
 
     def float(self, number):
-        return 'NUMBER', float(number)
+        return "NUMBER", float(number)
 
     def int(self, number):
-        return 'NUMBER', int(number)
+        return "NUMBER", int(number)
 
     def string(self, s):
-        return 'STRING', s[1:-1].replace('\\"', '"')
+        return "STRING", s[1:-1].replace('\\"', '"')
 
     def single_statement(self, expression):
         return expression
@@ -109,24 +109,24 @@ class TreeTransformer(Transformer):
         return operator.type, statement, expression
 
     def single_expression(self, name):
-        return 'NAME', str(name)
+        return "NAME", str(name)
 
     def grouped_expression(self, statement):
         # return statement
-        return 'GROUP', statement
+        return "GROUP", statement
 
     def operator_expression(self, name, operator, value):
-        return operator.type, ('NAME', str(name)), value
+        return operator.type, ("NAME", str(name)), value
 
     def reversed_expression(self, value, operator, name):
-        return operator.type, ('NAME', str(name)), value
+        return operator.type, ("NAME", str(name)), value
 
     def negation_expression(self, operator, expression):
         return operator.type, expression
 
 
 class Parser:
-    parser = Lark(grammar, start='statement')
+    parser = Lark(grammar, start="statement")
     transformer = TreeTransformer()
 
     def parse(self, string):
@@ -138,29 +138,29 @@ class Parser:
 
 parser = Parser()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # logging.basicConfig(level=logging.DEBUG)
     logging.basicConfig(level=logging.INFO)
 
     queries = (
-        ' ',
-        'single',
-        'not single',
-        'operator_gt > 23 ',
-        'operator_gt > -2.31e-5 ',
+        " ",
+        "single",
+        "not single",
+        "operator_gt > 23 ",
+        "operator_gt > -2.31e-5 ",
         'string = "some string"',
         'regexp ~ ".*H"',
-        'aa & not bb',
-        'aa & bb > 23.54 | cc & dd',
+        "aa & not bb",
+        "aa & bb > 23.54 | cc & dd",
         # 'aa bb > 22 cc > 33 dd > 44 ',
-        'aa and bb > 22 and cc > 33 and dd > 44 ',
-        '((aa and bb > 22) and cc > 33) and dd > 44 ',
-        '(aa and bb > 22) and (cc > 33 and dd > 44) ',
-        '(aa and bb > 22 and cc > 33 and dd > 44) ',
-        'aa and bb > 23.54 or 22 in cc and dd',
-        'aa & bb > 23.54 | (22 in cc & dd)',
-        'aa and bb > 23.54 or (22 in cc and dd)',
-        'aa and not (bb > 23.54 or (22 in cc and dd))',
+        "aa and bb > 22 and cc > 33 and dd > 44 ",
+        "((aa and bb > 22) and cc > 33) and dd > 44 ",
+        "(aa and bb > 22) and (cc > 33 and dd > 44) ",
+        "(aa and bb > 22 and cc > 33 and dd > 44) ",
+        "aa and bb > 23.54 or 22 in cc and dd",
+        "aa & bb > 23.54 | (22 in cc & dd)",
+        "aa and bb > 23.54 or (22 in cc and dd)",
+        "aa and not (bb > 23.54 or (22 in cc and dd))",
         # 'expression = (bb/3-1)*cc',
         # 'energy/n_atoms > 3',
         # '1=3',
@@ -176,7 +176,7 @@ if __name__ == '__main__':
         # print(parser.parse(query).pretty())
         try:
             tree = parser.parse(query)
-            logger.info('=> tree: {}'.format(tree))
-            logger.info('==> ast: {}'.format(parser(query)))
+            logger.info("=> tree: {}".format(tree))
+            logger.info("==> ast: {}".format(parser(query)))
         except LarkError:
             raise NotImplementedError

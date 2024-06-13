@@ -3,7 +3,6 @@
 from pytest import fixture
 
 from abcd import ABCD
-from abcd.backends.atoms_pymongo import MongoDatabase
 
 
 @fixture
@@ -16,6 +15,9 @@ def mongo_srv(mocker):
 
 def test_init_mongodb_srv(mongo_srv):
     # client can be created with a mongodb+srv:// URI
+
+    # apparently mongomock breaks if this import is outside
+    from abcd.backends.atoms_pymongo import MongoDatabase
 
     # regression test
     uri = "mongodb+srv://user:pass@democluster.randomstr.mongodb.net/?key=value"

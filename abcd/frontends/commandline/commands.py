@@ -11,32 +11,37 @@ logger = logging.getLogger(__name__)
 @init_config
 def login(*, config, name, url, **kwargs):
     logger.info(
-        'login args: \nconfig:{}, name:{}, url:{}, kwargs:{}'.format(config, name, url, kwargs))
+        "login args: \nconfig:{}, name:{}, url:{}, kwargs:{}".format(
+            config, name, url, kwargs
+        )
+    )
     from abcd import ABCD
 
     db = ABCD.from_url(url=url)
     info = db.info()
 
-    config['url'] = url
+    config["url"] = url
     config.save()
 
-    print('Successfully connected to the database!')
-    print(" type:       {type}\n"
-          " hostname:   {host}\n"
-          " port:       {port}\n"
-          " database:   {db}\n"
-          " # of confs: {number of confs}".format(**info))
+    print("Successfully connected to the database!")
+    print(
+        " type:       {type}\n"
+        " hostname:   {host}\n"
+        " port:       {port}\n"
+        " database:   {db}\n"
+        " # of confs: {number of confs}".format(**info)
+    )
 
 
 @init_config
 @init_db
 def download(*, db, query, fileformat, filename, **kwargs):
-    logger.info('download\n kwargs: {}'.format(kwargs))
+    logger.info("download\n kwargs: {}".format(kwargs))
 
     from ase.io import write
 
-    if kwargs.pop('remote'):
-        write('-', list(db.get_atoms(query=query)), format=fileformat)
+    if kwargs.pop("remote"):
+        write("-", list(db.get_atoms(query=query)), format=fileformat)
         return
 
     write(filename, list(db.get_atoms(query=query)), format=fileformat)
@@ -46,14 +51,18 @@ def download(*, db, query, fileformat, filename, **kwargs):
 @init_db
 @check_remote
 def delete(*, db, query, yes, **kwargs):
-    logger.info('delete\n kwargs: {}'.format(kwargs))
+    logger.info("delete\n kwargs: {}".format(kwargs))
 
     if not yes:
-        print('Please use --yes for deleting {} configurations'.format(db.count(query=query)))
+        print(
+            "Please use --yes for deleting {} configurations".format(
+                db.count(query=query)
+            )
+        )
         exit(1)
 
     count = db.delete(query=query)
-    print('{} configuration has been deleted'.format(count))
+    print("{} configuration has been deleted".format(count))
 
 
 @init_config
@@ -69,11 +78,11 @@ def upload(*, db, path, extra_infos, ignore_calc_results, **kwargs):
         db.upload(path, extra_infos, store_calc=calculator)
 
     elif path.is_dir():
-        for file in path.glob('.xyz'):
-            logger.info('Uploaded file: {}'.format(file))
+        for file in path.glob(".xyz"):
+            logger.info("Uploaded file: {}".format(file))
             db.upload(file, extra_infos, store_calc=calculator)
         else:
-            logger.info('No file found: {}'.format(path))
+            logger.info("No file found: {}".format(path))
             raise FileNotFoundError()
 
     else:
@@ -83,8 +92,8 @@ def upload(*, db, path, extra_infos, ignore_calc_results, **kwargs):
 @init_config
 @init_db
 def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
-    logger.info('summary\n kwargs: {}'.format(kwargs))
-    logger.info('query: {}'.format(query))
+    logger.info("summary\n kwargs: {}".format(kwargs))
+    logger.info("query: {}".format(query))
 
     if print_all:
         truncate = None
@@ -97,15 +106,15 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
         props_list = []
         for prop in props:
             # TODO: Check that is this the right place?
-            props_list.extend(re.split(r';\s*|,\s*|\s+', prop))
+            props_list.extend(re.split(r";\s*|,\s*|\s+", prop))
 
-        if '*' in props_list:
-            props_list = '*'
+        if "*" in props_list:
+            props_list = "*"
 
-        logging.info('property list: {}'.format(props_list))
+        logging.info("property list: {}".format(props_list))
 
     total = db.count(query)
-    print('Total number of configurations: {}'.format(total))
+    print("Total number of configurations: {}".format(total))
 
     if total == 0:
         return
@@ -118,13 +127,13 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
         labels, categories, dtypes, counts = [], [], [], []
         for k in sorted(props, key=str.lower):
             labels.append(k)
-            counts.append(props[k]['count'])
-            categories.append(props[k]['category'])
-            dtypes.append(props[k]['dtype'])
+            counts.append(props[k]["count"])
+            categories.append(props[k]["category"])
+            dtypes.append(props[k]["dtype"])
 
         f.hist_labels(counts, categories, dtypes, labels)
 
-    elif props_list == '*':
+    elif props_list == "*":
         props = db.properties(query=query)
 
         for ptype in props:
@@ -149,8 +158,8 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 @init_config
 @init_db
 def show(*, db, query, print_all, props, **kwargs):
-    logger.info('show\n kwargs: {}'.format(kwargs))
-    logger.info('query: {}'.format(query))
+    logger.info("show\n kwargs: {}".format(kwargs))
+    logger.info("query: {}".format(query))
 
     if not props:
         print("Please define at least on property by using the -p option!")
@@ -162,7 +171,7 @@ def show(*, db, query, print_all, props, **kwargs):
     for dct in islice(db.get_items(query), 0, limit):
         print(" | ".join(str(dct.get(prop, None)) for prop in props))
 
-    logging.info('property list: {}'.format(props))
+    logging.info("property list: {}".format(props))
 
 
 @check_remote
@@ -171,17 +180,19 @@ def show(*, db, query, print_all, props, **kwargs):
 def key_add(*, db, query, keys, **kwargs):
     from abcd.parsers.extras import parser
 
-    keys = ' '.join(keys)
+    keys = " ".join(keys)
     data = parser.parse(keys)
 
     if query:
-        test = ('AND', query, ("OR", *(('NAME', key) for key in data.keys())))
+        test = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
     else:
-        test = ("OR", *(('NAME', key) for key in data.keys()))
+        test = ("OR", *(("NAME", key) for key in data.keys()))
 
     if db.count(query=test):
-        print('The new key already exist for the given query! '
-              'Please make sure that the target key name don\'t exist')
+        print(
+            "The new key already exist for the given query! "
+            "Please make sure that the target key name don't exist"
+        )
         exit(1)
 
     db.add_property(data, query=query)
@@ -192,8 +203,10 @@ def key_add(*, db, query, keys, **kwargs):
 @init_db
 def key_rename(*, db, query, old_keys, new_keys, **kwargs):
     if db.count(query=query + [old_keys, new_keys]):
-        print('The new key already exist for the given query! '
-              'Please make sure that the target key name don\'t exist')
+        print(
+            "The new key already exist for the given query! "
+            "Please make sure that the target key name don't exist"
+        )
         exit(1)
 
     db.rename_property(old_keys, new_keys, query=query)
@@ -205,14 +218,17 @@ def key_rename(*, db, query, old_keys, new_keys, **kwargs):
 def key_delete(*, db, query, yes, keys, **kwargs):
     from abcd.parsers.extras import parser
 
-    keys = ' '.join(keys)
+    keys = " ".join(keys)
     data = parser.parse(keys)
 
-    query = ('AND', query, ('OR', *(('NAME', key) for key in data.keys())))
+    query = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
 
     if not yes:
-        print('Please use --yes for deleting keys from {} configurations'.format(
-            db.count(query=query)))
+        print(
+            "Please use --yes for deleting keys from {} configurations".format(
+                db.count(query=query)
+            )
+        )
         exit(1)
 
     for k in keys:
@@ -224,8 +240,11 @@ def key_delete(*, db, query, yes, keys, **kwargs):
 @init_db
 def execute(*, db, query, yes, python_code, **kwargs):
     if not yes:
-        print('Please use --yes for executing code on {} configurations'.format(
-            db.count(query=query)))
+        print(
+            "Please use --yes for executing code on {} configurations".format(
+                db.count(query=query)
+            )
+        )
         exit(1)
 
     db.exec(python_code, query)
@@ -236,7 +255,9 @@ def server(*, abcd_url, url, api_only, **kwargs):
     from urllib.parse import urlparse
     from abcd.server.app import create_app
 
-    logger.info("SERVER -  abcd: {}, url: {}, api_only:{}".format(abcd_url, url, api_only))
+    logger.info(
+        "SERVER -  abcd: {}, url: {}, api_only:{}".format(abcd_url, url, api_only)
+    )
 
     if api_only:
         print("Not implemented yet!")
@@ -252,26 +273,37 @@ class Formater(object):
     partialBlocks = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]  # char=pb
 
     def title(self, title):
-        print('', title, '=' * len(title), sep=os.linesep)
+        print("", title, "=" * len(title), sep=os.linesep)
 
     def describe(self, data):
-        if data['type'] == 'hist_float':
+        if data["type"] == "hist_float":
             print(
-                '{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} var:{'
-                ':11.4e}'.format(
-                    data["name"], sum(data["counts"]),
-                    data["min"], data["median"], data["max"],
-                    data["std"], data["var"])
+                "{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} var:{"
+                ":11.4e}".format(
+                    data["name"],
+                    sum(data["counts"]),
+                    data["min"],
+                    data["median"],
+                    data["max"],
+                    data["std"],
+                    data["var"],
+                )
             )
 
-        elif data['type'] == 'hist_int':
-            print('{}  count: {} '.format(data["name"], sum(data["counts"])),
-                  'min: {:d} med: {:d} max: {:d}  '.format(int(data["min"]), int(data["median"]),
-                                                           int(data["max"]))
-                  )
+        elif data["type"] == "hist_int":
+            print(
+                "{}  count: {} ".format(data["name"], sum(data["counts"])),
+                "min: {:d} med: {:d} max: {:d}  ".format(
+                    int(data["min"]), int(data["median"]), int(data["max"])
+                ),
+            )
 
-        elif data['type'] == 'hist_str':
-            print('{} count: {} unique: {}'.format(data["name"], data["total"], data["unique"]))
+        elif data["type"] == "hist_str":
+            print(
+                "{} count: {} unique: {}".format(
+                    data["name"], data["total"], data["unique"]
+                )
+            )
 
         else:
             pass
@@ -282,10 +314,11 @@ class Formater(object):
 
         for count, lower, upper in zip(counts, bin_edges[:-1], bin_edges[1:]):
             scale = int(ratio * count)
-            self.print('{:<{}} {:>{}d} [{: >11.4e}, {: >11.4f})'.format(
-                "▉" * scale, width_hist,
-                count, width_count,
-                lower, upper))
+            self.print(
+                "{:<{}} {:>{}d} [{: >11.4e}, {: >11.4f})".format(
+                    "▉" * scale, width_hist, count, width_count, lower, upper
+                )
+            )
 
     def hist_int(self, bin_edges, counts, width_hist=40):
 
@@ -294,35 +327,50 @@ class Formater(object):
 
         for count, lower, upper in zip(counts, bin_edges[:-1], bin_edges[1:]):
             scale = int(ratio * count)
-            self.print('{:<{}} {:>{}d} [{:d}, {:d})'.format(
-                "▉" * scale, width_hist,
-                count, width_count,
-                np.ceil(lower).astype(int), np.floor(upper).astype(int)))
+            self.print(
+                "{:<{}} {:>{}d} [{:d}, {:d})".format(
+                    "▉" * scale,
+                    width_hist,
+                    count,
+                    width_count,
+                    np.ceil(lower).astype(int),
+                    np.floor(upper).astype(int),
+                )
+            )
 
     def hist_date(self, bin_edges, counts, width_hist=40):
-        dateformat = '%y-%m-%d %H:%M'
+        dateformat = "%y-%m-%d %H:%M"
         ratio = width_hist / max(counts)
         width_count = len(str(max(counts)))
 
         for count, lower, upper in zip(counts, bin_edges[:-1], bin_edges[1:]):
             scale = int(ratio * count)
-            self.print('{:<{}} {:>{}d} [{}, {})'.format(
-                "▉" * scale, width_hist,
-                count, width_count,
-                lower.strftime(dateformat), upper.strftime(dateformat)))
+            self.print(
+                "{:<{}} {:>{}d} [{}, {})".format(
+                    "▉" * scale,
+                    width_hist,
+                    count,
+                    width_count,
+                    lower.strftime(dateformat),
+                    upper.strftime(dateformat),
+                )
+            )
 
     def hist_str(self, total, counts, labels, width_hist=40):
         remain = total - sum(counts)
         if remain > 0:
             counts = (*counts, remain)
-            labels = (*labels, '...')
+            labels = (*labels, "...")
 
         width_count = len(str(max(counts)))
         ratio = width_hist / max(counts)
         for label, count in zip(labels, counts):
             scale = int(ratio * count)
             self.print(
-                '{:<{}} {:>{}d} {}'.format("▉" * scale, width_hist, count, width_count, label))
+                "{:<{}} {:>{}d} {}".format(
+                    "▉" * scale, width_hist, count, width_count, label
+                )
+            )
 
     def hist_labels(self, counts, categories, dtypes, labels, width_hist=40):
 
@@ -330,18 +378,21 @@ class Formater(object):
         ratio = width_hist / max(counts)
         for label, count, dtype in zip(labels, counts, dtypes):
             scale = int(ratio * count)
-            self.print('{:<{}} {:<21} {:>{}d} {}'.format(
-                "▉" * scale, width_hist, dtype, count, width_count, label))
+            self.print(
+                "{:<{}} {:<21} {:>{}d} {}".format(
+                    "▉" * scale, width_hist, dtype, count, width_count, label
+                )
+            )
 
     def hist(self, data: dict, width_hist=40):
-        if data['type'] == 'hist_float':
-            self.hist_float(data['edges'], data['counts'])
-        elif data['type'] == 'hist_int':
-            self.hist_int(data['edges'], data['counts'])
-        elif data['type'] == 'hist_date':
-            self.hist_date(data['edges'], data['counts'])
-        elif data['type'] == 'hist_str':
-            self.hist_str(data['total'], data['counts'], data['labels'])
+        if data["type"] == "hist_float":
+            self.hist_float(data["edges"], data["counts"])
+        elif data["type"] == "hist_int":
+            self.hist_int(data["edges"], data["counts"])
+        elif data["type"] == "hist_date":
+            self.hist_date(data["edges"], data["counts"])
+        elif data["type"] == "hist_str":
+            self.hist_str(data["total"], data["counts"], data["labels"])
         else:
             pass
 
@@ -350,4 +401,4 @@ class Formater(object):
         print(*args, **kwargs)
 
     def _trunc(self, text, width=80):
-        return text if len(text) < width else text[:width - 3] + '...'
+        return text if len(text) < width else text[: width - 3] + "..."

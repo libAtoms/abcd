@@ -14,7 +14,7 @@ class ABCD(object):
     @classmethod
     def from_config(cls, config):
         # Factory method
-        url = config['url']
+        url = config["url"]
         return ABCD.from_url(url)
 
     @classmethod
@@ -23,35 +23,38 @@ class ABCD(object):
         r = parse.urlparse(url)
         logger.info(r)
 
-        if r.scheme == 'mongodb':
+        if r.scheme == "mongodb":
 
             conn_settings = {
-                'host': r.hostname,
-                'port': r.port,
-                'username': r.username,
-                'password': r.password,
-                'authSource': 'admin',
+                "host": r.hostname,
+                "port": r.port,
+                "username": r.username,
+                "password": r.password,
+                "authSource": "admin",
             }
 
-            db = r.path.split('/')[1] if r.path else None
-            db = db if db else 'abcd'
+            db = r.path.split("/")[1] if r.path else None
+            db = db if db else "abcd"
 
             from abcd.backends.atoms_pymongo import MongoDatabase
+
             return MongoDatabase(db_name=db, **conn_settings, **kwargs)
 
-        elif r.scheme == 'http' or r.scheme == 'https':
-            raise NotImplementedError('http not yet supported! soon...')
-        elif r.scheme == 'ssh':
-            raise NotImplementedError('ssh not yet supported! soon...')
+        elif r.scheme == "http" or r.scheme == "https":
+            raise NotImplementedError("http not yet supported! soon...")
+        elif r.scheme == "ssh":
+            raise NotImplementedError("ssh not yet supported! soon...")
         else:
-            raise NotImplementedError('Unable to recognise the type of connection. (url: {})'.format(url))
+            raise NotImplementedError(
+                "Unable to recognise the type of connection. (url: {})".format(url)
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     # url = 'mongodb://mongoadmin:secret@localhost:27017'
-    url = 'mongodb://mongoadmin:secret@localhost:27017/abcd_new'
+    url = "mongodb://mongoadmin:secret@localhost:27017/abcd_new"
     abcd = ABCD.from_url(url)
     abcd.print_info()
 

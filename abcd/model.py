@@ -18,13 +18,13 @@ class Hasher(object):
     def update(self, value):
 
         if isinstance(value, int):
-            self.update(str(value).encode('ascii'))
+            self.update(str(value).encode("ascii"))
 
         elif isinstance(value, str):
-            self.update(value.encode('utf-8'))
+            self.update(value.encode("utf-8"))
 
         elif isinstance(value, float):
-            self.update('{:.8e}'.format(value).encode('ascii'))
+            self.update("{:.8e}".format(value).encode("ascii"))
 
         elif isinstance(value, (tuple, list)):
             for e in value:
@@ -33,7 +33,7 @@ class Hasher(object):
         elif isinstance(value, (dict, UserDict)):
             keys = value.keys()
             for k in sorted(keys):
-                self.update(k.encode('utf-8'))
+                self.update(k.encode("utf-8"))
                 self.update(value[k])
 
         elif isinstance(value, datetime.datetime):
@@ -43,7 +43,9 @@ class Hasher(object):
             self.method.update(value)
 
         else:
-            raise ValueError("The {} type cannot be hashed! (Value: {})", format(type(value), value))
+            raise ValueError(
+                "The {} type cannot be hashed! (Value: {})", format(type(value), value)
+            )
 
     def __call__(self):
         """Retrieve the digest of the hash."""
@@ -51,7 +53,14 @@ class Hasher(object):
 
 
 class AbstractModel(UserDict):
-    reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived'}
+    reserved_keys = {
+        "n_atoms",
+        "cell",
+        "pbc",
+        "calculator_name",
+        "calculator_parameters",
+        "derived",
+    }
 
     def __init__(self, dict=None, **kwargs):
         self.arrays_keys = []
@@ -64,22 +73,22 @@ class AbstractModel(UserDict):
     @property
     def derived(self):
         return {
-            'arrays_keys': self.arrays_keys,
-            'info_keys': self.info_keys,
-            'results_keys': self.results_keys,
-            'derived_keys': self.derived_keys
+            "arrays_keys": self.arrays_keys,
+            "info_keys": self.info_keys,
+            "results_keys": self.results_keys,
+            "derived_keys": self.derived_keys,
         }
 
     def __getitem__(self, key):
 
-        if key == 'derived':
+        if key == "derived":
             return self.derived
 
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
 
-        if key == 'derived':
+        if key == "derived":
             # raise KeyError('Please do not use "derived" as key because it is protected!')
             # Silent return to avoid raising error in pymongo package
             return
@@ -99,31 +108,31 @@ class AbstractModel(UserDict):
 
     def update_key_category(self, key, value):
 
-        if key == '_id':
+        if key == "_id":
             # raise KeyError('Please do not use "derived" as key because it is protected!')
             return
 
-        for category in ('arrays_keys', 'info_keys', 'results_keys', 'derived_keys'):
+        for category in ("arrays_keys", "info_keys", "results_keys", "derived_keys"):
             if key in self.derived[category]:
                 return
 
-        if key in ('positions', 'forces'):
-            self.derived['arrays_keys'].append(key)
+        if key in ("positions", "forces"):
+            self.derived["arrays_keys"].append(key)
             return
 
-        if key in ('n_atoms', 'cell', 'pbc'):
-            self.derived['info_keys'].append(key)
+        if key in ("n_atoms", "cell", "pbc"):
+            self.derived["info_keys"].append(key)
             return
 
         # Guess the category based in the shape of the value
-        n_atoms = self['n_atoms']
+        n_atoms = self["n_atoms"]
         if isinstance(value, (np.ndarray, list)) and len(value) == n_atoms:
-            self.derived['arrays_keys'].append(key)
+            self.derived["arrays_keys"].append(key)
         else:
-            self.derived['info_keys'].append(key)
+            self.derived["info_keys"].append(key)
 
     def __delitem__(self, key):
-        for category in ('arrays_keys', 'info_keys', 'results_keys', 'derived_keys'):
+        for category in ("arrays_keys", "info_keys", "results_keys", "derived_keys"):
             if key in self.derived[category]:
                 self.derived[category].remove(key)
                 break
@@ -133,34 +142,44 @@ class AbstractModel(UserDict):
     def __iter__(self):
         for item in super().__iter__():
             yield item
-        yield 'derived'
+        yield "derived"
 
     @classmethod
     def from_atoms(cls, atoms: Atoms, extra_info=None, store_calc=True):
         """ASE's original implementation"""
 
-        reserved_keys = {'n_atoms', 'cell', 'pbc', 'calculator_name', 'calculator_parameters', 'derived', 'formula'}
+        reserved_keys = {
+            "n_atoms",
+            "cell",
+            "pbc",
+            "calculator_name",
+            "calculator_parameters",
+            "derived",
+            "formula",
+        }
         arrays_keys = set(atoms.arrays.keys())
         info_keys = set(atoms.info.keys())
-        results_keys = set(atoms.calc.results.keys()) if store_calc and atoms.calc else {}
+        results_keys = (
+            set(atoms.calc.results.keys()) if store_calc and atoms.calc else {}
+        )
 
         all_keys = (reserved_keys, arrays_keys, info_keys, results_keys)
         if len(set.union(*all_keys)) != sum(map(len, all_keys)):
             print(all_keys)
-            raise ValueError('All the keys must be unique!')
+            raise ValueError("All the keys must be unique!")
 
         item = cls()
 
         n_atoms = len(atoms)
 
         dct = {
-            'n_atoms': n_atoms,
-            'cell': atoms.cell.tolist(),
-            'pbc': atoms.pbc.tolist(),
-            'formula': atoms.get_chemical_formula()
+            "n_atoms": n_atoms,
+            "cell": atoms.cell.tolist(),
+            "pbc": atoms.pbc.tolist(),
+            "formula": atoms.get_chemical_formula(),
         }
 
-        info_keys.update({'n_atoms', 'cell', 'pbc', 'formula'})
+        info_keys.update({"n_atoms", "cell", "pbc", "formula"})
 
         for key, value in atoms.arrays.items():
             if isinstance(value, np.ndarray):
@@ -175,9 +194,9 @@ class AbstractModel(UserDict):
                 dct[key] = value
 
         if store_calc and atoms.calc:
-            dct['calculator_name'] = atoms.calc.__class__.__name__
-            dct['calculator_parameters'] = atoms.calc.todict()
-            info_keys.update({'calculator_name', 'calculator_parameters'})
+            dct["calculator_name"] = atoms.calc.__class__.__name__
+            dct["calculator_parameters"] = atoms.calc.todict()
+            info_keys.update({"calculator_name", "calculator_parameters"})
 
             for key, value in atoms.calc.results.items():
 
@@ -205,26 +224,22 @@ class AbstractModel(UserDict):
         arrays_keys = set(self.arrays_keys)
         info_keys = set(self.info_keys)
 
-        cell = self.pop('cell', None)
-        pbc = self.pop('pbc', None)
-        numbers = self.pop('numbers', None)
-        positions = self.pop('positions', None)
-        results_keys = self.derived['results_keys']
+        cell = self.pop("cell", None)
+        pbc = self.pop("pbc", None)
+        numbers = self.pop("numbers", None)
+        positions = self.pop("positions", None)
+        results_keys = self.derived["results_keys"]
 
-        info_keys -= {'cell', 'pbc'}
-        arrays_keys -= {'numbers', 'positions'}
+        info_keys -= {"cell", "pbc"}
+        arrays_keys -= {"numbers", "positions"}
 
-        atoms = Atoms(
-            cell=cell,
-            pbc=pbc,
-            numbers=numbers,
-            positions=positions)
+        atoms = Atoms(cell=cell, pbc=pbc, numbers=numbers, positions=positions)
 
-        if 'calculator_name' in self:
+        if "calculator_name" in self:
             # calculator_name = self['info'].pop('calculator_name')
             # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
 
-            params = self.pop('calculator_parameters', {})
+            params = self.pop("calculator_parameters", {})
 
             atoms.calc = SinglePointCalculator(atoms, **params)
             atoms.calc.results.update((key, self[key]) for key in results_keys)
@@ -235,38 +250,38 @@ class AbstractModel(UserDict):
         return atoms
 
     def pre_save(self):
-        self.derived_keys = ['elements', 'username', 'uploaded', 'modified']
+        self.derived_keys = ["elements", "username", "uploaded", "modified"]
 
-        cell = self['cell']
+        cell = self["cell"]
 
         if cell:
             volume = abs(np.linalg.det(cell))  # atoms.get_volume()
-            self['volume'] = volume
-            self.derived_keys.append('volume')
+            self["volume"] = volume
+            self.derived_keys.append("volume")
 
-            virial = self.get('virial')
+            virial = self.get("virial")
             if virial:
                 # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
-                self['pressure'] = -1 / 3 * np.trace(virial / volume)
-                self.derived_keys.append('pressure')
+                self["pressure"] = -1 / 3 * np.trace(virial / volume)
+                self.derived_keys.append("pressure")
 
         # 'elements': Counter(atoms.get_chemical_symbols()),
-        self['elements'] = Counter(str(element) for element in self['numbers'])
+        self["elements"] = Counter(str(element) for element in self["numbers"])
 
-        self['username'] = getpass.getuser()
+        self["username"] = getpass.getuser()
 
-        if not self.get('uploaded'):
-            self['uploaded'] = datetime.datetime.utcnow()
+        if not self.get("uploaded"):
+            self["uploaded"] = datetime.datetime.utcnow()
 
-        self['modified'] = datetime.datetime.utcnow()
+        self["modified"] = datetime.datetime.utcnow()
 
         m = Hasher()
 
-        for key in ('numbers', 'positions', 'cell', 'pbc'):
+        for key in ("numbers", "positions", "cell", "pbc"):
             m.update(self[key])
 
-        self.derived_keys.append('hash_structure')
-        self['hash_structure'] = m()
+        self.derived_keys.append("hash_structure")
+        self["hash_structure"] = m()
 
         m = Hasher()
         for key in self.arrays_keys:
@@ -274,11 +289,11 @@ class AbstractModel(UserDict):
         for key in self.info_keys:
             m.update(self[key])
 
-        self.derived_keys.append('hash')
-        self['hash'] = m()
+        self.derived_keys.append("hash")
+        self["hash"] = m()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import io
     from pprint import pprint
     from ase.io import read
@@ -286,7 +301,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     # from ase.io import jsonio
 
-    atoms = read('test.xyz', format='xyz', index=0)
+    atoms = read("test.xyz", format="xyz", index=0)
     atoms.set_cell([1, 1, 1])
 
     print(atoms)

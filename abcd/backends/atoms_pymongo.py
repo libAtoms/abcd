@@ -26,12 +26,12 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 map_types = {
-    bool: 'bool',
-    float: 'float',
-    int: 'int',
-    str: 'str',
-    datetime: 'date',
-    dict: 'dict'
+    bool: "bool",
+    float: "float",
+    int: "int",
+    str: "str",
+    datetime: "date",
+    dict: "dict",
 }
 
 
@@ -49,15 +49,14 @@ class AtomsModel(AbstractModel):
 
     @property
     def _id(self):
-        return self.get('_id', None)
+        return self.get("_id", None)
 
     def save(self):
         if not self._id:
             self._collection.insert_one(self)
         else:
-            new_values = { "$set": self }
-            self._collection.update_one(
-                {"_id": ObjectId(self._id)}, new_values)
+            new_values = {"$set": self}
+            self._collection.update_one({"_id": ObjectId(self._id)}, new_values)
 
     def remove(self):
         if self._id:
@@ -66,28 +65,27 @@ class AtomsModel(AbstractModel):
 
 
 class MongoQuery(AbstractQuerySet):
-
     def __init__(self):
         pass
 
     def visit(self, syntax_tree):
         op, *args = syntax_tree
         try:
-            fun = self.__getattribute__('visit_' + op.lower())
+            fun = self.__getattribute__("visit_" + op.lower())
             return fun(*args)
         except KeyError:
             pass
 
     def visit_name(self, field):
-        return {field: {'$exists': True}}
+        return {field: {"$exists": True}}
 
     def visit_not(self, value):
         _, field = value
-        return {field: {'$exists': False}}
+        return {field: {"$exists": False}}
 
     def visit_and(self, *args):
         print(args)
-        return {'$and': [self.visit(arg) for arg in args]}
+        return {"$and": [self.visit(arg) for arg in args]}
         # TODO recursively combining all the and statements
         # out = {}
         # for arg in args:
@@ -97,28 +95,28 @@ class MongoQuery(AbstractQuerySet):
         # return out
 
     def visit_or(self, *args):
-        return {'$or': [self.visit(arg) for arg in args]}
+        return {"$or": [self.visit(arg) for arg in args]}
 
     def visit_eq(self, field, value):
         return {field[1]: value[1]}
 
     def visit_re(self, field, value):
-        return {field[1]: {'$regex': value[1]}}
+        return {field[1]: {"$regex": value[1]}}
 
     def visit_gt(self, field, value):
-        return {field[1]: {'$gt': value[1]}}
+        return {field[1]: {"$gt": value[1]}}
 
     def visit_gte(self, field, value):
-        return {field[1]: {'$gte': value[1]}}
+        return {field[1]: {"$gte": value[1]}}
 
     def visit_lt(self, field, value):
-        return {field[1]: {'$lt': value[1]}}
+        return {field[1]: {"$lt": value[1]}}
 
     def visit_lte(self, field, value):
-        return {field[1]: {'$lte': value[1]}}
+        return {field[1]: {"$lte": value[1]}}
 
     def visit_in(self, field, *values):
-        return {field[1]: {'$in': [value[1] for value in values]}}
+        return {field[1]: {"$in": [value[1] for value in values]}}
 
     def __enter__(self):
         return self
@@ -127,12 +125,13 @@ class MongoQuery(AbstractQuerySet):
         pass
 
     def __call__(self, ast):
-        logger.info('parsed ast: {}'.format(ast))
+        logger.info("parsed ast: {}".format(ast))
 
         if isinstance(ast, dict):
             return ast
         elif isinstance(ast, str):
             from abcd.parsers.queries import parser
+
             p = parser(ast)
             return self.visit(p)
 
@@ -156,20 +155,43 @@ def parse_query(func):
 class MongoDatabase(AbstractABCD):
     """Wrapper to make database operations easy"""
 
-    def __init__(self, host='localhost', port=27017,
-                 db_name='abcd', collection_name='atoms',
-                 username=None, password=None, authSource='admin', **kwargs):
+    def __init__(
+        self,
+        host="localhost",
+        port=27017,
+        db_name="abcd",
+        collection_name="atoms",
+        username=None,
+        password=None,
+        authSource="admin",
+        **kwargs
+    ):
         super().__init__()
 
-        logger.info((host, port, db_name, collection_name, username, password, authSource, kwargs))
+        logger.info(
+            (
+                host,
+                port,
+                db_name,
+                collection_name,
+                username,
+                password,
+                authSource,
+                kwargs,
+            )
+        )
 
         self.client = MongoClient(
-            host=host, port=port, username=username, password=password,
-            authSource=authSource)
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            authSource=authSource,
+        )
 
         try:
             info = self.client.server_info()  # Forces a call.
-            logger.info('DB info: {}'.format(info))
+            logger.info("DB info: {}".format(info))
 
         except pymongo.errors.OperationFailure:
             raise abcd.errors.AuthenticationError()
@@ -184,12 +206,12 @@ class MongoDatabase(AbstractABCD):
         host, port = self.client.address
 
         return {
-            'host': host,
-            'port': port,
-            'db': self.db.name,
-            'collection': self.collection.name,
-            'number of confs': self.collection.count_documents({}),
-            'type': 'mongodb'
+            "host": host,
+            "port": port,
+            "db": self.db.name,
+            "collection": self.collection.name,
+            "number of confs": self.collection.count_documents({}),
+            "type": "mongodb",
         }
 
     def delete(self, query=None):
@@ -205,14 +227,18 @@ class MongoDatabase(AbstractABCD):
             extra_info = extras.parser.parse(extra_info)
 
         if isinstance(atoms, Atoms):
-            data = AtomsModel.from_atoms(self.collection, atoms, extra_info=extra_info, store_calc=store_calc)
+            data = AtomsModel.from_atoms(
+                self.collection, atoms, extra_info=extra_info, store_calc=store_calc
+            )
             data.save()
             # self.collection.insert_one(data)
 
         elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
 
             for item in atoms:
-                data = AtomsModel.from_atoms(self.collection, item, extra_info=extra_info, store_calc=store_calc)
+                data = AtomsModel.from_atoms(
+                    self.collection, item, extra_info=extra_info, store_calc=store_calc
+                )
                 data.save()
 
     def upload(self, file: Path, extra_infos=None, store_calc=True):
@@ -225,7 +251,7 @@ class MongoDatabase(AbstractABCD):
             for info in extra_infos:
                 extra_info.update(extras.parser.parse(info))
 
-        extra_info['filename'] = str(file)
+        extra_info["filename"] = str(file)
 
         data = iread(str(file))
         self.push(data, extra_info, store_calc=store_calc)
@@ -243,7 +269,7 @@ class MongoDatabase(AbstractABCD):
 
     def count(self, query=None):
         query = parser(query)
-        logger.info('query; {}'.format(query))
+        logger.info("query; {}".format(query))
 
         if not query:
             query = {}
@@ -254,61 +280,69 @@ class MongoDatabase(AbstractABCD):
         query = parser(query)
 
         pipeline = [
-            {'$match': query},
-            {'$match': {'{}'.format(name): {"$exists": True}}},
-            {'$project': {'_id': False, 'data': '${}'.format(name)}}
+            {"$match": query},
+            {"$match": {"{}".format(name): {"$exists": True}}},
+            {"$project": {"_id": False, "data": "${}".format(name)}},
         ]
 
-        return [val['data'] for val in self.db.atoms.aggregate(pipeline)]
+        return [val["data"] for val in self.db.atoms.aggregate(pipeline)]
 
     def properties(self, query=None):
         query = parser(query)
         properties = {}
 
         pipeline = [
-            {'$match': query},
-            {'$unwind': '$derived.info_keys'},
-            {'$group': {'_id': '$derived.info_keys'}}
+            {"$match": query},
+            {"$unwind": "$derived.info_keys"},
+            {"$group": {"_id": "$derived.info_keys"}},
         ]
-        properties['info'] = [value['_id'] for value in self.db.atoms.aggregate(pipeline)]
+        properties["info"] = [
+            value["_id"] for value in self.db.atoms.aggregate(pipeline)
+        ]
 
         pipeline = [
-            {'$match': query},
-            {'$unwind': '$derived.arrays_keys'},
-            {'$group': {'_id': '$derived.arrays_keys'}}
+            {"$match": query},
+            {"$unwind": "$derived.arrays_keys"},
+            {"$group": {"_id": "$derived.arrays_keys"}},
         ]
-        properties['arrays'] = [value['_id'] for value in self.db.atoms.aggregate(pipeline)]
+        properties["arrays"] = [
+            value["_id"] for value in self.db.atoms.aggregate(pipeline)
+        ]
 
         pipeline = [
-            {'$match': query},
-            {'$unwind': '$derived.derived_keys'},
-            {'$group': {'_id': '$derived.derived_keys'}}
+            {"$match": query},
+            {"$unwind": "$derived.derived_keys"},
+            {"$group": {"_id": "$derived.derived_keys"}},
         ]
-        properties['derived'] = [value['_id'] for value in self.db.atoms.aggregate(pipeline)]
+        properties["derived"] = [
+            value["_id"] for value in self.db.atoms.aggregate(pipeline)
+        ]
 
         return properties
 
     def get_type_of_property(self, prop, category):
         # TODO: Probably it would be nicer to store the type info in the database from the beginning.
-        atoms = self.db.atoms.find_one({prop: {'$exists': True}})
+        atoms = self.db.atoms.find_one({prop: {"$exists": True}})
         data = atoms[prop]
 
-        if category == 'arrays':
+        if category == "arrays":
             if type(data[0]) == list:
-                return 'array({}, N x {})'.format(map_types[type(data[0][0])], len(data[0]))
+                return "array({}, N x {})".format(
+                    map_types[type(data[0][0])], len(data[0])
+                )
             else:
-                return 'vector({}, N)'.format(map_types[type(data[0])])
+                return "vector({}, N)".format(map_types[type(data[0])])
 
         if type(data) == list:
             if type(data[0]) == list:
                 if type(data[0][0]) == list:
-                    return 'list(list(...)'
+                    return "list(list(...)"
                 else:
-                    return 'array({})'.format(map_types[type(data[0][0])])
+                    return "array({})".format(map_types[type(data[0][0])])
             else:
-                return 'vector({})'.format(map_types[type(data[0])])
+                return "vector({})".format(map_types[type(data[0])])
         else:
-            return 'scalar({})'.format(map_types[type(data)])
+            return "scalar({})".format(map_types[type(data)])
 
     def count_properties(self, query=None):
         query = parser(query)
@@ -316,67 +350,69 @@ class MongoDatabase(AbstractABCD):
         properties = {}
 
         pipeline = [
-            {'$match': query},
-            {'$unwind': '$derived.info_keys'},
-            {'$group': {'_id': '$derived.info_keys', 'count': {'$sum': 1}}}
+            {"$match": query},
+            {"$unwind": "$derived.info_keys"},
+            {"$group": {"_id": "$derived.info_keys", "count": {"$sum": 1}}},
         ]
 
         info_keys = self.db.atoms.aggregate(pipeline)
         for val in info_keys:
-            properties[val['_id']] = {
-                'count': val['count'],
-                'category': 'info',
-                'dtype': self.get_type_of_property(val['_id'], 'info')
+            properties[val["_id"]] = {
+                "count": val["count"],
+                "category": "info",
+                "dtype": self.get_type_of_property(val["_id"], "info"),
             }
 
         pipeline = [
-            {'$match': query},
-            {'$unwind': '$derived.arrays_keys'},
-            {'$group': {'_id': '$derived.arrays_keys', 'count': {'$sum': 1}}}
+            {"$match": query},
+            {"$unwind": "$derived.arrays_keys"},
+            {"$group": {"_id": "$derived.arrays_keys", "count": {"$sum": 1}}},
         ]
         arrays_keys = list(self.db.atoms.aggregate(pipeline))
         for val in arrays_keys:
-            properties[val['_id']] = {
-                'count': val['count'],
-                'category': 'arrays',
-                'dtype': self.get_type_of_property(val['_id'], 'arrays')
+            properties[val["_id"]] = {
+                "count": val["count"],
+                "category": "arrays",
+                "dtype": self.get_type_of_property(val["_id"], "arrays"),
             }
 
         pipeline = [
-            {'$match': query},
-            {'$unwind': '$derived.derived_keys'},
-            {'$group': {'_id': '$derived.derived_keys', 'count': {'$sum': 1}}}
+            {"$match": query},
+            {"$unwind": "$derived.derived_keys"},
+            {"$group": {"_id": "$derived.derived_keys", "count": {"$sum": 1}}},
         ]
         arrays_keys = list(self.db.atoms.aggregate(pipeline))
         for val in arrays_keys:
-            properties[val['_id']] = {
-                'count': val['count'],
-                'category': 'derived',
-                'dtype': self.get_type_of_property(val['_id'], 'derived')
+            properties[val["_id"]] = {
+                "count": val["count"],
+                "category": "derived",
+                "dtype": self.get_type_of_property(val["_id"], "derived"),
             }
 
         return properties
 
     def add_property(self, data, query=None):
-        logger.info('add: data={}, query={}'.format(data, query))
-
-        self.collection.update_many(
-            parser(query),
-            {'$push': {'derived.info_keys': {'$each': list(data.keys())}},
-             '$set': data})
-
-    def rename_property(self, name, new_name, query=None):
-        logger.info('rename: query={}, old={}, new={}'.format(query, name, new_name))
-        # TODO name in derived.info_keys OR name in derived.arrays_keys OR name in derived.derived_keys
-        self.collection.update_many(
-            parser(query),
-            {'$push': {'derived.info_keys': new_name}})
+        logger.info("add: data={}, query={}".format(data, query))
 
         self.collection.update_many(
             parser(query),
             {
-                '$pull': {'derived.info_keys': name},
-                '$rename': {name: new_name}})
+                "$push": {"derived.info_keys": {"$each": list(data.keys())}},
+                "$set": data,
+            },
+        )
+
+    def rename_property(self, name, new_name, query=None):
+        logger.info("rename: query={}, old={}, new={}".format(query, name, new_name))
+        # TODO name in derived.info_keys OR name in derived.arrays_keys OR name in derived.derived_keys
+        self.collection.update_many(
+            parser(query), {"$push": {"derived.info_keys": new_name}}
+        )
+
+        self.collection.update_many(
+            parser(query),
+            {"$pull": {"derived.info_keys": name}, "$rename": {name: new_name}},
+        )
 
         # self.collection.update_many(
         #     parser(query + ['arrays.{}'.format(name)]),
@@ -388,13 +424,15 @@ class MongoDatabase(AbstractABCD):
         #      '$rename': {'arrays.{}'.format(name): 'arrays.{}'.format(new_name)}})
 
     def delete_property(self, name, query=None):
-        logger.info('delete: query={}, porperty={}'.format(name, query))
+        logger.info("delete: query={}, porperty={}".format(name, query))
 
         self.collection.update_many(
             parser(query),
-            {'$pull': {'derived.info_keys': name,
-                       'derived.arrays_keys': name},
-             '$unset': {name: ''}})
+            {
+                "$pull": {"derived.info_keys": name, "derived.arrays_keys": name},
+                "$unset": {name: ""},
+            },
+        )
 
     def hist(self, name, query=None, **kwargs):
 
@@ -411,21 +449,27 @@ class MongoDatabase(AbstractABCD):
     def __repr__(self):
         host, port = self.client.address
 
-        return '{}('.format(self.__class__.__name__) + \
-               'url={}:{}, '.format(host, port) + \
-               'db={}, '.format(self.db.name) + \
-               'collection={})'.format(self.collection.name)
+        return (
+            "{}(".format(self.__class__.__name__)
+            + "url={}:{}, ".format(host, port)
+            + "db={}, ".format(self.db.name)
+            + "collection={})".format(self.collection.name)
+        )
 
     def _repr_html_(self):
         """Jupyter notebook representation"""
-        return '<b>ABCD MongoDB database</b>'
+        return "<b>ABCD MongoDB database</b>"
 
     def print_info(self):
         """shows basic information about the connected database"""
 
-        out = linesep.join(['{:=^50}'.format(' ABCD MongoDB '),
-                            '{:>10}: {}'.format('type', 'mongodb'),
-                            linesep.join('{:>10}: {}'.format(k, v) for k, v in self.info().items())])
+        out = linesep.join(
+            [
+                "{:=^50}".format(" ABCD MongoDB "),
+                "{:>10}: {}".format("type", "mongodb"),
+                linesep.join("{:>10}: {}".format(k, v) for k, v in self.info().items()),
+            ]
+        )
 
         print(out)
 
@@ -449,26 +493,36 @@ def histogram(name, data, **kwargs):
             return None
 
         if ptype == float:
-            bins = kwargs.get('bins', 10)
+            bins = kwargs.get("bins", 10)
             return _hist_float(name, data, bins)
 
         elif ptype == int:
-            bins = kwargs.get('bins', 10)
+            bins = kwargs.get("bins", 10)
             return _hist_int(name, data, bins)
 
         elif ptype == str:
             return _hist_str(name, data, **kwargs)
 
         elif ptype == datetime:
-            bins = kwargs.get('bins', 10)
+            bins = kwargs.get("bins", 10)
             return _hist_date(name, data, bins)
 
         else:
-            print('{}: Histogram for list of {} types are not supported!'.format(name, type(data[0])))
-            logger.info('{}: Histogram for list of {} types are not supported!'.format(name, type(data[0])))
+            print(
+                "{}: Histogram for list of {} types are not supported!".format(
+                    name, type(data[0])
+                )
+            )
+            logger.info(
+                "{}: Histogram for list of {} types are not supported!".format(
+                    name, type(data[0])
+                )
+            )
 
     else:
-        logger.info('{}: Histogram for {} types are not supported!'.format(name, type(data)))
+        logger.info(
+            "{}: Histogram for {} types are not supported!".format(name, type(data))
+        )
         return None
 
 
@@ -477,16 +531,16 @@ def _hist_float(name, data, bins=10):
     hist, bin_edges = np.histogram(data, bins=bins)
 
     return {
-        'type': 'hist_float',
-        'name': name,
-        'bins': bins,
-        'edges': bin_edges,
-        'counts': hist,
-        'min': data.min(),
-        'max': data.max(),
-        'median': data.mean(),
-        'std': data.std(),
-        'var': data.var()
+        "type": "hist_float",
+        "name": name,
+        "bins": bins,
+        "edges": bin_edges,
+        "counts": hist,
+        "min": data.min(),
+        "max": data.max(),
+        "median": data.mean(),
+        "std": data.std(),
+        "var": data.var(),
     }
 
 
@@ -497,16 +551,16 @@ def _hist_date(name, data, bins=10):
     fromtimestamp = datetime.fromtimestamp
 
     return {
-        'type': 'hist_date',
-        'name': name,
-        'bins': bins,
-        'edges': [fromtimestamp(d) for d in bin_edges],
-        'counts': hist,
-        'min': fromtimestamp(hist_data.min()),
-        'max': fromtimestamp(hist_data.max()),
-        'median': fromtimestamp(hist_data.mean()),
-        'std': fromtimestamp(hist_data.std()),
-        'var': fromtimestamp(hist_data.var())
+        "type": "hist_date",
+        "name": name,
+        "bins": bins,
+        "edges": [fromtimestamp(d) for d in bin_edges],
+        "counts": hist,
+        "min": fromtimestamp(hist_data.min()),
+        "max": fromtimestamp(hist_data.max()),
+        "median": fromtimestamp(hist_data.mean()),
+        "std": fromtimestamp(hist_data.std()),
+        "var": fromtimestamp(hist_data.var()),
     }
 
 
@@ -520,16 +574,16 @@ def _hist_int(name, data, bins=10):
     hist, bin_edges = np.histogram(data, bins=bins)
 
     return {
-        'type': 'hist_int',
-        'name': name,
-        'bins': bins,
-        'edges': bin_edges,
-        'counts': hist,
-        'min': data.min(),
-        'max': data.max(),
-        'median': data.mean(),
-        'std': data.std(),
-        'var': data.var()
+        "type": "hist_int",
+        "name": name,
+        "bins": bins,
+        "edges": bin_edges,
+        "counts": hist,
+        "min": data.min(),
+        "max": data.max(),
+        "median": data.mean(),
+        "std": data.std(),
+        "var": data.var(),
     }
 
 
@@ -538,7 +592,9 @@ def _hist_str(name, data, bins=10, truncate=20):
 
     if truncate:
         # data = (item[:truncate] for item in data)
-        data = (item[:truncate] + '...' if len(item) > truncate else item for item in data)
+        data = (
+            item[:truncate] + "..." if len(item) > truncate else item for item in data
+        )
 
     data = Counter(data)
 
@@ -548,27 +604,27 @@ def _hist_str(name, data, bins=10, truncate=20):
         labels, counts = zip(*data.items())
 
     return {
-        'type': 'hist_str',
-        'name': name,
-        'total': sum(data.values()),
-        'unique': n_unique,
-        'labels': labels[:bins],
-        'counts': counts[:bins]
+        "type": "hist_str",
+        "name": name,
+        "total": sum(data.values()),
+        "unique": n_unique,
+        "labels": labels[:bins],
+        "counts": counts[:bins],
     }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # import json
     # from ase.io import iread
     # from pprint import pprint
     # from server.styles.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
 
-    print('hello')
-    db = MongoDatabase(username='mongoadmin', password='secret')
+    print("hello")
+    db = MongoDatabase(username="mongoadmin", password="secret")
     print(db.info())
     print(db.count())
 
-    print(db.hist('uploaded'))
+    print(db.hist("uploaded"))
 
     # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
     #     # print(at)

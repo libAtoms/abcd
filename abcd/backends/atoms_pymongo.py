@@ -164,6 +164,7 @@ class MongoDatabase(AbstractABCD):
         username=None,
         password=None,
         authSource="admin",
+        uri_mode=False,
         **kwargs
     ):
         super().__init__()
@@ -181,13 +182,16 @@ class MongoDatabase(AbstractABCD):
             )
         )
 
-        self.client = MongoClient(
-            host=host,
-            port=port,
-            username=username,
-            password=password,
-            authSource=authSource,
-        )
+        if uri_mode:
+            self.client = MongoClient(host=host, authSource=authSource)
+        else:
+            self.client = MongoClient(
+                host=host,
+                port=port,
+                username=username,
+                password=password,
+                authSource=authSource,
+            )
 
         try:
             info = self.client.server_info()  # Forces a call.

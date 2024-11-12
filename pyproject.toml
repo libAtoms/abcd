@@ -25,6 +25,12 @@ pytest = "^8.2.2"
 pytest-cov = "^5.0.0"
 pytest-mock = "^3.14.0"
 
+[tool.poetry.group.pre-commit]
+optional = true
+[tool.poetry.group.pre-commit.dependencies]
+pre-commit = "^4.0.1"
+ruff = "^0.7.3"
+
 [tool.poetry.extras]
 tests = ["mongomock", "pytest", "pytest-cov"]
 mongo = ["pymongo"]
@@ -38,3 +44,35 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.plugins."console_scripts"]
 "abcd" = "abcd.frontends.commandline:main"
+
+[tool.ruff]
+target-version = "py39"
+
+[tool.ruff.lint]
+# Ignore complexity
+ignore = ["C901"]
+select = [
+    # flake8-bugbear
+    "B",
+    # pylint
+    "C", "R",
+    # pycodestyle
+    "E", "W",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "I",
+    # pep8-naming
+    "N",
+    # isort
+    "UP",
+]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+
+[tool.ruff.lint.pylint]
+max-args = 10
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = false

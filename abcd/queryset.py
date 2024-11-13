@@ -1,5 +1,5 @@
-import logging
 from abc import ABCMeta
+import logging
 
 logger = logging.getLogger(__name__)
 

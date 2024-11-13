@@ -1,6 +1,4 @@
-import sys
 from lark import Lark, Transformer, v_args
-from lark.exceptions import LarkError
 
 grammar = r"""
     start: ( key | key_value )*

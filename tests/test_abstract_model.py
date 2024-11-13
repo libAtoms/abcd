@@ -1,16 +1,15 @@
 import datetime
 import io
+from io import StringIO
 
 import ase
+from ase.calculators.lj import LennardJones
+from ase.io import read, write
+import numpy as np
 import pytest
 from pytest import approx
 
-from io import StringIO
-from ase.io import read, write
-import numpy as np
-
 from abcd.model import AbstractModel, Hasher
-from ase.calculators.lj import LennardJones
 
 
 @pytest.fixture

@@ -1,22 +1,21 @@
+from collections import Counter, UserDict
 import datetime
 import getpass
-import logging
 from hashlib import md5
-from collections import Counter, UserDict
-from ase.calculators.singlepoint import SinglePointCalculator
+import logging
 
-import numpy as np
 from ase import Atoms
+from ase.calculators.singlepoint import SinglePointCalculator
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
-class Hasher(object):
+class Hasher:
     def __init__(self, method=md5):
         self.method = method()
 
     def update(self, value):
-
         if isinstance(value, int):
             self.update(str(value).encode("ascii"))
 
@@ -24,7 +23,7 @@ class Hasher(object):
             self.update(value.encode("utf-8"))
 
         elif isinstance(value, float):
-            self.update("{:.8e}".format(value).encode("ascii"))
+            self.update(f"{value:.8e}".encode("ascii"))
 
         elif isinstance(value, (tuple, list)):
             for e in value:
@@ -80,14 +79,12 @@ class AbstractModel(UserDict):
         }
 
     def __getitem__(self, key):
-
         if key == "derived":
             return self.derived
 
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-
         if key == "derived":
             # raise KeyError('Please do not use "derived" as key because it is protected!')
             # Silent return to avoid raising error in pymongo package
@@ -107,7 +104,6 @@ class AbstractModel(UserDict):
         return value
 
     def update_key_category(self, key, value):
-
         if key == "_id":
             # raise KeyError('Please do not use "derived" as key because it is protected!')
             return
@@ -295,8 +291,8 @@ class AbstractModel(UserDict):
 
 
 if __name__ == "__main__":
-    import io
     from pprint import pprint
+
     from ase.io import read
 
     logging.basicConfig(level=logging.INFO)

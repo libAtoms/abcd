@@ -1,10 +1,11 @@
 import json
 import logging
-import requests
 from os import linesep
 from typing import List
 
 import ase
+import requests
+
 from abcd.backends.abstract import Database
 
 logger = logging.getLogger(__name__)
@@ -49,12 +50,12 @@ class HttpDatabase(Database):
         return results
 
     def get_atoms(self, id: str) -> Atoms:
-        data = requests.get(self.url + "/calculation/{}".format(id)).json()
+        data = requests.get(self.url + f"/calculation/{id}").json()
         atoms = Atoms.from_dict(data)
         return atoms
 
     def __repr__(self):
-        return "ABCD(type={}, url={}, ...)".format(self.__class__.__name__, self.url)
+        return f"ABCD(type={self.__class__.__name__}, url={self.url}, ...)"
 
     def _repr_html_(self):
         """jupyter notebook representation"""
@@ -67,9 +68,7 @@ class HttpDatabase(Database):
             [
                 "{:=^50}".format(" ABCD Database "),
                 "{:>10}: {}".format("type", "remote (http/https)"),
-                linesep.join(
-                    "{:>10}: {}".format(k, v) for k, v in self.db.info().items()
-                ),
+                linesep.join(f"{k:>10}: {v}" for k, v in self.db.info().items()),
             ]
         )
 

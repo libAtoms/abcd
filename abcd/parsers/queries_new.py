@@ -1,6 +1,6 @@
 import logging
-from lark import Lark, Transformer, v_args
-from lark.lexer import Token
+
+from lark import Lark, Transformer
 from lark.exceptions import LarkError
 
 logger = logging.getLogger(__name__)

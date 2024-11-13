@@ -1,27 +1,25 @@
-import types
-import logging
-import numpy as np
-
-from typing import Union, Iterable
-from os import linesep
-from operator import itemgetter
 from collections import Counter
+from collections.abc import Iterable
 from datetime import datetime
+import logging
+from operator import itemgetter
+from os import linesep
+from pathlib import Path
+import types
+from typing import Union
 
 from ase import Atoms
 from ase.io import iread
+from bson import ObjectId
+import numpy as np
+from pymongo import MongoClient
+import pymongo.errors
 
+from abcd.database import AbstractABCD
 import abcd.errors
 from abcd.model import AbstractModel
-from abcd.database import AbstractABCD
-from abcd.queryset import AbstractQuerySet
 from abcd.parsers import extras
-
-import pymongo.errors
-from pymongo import MongoClient
-from bson import ObjectId
-
-from pathlib import Path
+from abcd.queryset import AbstractQuerySet
 
 logger = logging.getLogger(__name__)
 
@@ -125,11 +123,11 @@ class MongoQuery(AbstractQuerySet):
         pass
 
     def __call__(self, ast):
-        logger.info("parsed ast: {}".format(ast))
+        logger.info(f"parsed ast: {ast}")
 
         if isinstance(ast, dict):
             return ast
-        elif isinstance(ast, str):
+        if isinstance(ast, str):
             from abcd.parsers.queries import parser
 
             p = parser(ast)
@@ -165,7 +163,7 @@ class MongoDatabase(AbstractABCD):
         password=None,
         authSource="admin",
         uri_mode=False,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
 
@@ -195,7 +193,7 @@ class MongoDatabase(AbstractABCD):
 
         try:
             info = self.client.server_info()  # Forces a call.
-            logger.info("DB info: {}".format(info))
+            logger.info(f"DB info: {info}")
 
         except pymongo.errors.OperationFailure:
             raise abcd.errors.AuthenticationError()
@@ -226,7 +224,6 @@ class MongoDatabase(AbstractABCD):
         self.collection.drop()
 
     def push(self, atoms: Union[Atoms, Iterable], extra_info=None, store_calc=True):
-
         if extra_info and isinstance(extra_info, str):
             extra_info = extras.parser.parse(extra_info)
 
@@ -238,7 +235,6 @@ class MongoDatabase(AbstractABCD):
             # self.collection.insert_one(data)
 
         elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-
             for item in atoms:
                 data = AtomsModel.from_atoms(
                     self.collection, item, extra_info=extra_info, store_calc=store_calc
@@ -246,7 +242,6 @@ class MongoDatabase(AbstractABCD):
                 data.save()
 
     def upload(self, file: Path, extra_infos=None, store_calc=True):
-
         if isinstance(file, str):
             file = Path(file)
 
@@ -273,7 +268,7 @@ class MongoDatabase(AbstractABCD):
 
     def count(self, query=None):
         query = parser(query)
-        logger.info("query; {}".format(query))
+        logger.info(f"query; {query}")
 
         if not query:
             query = {}
@@ -285,8 +280,8 @@ class MongoDatabase(AbstractABCD):
 
         pipeline = [
             {"$match": query},
-            {"$match": {"{}".format(name): {"$exists": True}}},
-            {"$project": {"_id": False, "data": "${}".format(name)}},
+            {"$match": {f"{name}": {"$exists": True}}},
+            {"$project": {"_id": False, "data": f"${name}"}},
         ]
 
         return [val["data"] for val in self.db.atoms.aggregate(pipeline)]
@@ -331,22 +326,16 @@ class MongoDatabase(AbstractABCD):
 
         if category == "arrays":
             if type(data[0]) == list:
-                return "array({}, N x {})".format(
-                    map_types[type(data[0][0])], len(data[0])
-                )
-            else:
-                return "vector({}, N)".format(map_types[type(data[0])])
+                return f"array({map_types[type(data[0][0])]}, N x {len(data[0])})"
+            return f"vector({map_types[type(data[0])]}, N)"
 
         if type(data) == list:
             if type(data[0]) == list:
                 if type(data[0][0]) == list:
                     return "list(list(...)"
-                else:
-                    return "array({})".format(map_types[type(data[0][0])])
-            else:
-                return "vector({})".format(map_types[type(data[0])])
-        else:
-            return "scalar({})".format(map_types[type(data)])
+                return f"array({map_types[type(data[0][0])]})"
+            return f"vector({map_types[type(data[0])]})"
+        return f"scalar({map_types[type(data)]})"
 
     def count_properties(self, query=None):
         query = parser(query)
@@ -396,7 +385,7 @@ class MongoDatabase(AbstractABCD):
         return properties
 
     def add_property(self, data, query=None):
-        logger.info("add: data={}, query={}".format(data, query))
+        logger.info(f"add: data={data}, query={query}")
 
         self.collection.update_many(
             parser(query),
@@ -407,7 +396,7 @@ class MongoDatabase(AbstractABCD):
         )
 
     def rename_property(self, name, new_name, query=None):
-        logger.info("rename: query={}, old={}, new={}".format(query, name, new_name))
+        logger.info(f"rename: query={query}, old={name}, new={new_name}")
         # TODO name in derived.info_keys OR name in derived.arrays_keys OR name in derived.derived_keys
         self.collection.update_many(
             parser(query), {"$push": {"derived.info_keys": new_name}}
@@ -428,7 +417,7 @@ class MongoDatabase(AbstractABCD):
         #      '$rename': {'arrays.{}'.format(name): 'arrays.{}'.format(new_name)}})
 
     def delete_property(self, name, query=None):
-        logger.info("delete: query={}, porperty={}".format(name, query))
+        logger.info(f"delete: query={name}, porperty={query}")
 
         self.collection.update_many(
             parser(query),
@@ -439,7 +428,6 @@ class MongoDatabase(AbstractABCD):
         )
 
     def hist(self, name, query=None, **kwargs):
-
         data = self.property(name, query)
         return histogram(name, data, **kwargs)
 
@@ -454,10 +442,10 @@ class MongoDatabase(AbstractABCD):
         host, port = self.client.address
 
         return (
-            "{}(".format(self.__class__.__name__)
-            + "url={}:{}, ".format(host, port)
-            + "db={}, ".format(self.db.name)
-            + "collection={})".format(self.collection.name)
+            f"{self.__class__.__name__}("
+            + f"url={host}:{port}, "
+            + f"db={self.db.name}, "
+            + f"collection={self.collection.name})"
         )
 
     def _repr_html_(self):
@@ -471,7 +459,7 @@ class MongoDatabase(AbstractABCD):
             [
                 "{:=^50}".format(" ABCD MongoDB "),
                 "{:>10}: {}".format("type", "mongodb"),
-                linesep.join("{:>10}: {}".format(k, v) for k, v in self.info().items()),
+                linesep.join(f"{k:>10}: {v}" for k, v in self.info().items()),
             ]
         )
 
@@ -488,45 +476,35 @@ def histogram(name, data, **kwargs):
     if not data:
         return None
 
-    elif data and isinstance(data, list):
-
+    if data and isinstance(data, list):
         ptype = type(data[0])
 
         if not all(isinstance(x, ptype) for x in data):
-            print("Mixed type error of the {} property!".format(name))
+            print(f"Mixed type error of the {name} property!")
             return None
 
         if ptype == float:
             bins = kwargs.get("bins", 10)
             return _hist_float(name, data, bins)
 
-        elif ptype == int:
+        if ptype == int:
             bins = kwargs.get("bins", 10)
             return _hist_int(name, data, bins)
 
-        elif ptype == str:
+        if ptype == str:
             return _hist_str(name, data, **kwargs)
 
-        elif ptype == datetime:
+        if ptype == datetime:
             bins = kwargs.get("bins", 10)
             return _hist_date(name, data, bins)
 
-        else:
-            print(
-                "{}: Histogram for list of {} types are not supported!".format(
-                    name, type(data[0])
-                )
-            )
-            logger.info(
-                "{}: Histogram for list of {} types are not supported!".format(
-                    name, type(data[0])
-                )
-            )
+        print(f"{name}: Histogram for list of {type(data[0])} types are not supported!")
+        logger.info(
+            f"{name}: Histogram for list of {type(data[0])} types are not supported!"
+        )
 
     else:
-        logger.info(
-            "{}: Histogram for {} types are not supported!".format(name, type(data))
-        )
+        logger.info(f"{name}: Histogram for {type(data)} types are not supported!")
         return None
 
 

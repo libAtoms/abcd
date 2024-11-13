@@ -1,5 +1,6 @@
 from pathlib import Path
-from ase.io import iread, read
+
+from ase.io import read
 
 from abcd import ABCD
 

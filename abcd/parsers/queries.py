@@ -1,7 +1,7 @@
 import logging
+
 from lark import Lark, Transformer, v_args
 from lark.exceptions import LarkError
-from abcd.queryset import Query
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         # print(parser.parse(query).pretty())
         try:
             tree = parser.parse(query)
-            logger.info("=> tree: {}".format(tree))
-            logger.info("==> ast: {}".format(parser(query)))
+            logger.info(f"=> tree: {tree}")
+            logger.info(f"==> ast: {parser(query)}")
         except LarkError:
             raise NotImplementedError

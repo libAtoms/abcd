@@ -1,10 +1,8 @@
-import io
 import uuid
 
-from nglview import register_backend, Structure
-from ipywidgets import Dropdown, FloatSlider, IntSlider, HBox, VBox, Output
-
+from ipywidgets import Dropdown, FloatSlider, Output, VBox
 import matplotlib.pyplot as plt
+from nglview import Structure, register_backend
 import numpy as np
 
 
@@ -69,7 +67,7 @@ def ViewStructure(atoms):
     return view
 
 
-class AtomViewer(object):
+class AtomViewer:
     def __init__(self, atoms, data=[], xsize=1000, ysize=500):
         self.view = self._init_nglview(atoms, data, xsize, ysize)
 
@@ -114,7 +112,7 @@ class AtomViewer(object):
         view._remote_call(
             "setSize",
             target="Widget",
-            args=["{:d}px".format(xsize), "{:d}px".format(ysize)],
+            args=[f"{xsize:d}px", f"{ysize:d}px"],
         )
 
         data = np.max(data) - data

@@ -1,4 +1,5 @@
 import pytest
+
 from abcd.parsers.extras import parser as extras_parser
 from abcd.parsers.queries import parser as queries_parser
 
@@ -143,8 +144,7 @@ class TestParsingExtras:
             "not_bool_array=[T F S]",
         ],
     )
-    def test_missing(self, string):
-        ...
+    def test_missing(self, string): ...
 
 
 class TestParsingQueries:
@@ -188,8 +188,7 @@ class TestParsingQueries:
             ("any(aa) > 3", {}),
         ],
     )
-    def test_expressions(self, case):
-        ...
+    def test_expressions(self, case): ...
 
     @pytest.mark.skip("known issues / future features")
     @pytest.mark.parametrize(
@@ -202,5 +201,4 @@ class TestParsingQueries:
             ("aa and (bb > 23.54 or (22 in cc and dd))", {}),
         ],
     )
-    def test_expressions(self, case):
-        ...
+    def test_expressions(self, case): ...

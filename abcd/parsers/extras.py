@@ -10,24 +10,24 @@ grammar = r"""
 
     NAME: ("_"|LETTER|DIGIT) ("_"|"-"|LETTER|DIGIT)*
 
-    ?value: 
+    ?value:
           | ESCAPED_STRING     -> string
           | integer
           | float
           | boolean
           | WORD
           | "null"             -> null
-          
+
     arrays: "[" value (","? value)* "]"
           | "{" value (","? value)* "}"
           | "(" value (","? value)* ")"
-    
-    ?integer: INT -> int 
+
+    ?integer: INT -> int
             | array_int
-    
-    ?float: FLOAT -> float 
+
+    ?float: FLOAT -> float
           | array_float
-    
+
     ?boolean: true | false | array_boolean
 
     true: "T" | "true"
@@ -36,8 +36,8 @@ grammar = r"""
     array_int: "[" integer ([","] integer)* "]"
              | "{" integer ([","] integer)* "}"
              | "(" integer ([","] integer)* ")"
-             
-    
+
+
     array_float: "[" float ([","] float)* "]"
                | "{" float ([","] float)* "}"
                | "(" float ([","] float)* ")"
@@ -45,11 +45,11 @@ grammar = r"""
     array_boolean: "[" boolean ([","] boolean)* "]"
                | "{" boolean ([","] boolean)* "}"
                | "(" boolean ([","] boolean)* ")"
-    
-    
-    INT.3: SIGNED_INT 
+
+
+    INT.3: SIGNED_INT
     FLOAT.4: SIGNED_FLOAT
-          
+
     %import common.ESCAPED_STRING
     %import common.LETTER
     %import common.WORD

@@ -159,9 +159,10 @@ class AbstractModel(UserDict):
         }
         arrays_keys = set(atoms.arrays.keys())
         info_keys = set(atoms.info.keys())
-        results_keys = (
-            set(atoms.calc.results.keys()) if store_calc and atoms.calc else {}
-        )
+        if store_calc and atoms.calc:
+            results_keys = atoms.calc.results.keys() - (arrays_keys | info_keys)
+        else:
+            results_keys = {}
 
         all_keys = (reserved_keys, arrays_keys, info_keys, results_keys)
         if len(set.union(*all_keys)) != sum(map(len, all_keys)):

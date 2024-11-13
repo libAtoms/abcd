@@ -8,8 +8,12 @@ import numpy as np
 
 @register_backend("ase")
 class MyASEStructure(Structure):
-    def __init__(self, atoms, bfactor=[], occupancy=[]):
+    def __init__(self, atoms, bfactor=None, occupancy=None):
         # super(MyASEStructure, self).__init__()
+        if occupancy is None:
+            occupancy = []
+        if bfactor is None:
+            bfactor = []
         self.ext = "pdb"
         self.params = {}
         self._atoms = atoms
@@ -68,7 +72,9 @@ def ViewStructure(atoms):
 
 
 class AtomViewer:
-    def __init__(self, atoms, data=[], xsize=1000, ysize=500):
+    def __init__(self, atoms, data=None, xsize=1000, ysize=500):
+        if data is None:
+            data = []
         self.view = self._init_nglview(atoms, data, xsize, ysize)
 
         self.widgets = {
@@ -100,7 +106,7 @@ class AtomViewer:
                 [[min(data), max(data)]], aspect="auto", cmap=plt.get_cmap(cmap)
             )
             ax1.remove()
-            cbar = fig.colorbar(img, cax=ax2, orientation="horizontal")
+            fig.colorbar(img, cax=ax2, orientation="horizontal")
 
             plt.show()
 

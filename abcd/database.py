@@ -1,4 +1,5 @@
-from abc import ABCMeta, abstractmethod
+# ruff: noqa: B024, B027
+from abc import ABCMeta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -7,7 +8,6 @@ logger = logging.getLogger(__name__)
 class AbstractABCD(metaclass=ABCMeta):
     """Factory method"""
 
-    @abstractmethod
     def __init__(self):
         pass
 

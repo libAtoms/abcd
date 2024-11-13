@@ -218,7 +218,8 @@ def key_delete(*, db, query, yes, keys, **kwargs):
 
     if not yes:
         print(
-            f"Please use --yes for deleting keys from {db.count(query=query)} configurations"
+            f"Please use --yes for deleting keys from {db.count(query=query)} "
+            "configurations"
         )
         exit(1)
 
@@ -232,7 +233,8 @@ def key_delete(*, db, query, yes, keys, **kwargs):
 def execute(*, db, query, yes, python_code, **kwargs):
     if not yes:
         print(
-            f"Please use --yes for executing code on {db.count(query=query)} configurations"
+            f"Please use --yes for executing code on {db.count(query=query)} "
+            "configurations"
         )
         exit(1)
 
@@ -258,16 +260,14 @@ def server(*, abcd_url, url, api_only, **kwargs):
 
 
 class Formater:
-    partialBlocks = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]  # char=pb
-
     def title(self, title):
         print("", title, "=" * len(title), sep=os.linesep)
 
     def describe(self, data):
         if data["type"] == "hist_float":
             print(
-                "{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} var:{"
-                ":11.4e}".format(
+                "{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} "
+                "var:{:11.4e}".format(
                     data["name"],
                     sum(data["counts"]),
                     data["min"],

@@ -1,7 +1,6 @@
 import json
 import logging
 from os import linesep
-from typing import List
 
 import ase
 import requests
@@ -45,14 +44,12 @@ class HttpDatabase(Database):
     def query(self, query_string):
         pass
 
-    def search(self, query_string: str) -> List[str]:
-        results = requests.get(self.url + "/calculation").json()
-        return results
+    def search(self, query_string: str) -> list[str]:
+        return requests.get(self.url + "/calculation").json()
 
     def get_atoms(self, id: str) -> Atoms:
         data = requests.get(self.url + f"/calculation/{id}").json()
-        atoms = Atoms.from_dict(data)
-        return atoms
+        return Atoms.from_dict(data)
 
     def __repr__(self):
         return f"ABCD(type={self.__class__.__name__}, url={self.url}, ...)"

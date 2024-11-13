@@ -201,4 +201,4 @@ class TestParsingQueries:
             ("aa and (bb > 23.54 or (22 in cc and dd))", {}),
         ],
     )
-    def test_expressions(self, case): ...
+    def test_expressions(self, case): ...  # noqa: F811

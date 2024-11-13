@@ -1,3 +1,5 @@
+# ruff: noqa: E731
+
 import logging
 
 from lark import Lark, Transformer, v_args
@@ -178,5 +180,5 @@ if __name__ == "__main__":
             tree = parser.parse(query)
             logger.info(f"=> tree: {tree}")
             logger.info(f"==> ast: {parser(query)}")
-        except LarkError:
-            raise NotImplementedError
+        except LarkError as err:
+            raise NotImplementedError from err

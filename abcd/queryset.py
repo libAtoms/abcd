@@ -8,5 +8,5 @@ class Query(dict):
     pass
 
 
-class AbstractQuerySet(metaclass=ABCMeta):
+class AbstractQuerySet(metaclass=ABCMeta):  # noqa: B024
     pass

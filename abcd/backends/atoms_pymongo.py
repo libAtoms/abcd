@@ -161,7 +161,7 @@ class MongoDatabase(AbstractABCD):
         collection_name="atoms",
         username=None,
         password=None,
-        authSource="admin",
+        auth_source="admin",
         uri_mode=False,
         **kwargs,
     ):
@@ -175,31 +175,31 @@ class MongoDatabase(AbstractABCD):
                 collection_name,
                 username,
                 password,
-                authSource,
+                auth_source,
                 kwargs,
             )
         )
 
         if uri_mode:
-            self.client = MongoClient(host=host, authSource=authSource)
+            self.client = MongoClient(host=host, authSource=auth_source)
         else:
             self.client = MongoClient(
                 host=host,
                 port=port,
                 username=username,
                 password=password,
-                authSource=authSource,
+                authSource=auth_source,
             )
 
         try:
             info = self.client.server_info()  # Forces a call.
             logger.info(f"DB info: {info}")
 
-        except pymongo.errors.OperationFailure:
-            raise abcd.errors.AuthenticationError()
+        except pymongo.errors.OperationFailure as err:
+            raise abcd.errors.AuthenticationError() from err
 
-        except pymongo.errors.ServerSelectionTimeoutError:
-            raise abcd.errors.TimeoutError()
+        except pymongo.errors.ServerSelectionTimeoutError as err:
+            raise abcd.errors.TimeoutError() from err
 
         self.db = self.client[db_name]
         self.collection = self.db[collection_name]
@@ -258,8 +258,7 @@ class MongoDatabase(AbstractABCD):
     def get_items(self, query=None):
         # TODO: better method for aggregations
         query = parser(query)
-        for dct in self.db.atoms.find(query):
-            yield dct
+        yield from self.db.atoms.find(query)
 
     def get_atoms(self, query=None):
         query = parser(query)
@@ -320,18 +319,18 @@ class MongoDatabase(AbstractABCD):
         return properties
 
     def get_type_of_property(self, prop, category):
-        # TODO: Probably it would be nicer to store the type info in the database from the beginning.
+        # TODO: Store the type info in the database from the beginning?
         atoms = self.db.atoms.find_one({prop: {"$exists": True}})
         data = atoms[prop]
 
         if category == "arrays":
-            if type(data[0]) == list:
+            if isinstance(data[0], list):
                 return f"array({map_types[type(data[0][0])]}, N x {len(data[0])})"
             return f"vector({map_types[type(data[0])]}, N)"
 
-        if type(data) == list:
-            if type(data[0]) == list:
-                if type(data[0][0]) == list:
+        if isinstance(data, list):
+            if isinstance(data[0], list):
+                if isinstance(data[0][0], list):
                     return "list(list(...)"
                 return f"array({map_types[type(data[0][0])]})"
             return f"vector({map_types[type(data[0])]})"
@@ -397,7 +396,8 @@ class MongoDatabase(AbstractABCD):
 
     def rename_property(self, name, new_name, query=None):
         logger.info(f"rename: query={query}, old={name}, new={new_name}")
-        # TODO name in derived.info_keys OR name in derived.arrays_keys OR name in derived.derived_keys
+        # TODO name in derived.info_keys OR name in derived.arrays_keys
+        # OR name in derived.derived_keys
         self.collection.update_many(
             parser(query), {"$push": {"derived.info_keys": new_name}}
         )
@@ -406,15 +406,6 @@ class MongoDatabase(AbstractABCD):
             parser(query),
             {"$pull": {"derived.info_keys": name}, "$rename": {name: new_name}},
         )
-
-        # self.collection.update_many(
-        #     parser(query + ['arrays.{}'.format(name)]),
-        #     {'$push': {'derived.arrays_keys': new_name}})
-        #
-        # self.collection.update_many(
-        #     parser(query + ['arrays.{}'.format(name)]),
-        #     {'$pull': {'derived.arrays_keys': name},
-        #      '$rename': {'arrays.{}'.format(name): 'arrays.{}'.format(new_name)}})
 
     def delete_property(self, name, query=None):
         logger.info(f"delete: query={name}, porperty={query}")
@@ -435,7 +426,7 @@ class MongoDatabase(AbstractABCD):
         # TODO: Separate python environment with its own packages loaded
 
         for dct in self.get_items(query):
-            atoms = AtomsModel(self.collection, dct)
+            AtomsModel(self.collection, dct)
             exec(code)
 
     def __repr__(self):
@@ -483,18 +474,18 @@ def histogram(name, data, **kwargs):
             print(f"Mixed type error of the {name} property!")
             return None
 
-        if ptype == float:
+        if isinstance(data[0], float):
             bins = kwargs.get("bins", 10)
             return _hist_float(name, data, bins)
 
-        if ptype == int:
+        if isinstance(data[0], int):
             bins = kwargs.get("bins", 10)
             return _hist_int(name, data, bins)
 
-        if ptype == str:
+        if isinstance(data[0], str):
             return _hist_str(name, data, **kwargs)
 
-        if ptype == datetime:
+        if isinstance(data[0], datetime):
             bins = kwargs.get("bins", 10)
             return _hist_date(name, data, bins)
 
@@ -502,10 +493,10 @@ def histogram(name, data, **kwargs):
         logger.info(
             f"{name}: Histogram for list of {type(data[0])} types are not supported!"
         )
-
-    else:
-        logger.info(f"{name}: Histogram for {type(data)} types are not supported!")
         return None
+
+    logger.info(f"{name}: Histogram for {type(data)} types are not supported!")
+    return None
 
 
 def _hist_float(name, data, bins=10):
@@ -596,39 +587,7 @@ def _hist_str(name, data, bins=10, truncate=20):
 
 
 if __name__ == "__main__":
-    # import json
-    # from ase.io import iread
-    # from pprint import pprint
-    # from server.styles.myjson import JSONEncoderOld, JSONDecoderOld, JSONEncoder
-
-    print("hello")
     db = MongoDatabase(username="mongoadmin", password="secret")
     print(db.info())
     print(db.count())
-
     print(db.hist("uploaded"))
-
-    # for atoms in iread('../../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(None)):
-    #     # print(at)
-    #     atoms.calc.results['forces'] = atoms.arrays['force']
-    #     # at.arrays['force'] = None
-    #
-    #     json_data = json.dumps(atoms, cls=JSONEncoderOld)
-    #     print(json_data)
-    #
-    #     atom_dict = json.loads(json_data, cls=JSONDecoderOld)
-    #     print(atom_dict)
-    #
-    #     print(atoms == atom_dict)
-    #
-    # with JSONEncoder() as encoder:
-    #     data = encoder.encode(atoms)
-    #
-    # print(data)
-    #
-    # with DictEncoder() as encoder:
-    #     data = encoder.encode(atoms)
-    #
-    # pprint(data)
-    #
-    # db.collection.insert_one(DictEncoder().encode(atoms))

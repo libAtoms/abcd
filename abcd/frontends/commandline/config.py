@@ -32,9 +32,7 @@ class Config(dict):
 
         logger.info(f"Using config file: {file}")
 
-        config = cls.from_json(file)
-
-        return config
+        return cls.from_json(file)
 
     def save(self):
         file = (

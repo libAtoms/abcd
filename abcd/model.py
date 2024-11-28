@@ -241,6 +241,7 @@ class AbstractModel(UserDict):
             # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
 
             params = self.pop("calculator_parameters", {})
+            info_keys -= {"calculator_parameters"}
 
             atoms.calc = SinglePointCalculator(atoms, **params)
             atoms.calc.results.update((key, self[key]) for key in results_keys)

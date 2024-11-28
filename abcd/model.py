@@ -204,10 +204,6 @@ class AbstractModel(UserDict):
 
             for key, value in atoms.calc.results.items():
                 if isinstance(value, np.ndarray):
-                    if value.shape[0] == n_atoms:
-                        arrays_keys.add(key)
-                    else:
-                        info_keys.add(key)
                     data[key] = value.tolist()
                 else:
                     data[key] = value
@@ -261,14 +257,14 @@ class AbstractModel(UserDict):
 
         if cell:
             volume = abs(np.linalg.det(cell))  # atoms.get_volume()
-            self["volume"] = volume
             self.derived_keys.append("volume")
+            self["volume"] = volume
 
             virial = self.get("virial")
             if virial:
                 # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
-                self["pressure"] = -1 / 3 * np.trace(virial / volume)
                 self.derived_keys.append("pressure")
+                self["pressure"] = -1 / 3 * np.trace(virial / volume)
 
         # 'elements': Counter(atoms.get_chemical_symbols()),
         self["elements"] = Counter(str(element) for element in self["numbers"])

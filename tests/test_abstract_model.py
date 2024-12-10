@@ -189,7 +189,7 @@ def test_from_atoms_len_atoms_3():
         "free_energy",
     }
 
-    # check a some keys as well
+    # check some values as well
     assert abcd_data["energy"] == atoms.get_potential_energy()
     assert abcd_data["forces"] == approx(atoms.get_forces())
 

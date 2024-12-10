@@ -146,7 +146,9 @@ class AbstractModel(UserDict):
 
     @classmethod
     def from_atoms(cls, atoms: Atoms, extra_info=None, store_calc=True):
-        """ASE's original implementation"""
+        """Extract data from Atoms info, arrays and results."""
+        if not isinstance(atoms, Atoms):
+            raise ValueError("atoms must be an ASE Atoms object.")
 
         reserved_keys = {
             "n_atoms",
@@ -157,11 +159,13 @@ class AbstractModel(UserDict):
             "derived",
             "formula",
         }
+
         arrays_keys = set(atoms.arrays.keys())
         info_keys = set(atoms.info.keys())
-        results_keys = (
-            set(atoms.calc.results.keys()) if store_calc and atoms.calc else {}
-        )
+        if store_calc and atoms.calc:
+            results_keys = atoms.calc.results.keys() - (arrays_keys | info_keys)
+        else:
+            results_keys = set()
 
         all_keys = (reserved_keys, arrays_keys, info_keys, results_keys)
         if len(set.union(*all_keys)) != sum(map(len, all_keys)):
@@ -172,46 +176,43 @@ class AbstractModel(UserDict):
 
         n_atoms = len(atoms)
 
-        dct = {
+        data = {
             "n_atoms": n_atoms,
             "cell": atoms.cell.tolist(),
             "pbc": atoms.pbc.tolist(),
             "formula": atoms.get_chemical_formula(),
         }
 
-        info_keys.update({"n_atoms", "cell", "pbc", "formula"})
+        info_keys.update(data.keys())
 
         for key, value in atoms.arrays.items():
             if isinstance(value, np.ndarray):
-                dct[key] = value.tolist()
+                data[key] = value.tolist()
             else:
-                dct[key] = value
+                data[key] = value
 
         for key, value in atoms.info.items():
             if isinstance(value, np.ndarray):
-                dct[key] = value.tolist()
+                data[key] = value.tolist()
             else:
-                dct[key] = value
+                data[key] = value
 
         if store_calc and atoms.calc:
-            dct["calculator_name"] = atoms.calc.__class__.__name__
-            dct["calculator_parameters"] = atoms.calc.todict()
+            data["calculator_name"] = atoms.calc.__class__.__name__
+            data["calculator_parameters"] = atoms.calc.todict()
             info_keys.update({"calculator_name", "calculator_parameters"})
 
             for key, value in atoms.calc.results.items():
-
                 if isinstance(value, np.ndarray):
-                    if value.shape[0] == n_atoms:
-                        arrays_keys.update(key)
-                    else:
-                        info_keys.update(key)
-                    dct[key] = value.tolist()
+                    data[key] = value.tolist()
+                else:
+                    data[key] = value
 
         item.arrays_keys = list(arrays_keys)
         item.info_keys = list(info_keys)
         item.results_keys = list(results_keys)
 
-        item.update(dct)
+        item.update(data)
 
         if extra_info:
             item.info_keys.extend(extra_info.keys())
@@ -240,6 +241,7 @@ class AbstractModel(UserDict):
             # atoms.calc = get_calculator(data['results']['calculator_name'])(**params)
 
             params = self.pop("calculator_parameters", {})
+            info_keys -= {"calculator_parameters"}
 
             atoms.calc = SinglePointCalculator(atoms, **params)
             atoms.calc.results.update((key, self[key]) for key in results_keys)
@@ -256,14 +258,14 @@ class AbstractModel(UserDict):
 
         if cell:
             volume = abs(np.linalg.det(cell))  # atoms.get_volume()
-            self["volume"] = volume
             self.derived_keys.append("volume")
+            self["volume"] = volume
 
             virial = self.get("virial")
             if virial:
                 # pressure P = -1/3 Tr(stress) = -1/3 Tr(virials/volume)
-                self["pressure"] = -1 / 3 * np.trace(virial / volume)
                 self.derived_keys.append("pressure")
+                self["pressure"] = -1 / 3 * np.trace(virial / volume)
 
         # 'elements': Counter(atoms.get_chemical_symbols()),
         self["elements"] = Counter(str(element) for element in self["numbers"])

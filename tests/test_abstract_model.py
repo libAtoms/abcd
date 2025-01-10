@@ -1,3 +1,4 @@
+import datetime
 import io
 
 import ase
@@ -8,7 +9,7 @@ from io import StringIO
 from ase.io import read, write
 import numpy as np
 
-from abcd.model import AbstractModel
+from abcd.model import AbstractModel, Hasher
 from ase.calculators.lj import LennardJones
 
 
@@ -238,7 +239,6 @@ def test_write_and_read(store_calc):
         "hash",
         "modified",
         "uploaded",
-        "hash_structure",  # see issue #118
     }:
         assert (
             abcd_data[key] == abcd_data_after_read[key]
@@ -247,10 +247,45 @@ def test_write_and_read(store_calc):
     # expected differences - n.b. order of calls above
     assert abcd_data_after_read["modified"] > abcd_data["modified"]
     assert abcd_data_after_read["uploaded"] > abcd_data["uploaded"]
-    assert abcd_data_after_read["hash"] != abcd_data["hash"]
 
     # expect results to match within fp precision
     for key in set(abcd_data.results_keys):
         assert abcd_data[key] == approx(
             np.array(abcd_data_after_read[key])
         ), f"{key}'s value does not match"
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        1296,
+        3.14,
+        [1, 2, 3],
+        (4, 5, 6),
+        {"a": "value"},
+        datetime.datetime.now(datetime.timezone.utc),
+        b"test",
+    ],
+)
+def test_hasher(data):
+    """Test hash calculated correctly."""
+    hasher_1 = Hasher()
+
+    # Test hash updated
+    init_hash = hasher_1()
+    hasher_1.update("Test value")
+    updated_hash = hasher_1()
+    assert updated_hash != init_hash
+
+    # Test updating hash for different data types
+    hasher_1.update(data)
+    assert updated_hash != hasher_1()
+
+    # Test newer hasher reset correctly
+    hasher_2 = Hasher()
+    assert hasher_2() == init_hash
+
+    # Test hashes match after same data added
+    hasher_2.update("Test value")
+    hasher_2.update(data)
+    assert hasher_1() == hasher_2()

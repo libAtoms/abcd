@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class Hasher(object):
-    def __init__(self, method=md5()):
-        self.method = method
+    def __init__(self, method=md5):
+        self.method = method()
 
     def update(self, value):
 
@@ -273,26 +273,25 @@ class AbstractModel(UserDict):
         self["username"] = getpass.getuser()
 
         if not self.get("uploaded"):
-            self["uploaded"] = datetime.datetime.utcnow()
+            self["uploaded"] = datetime.datetime.now(datetime.timezone.utc)
 
-        self["modified"] = datetime.datetime.utcnow()
+        self["modified"] = datetime.datetime.now(datetime.timezone.utc)
 
-        m = Hasher()
+        hasher = Hasher()
 
         for key in ("numbers", "positions", "cell", "pbc"):
-            m.update(self[key])
+            hasher.update(self[key])
 
         self.derived_keys.append("hash_structure")
-        self["hash_structure"] = m()
+        self["hash_structure"] = hasher()
 
-        m = Hasher()
         for key in self.arrays_keys:
-            m.update(self[key])
+            hasher.update(self[key])
         for key in self.info_keys:
-            m.update(self[key])
+            hasher.update(self[key])
 
         self.derived_keys.append("hash")
-        self["hash"] = m()
+        self["hash"] = hasher()
 
 
 if __name__ == "__main__":

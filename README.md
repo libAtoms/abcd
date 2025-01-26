@@ -1,5 +1,6 @@
 # ABCD
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Doc](https://img.shields.io/badge/docs-master-green.svg)](https://libatoms.github.io/abcd/)
 [![Build Status](https://travis-ci.org/libAtoms/abcd.svg?branch=master)](https://travis-ci.org/libAtoms/abcd)
 

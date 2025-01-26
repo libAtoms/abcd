@@ -1,3 +1,7 @@
+# Copyright (c) 2025.
+# Authors: Elliott Kasoar, Tamás K. Stenczel
+# This program is distributed under the MIT License, see LICENSE.md.
+
 import pytest
 from abcd.parsers.extras import parser as extras_parser
 from abcd.parsers.queries import parser as queries_parser

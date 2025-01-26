@@ -1,3 +1,7 @@
+# Copyright (c) 2025.
+# Authors: Ádám Fekete, Elliott Kasoar, Tamás K. Stenczel, Gábor Csányi
+# This program is distributed under the MIT License, see LICENSE.md.
+
 import types
 import logging
 import numpy as np

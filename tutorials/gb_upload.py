@@ -1,3 +1,7 @@
+# Copyright (c) 2025.
+# Authors: Ádám Fekete, Elliott Kasoar
+# This program is distributed under the MIT License, see LICENSE.md.
+
 import sys
 from pathlib import Path
 

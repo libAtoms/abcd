@@ -255,6 +255,15 @@ def test_write_and_read(store_calc):
         ), f"{key}'s value does not match"
 
 
+def test_hash_update():
+    """Test hash can be updated after initialisation."""
+    hasher_1 = Hasher()
+
+    init_hash = hasher_1()
+    hasher_1.update("Test value")
+    assert hasher_1() != init_hash
+
+
 @pytest.mark.parametrize(
     "data",
     [
@@ -267,25 +276,46 @@ def test_write_and_read(store_calc):
         b"test",
     ],
 )
-def test_hasher(data):
-    """Test hash calculated correctly."""
+def test_hash_data_types(data):
+    """Test updating hash for different data types."""
     hasher_1 = Hasher()
-
-    # Test hash updated
-    init_hash = hasher_1()
     hasher_1.update("Test value")
     updated_hash = hasher_1()
-    assert updated_hash != init_hash
 
-    # Test updating hash for different data types
     hasher_1.update(data)
     assert updated_hash != hasher_1()
 
-    # Test newer hasher reset correctly
+
+def test_second_hash_init():
+    """Test second hash is initialised correctly."""
+    hasher_1 = Hasher()
+
+    init_hash = hasher_1()
+    hasher_1.update("Test value")
+
     hasher_2 = Hasher()
     assert hasher_2() == init_hash
 
-    # Test hashes match after same data added
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        1296,
+        3.14,
+        [1, 2, 3],
+        (4, 5, 6),
+        {"a": "value"},
+        datetime.datetime.now(datetime.timezone.utc),
+        b"test",
+    ],
+)
+def test_consistent_hash(data):
+    """Test two hashers agree with same data."""
+    hasher_1 = Hasher()
+    hasher_1.update("Test value")
+    hasher_1.update(data)
+
+    hasher_2 = Hasher()
     hasher_2.update("Test value")
     hasher_2.update(data)
     assert hasher_1() == hasher_2()

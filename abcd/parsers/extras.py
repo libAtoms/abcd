@@ -1,6 +1,6 @@
-import sys
+# ruff: noqa: E731
+
 from lark import Lark, Transformer, v_args
-from lark.exceptions import LarkError
 
 grammar = r"""
     start: ( key | key_value )*
@@ -10,24 +10,24 @@ grammar = r"""
 
     NAME: ("_"|LETTER|DIGIT) ("_"|"-"|LETTER|DIGIT)*
 
-    ?value: 
+    ?value:
           | ESCAPED_STRING     -> string
           | integer
           | float
           | boolean
           | WORD
           | "null"             -> null
-          
+
     arrays: "[" value (","? value)* "]"
           | "{" value (","? value)* "}"
           | "(" value (","? value)* ")"
-    
-    ?integer: INT -> int 
+
+    ?integer: INT -> int
             | array_int
-    
-    ?float: FLOAT -> float 
+
+    ?float: FLOAT -> float
           | array_float
-    
+
     ?boolean: true | false | array_boolean
 
     true: "T" | "true"
@@ -36,8 +36,8 @@ grammar = r"""
     array_int: "[" integer ([","] integer)* "]"
              | "{" integer ([","] integer)* "}"
              | "(" integer ([","] integer)* ")"
-             
-    
+
+
     array_float: "[" float ([","] float)* "]"
                | "{" float ([","] float)* "}"
                | "(" float ([","] float)* ")"
@@ -45,11 +45,11 @@ grammar = r"""
     array_boolean: "[" boolean ([","] boolean)* "]"
                | "{" boolean ([","] boolean)* "}"
                | "(" boolean ([","] boolean)* ")"
-    
-    
-    INT.3: SIGNED_INT 
+
+
+    INT.3: SIGNED_INT
     FLOAT.4: SIGNED_FLOAT
-          
+
     %import common.ESCAPED_STRING
     %import common.LETTER
     %import common.WORD
@@ -97,7 +97,7 @@ parser = Lark(
 if __name__ == "__main__":
     test_string = " ".join(
         [
-            " " "flag",  # start with a separator
+            " flag",  # start with a separator
             'quotedd_string="quoteddd value"',
             r'quotedddd_string_escaped="esc\"aped"',
             "false_value = F",
@@ -132,91 +132,3 @@ if __name__ == "__main__":
 
     print(j)
     # TODO: arrays with mixed types
-    # print(j.pretty())
-
-    # try:
-    #     parser.parse('double_equals=abc=xyz')
-    # except LarkError:
-    #     print('ERROR! ' * 10)
-
-# #
-# # This example shows how to write a basic JSON parser
-# #
-# # The code is short and clear, and outperforms every other parser (that's written in Python).
-# # For an explanation, check out the JSON parser tutorial at /docs/json_tutorial.md
-# #
-#
-# import sys
-#
-# from lark import Lark, Transformer, v_args
-#
-# json_grammar = r"""
-#     ?start: value
-#
-#     ?value: object
-#           | array
-#           | string
-#           | SIGNED_NUMBER      -> number
-#           | "true"             -> true
-#           | "false"            -> false
-#           | "null"             -> null
-#
-#     array  : "[" [value ("," value)*] "]"
-#     object : "{" [pair ("," pair)*] "}"
-#     pair   : string ":" value
-#
-#     string : ESCAPED_STRING
-#
-#     %import common.ESCAPED_STRING
-#     %import common.SIGNED_NUMBER
-#     %import common.WS
-#
-#     %ignore WS
-# """
-#
-#
-# class TreeToJson(Transformer):
-#     @v_args(inline=True)
-#     def string(self, s):
-#         return s[1:-1].replace('\\"', '"')
-#
-#     array = list
-#     pair = tuple
-#     object = dict
-#     number = v_args(inline=True)(float)
-#
-#     null = lambda self, _: None
-#     true = lambda self, _: True
-#     false = lambda self, _: False
-#
-#
-# # json_parser = Lark(json_grammar, parser='earley', lexer='standard')
-# # def parse(x):
-# #     return TreeToJson().transform(json_parser.parse(x))
-#
-# json_parser = Lark(json_grammar, parser='lalr', lexer='standard', transformer=TreeToJson())
-# parse = json_parser.parse
-#
-#
-# def test():
-#     test_json = '''
-#         {
-#             "empty_object" : {},
-#             "empty_array"  : [],
-#             "booleans"     : { "YES" : true, "NO" : false },
-#             "numbers"      : [ 0, 1, -2, 3.3, 4.4e5, 6.6e-7 ],
-#             "strings"      : [ "This", [ "And" , "That", "And a \\"b" ] ],
-#             "nothing"      : null
-#         }
-#     '''
-#
-#     j = parse(test_json)
-#     print(j)
-#     import json
-#     assert j == json.loads(test_json)
-#
-#
-# if __name__ == '__main__':
-#     # test()
-#     with open(sys.argv[1]) as f:
-#         print(parse(f.read()))

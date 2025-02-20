@@ -1,8 +1,8 @@
-from flask_nav import Nav
-from flask_nav.elements import Navbar, View, Separator, Subgroup, Link
 from hashlib import sha1
 
 from dominate import tags
+from flask_nav import Nav
+from flask_nav.elements import Link, Navbar, View
 from flask_nav.renderers import Renderer
 
 nav = Nav()
@@ -164,7 +164,6 @@ class BootstrapRenderer(Renderer):
         return item
 
     def visit_Subgroup(self, node):
-
         if self._in_dropdown:
             raise RuntimeError("Cannot render nested Subgroups")
 

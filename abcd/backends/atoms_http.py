@@ -1,10 +1,10 @@
 import json
 import logging
-import requests
 from os import linesep
-from typing import List
 
 import ase
+import requests
+
 from abcd.backends.abstract import Database
 
 logger = logging.getLogger(__name__)
@@ -44,17 +44,15 @@ class HttpDatabase(Database):
     def query(self, query_string):
         pass
 
-    def search(self, query_string: str) -> List[str]:
-        results = requests.get(self.url + "/calculation").json()
-        return results
+    def search(self, query_string: str) -> list[str]:
+        return requests.get(self.url + "/calculation").json()
 
     def get_atoms(self, id: str) -> Atoms:
-        data = requests.get(self.url + "/calculation/{}".format(id)).json()
-        atoms = Atoms.from_dict(data)
-        return atoms
+        data = requests.get(self.url + f"/calculation/{id}").json()
+        return Atoms.from_dict(data)
 
     def __repr__(self):
-        return "ABCD(type={}, url={}, ...)".format(self.__class__.__name__, self.url)
+        return f"ABCD(type={self.__class__.__name__}, url={self.url}, ...)"
 
     def _repr_html_(self):
         """jupyter notebook representation"""
@@ -67,9 +65,7 @@ class HttpDatabase(Database):
             [
                 "{:=^50}".format(" ABCD Database "),
                 "{:>10}: {}".format("type", "remote (http/https)"),
-                linesep.join(
-                    "{:>10}: {}".format(k, v) for k, v in self.db.info().items()
-                ),
+                linesep.join(f"{k:>10}: {v}" for k, v in self.db.info().items()),
             ]
         )
 

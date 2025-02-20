@@ -1,6 +1,3 @@
-import numpy as np
-from collections import Counter
-
 from abcd import ABCD
 
 if __name__ == "__main__":

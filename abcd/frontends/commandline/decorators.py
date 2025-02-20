@@ -1,7 +1,6 @@
 import logging
 
 from abcd import ABCD
-
 from abcd.frontends.commandline.config import Config
 from abcd.parsers.queries import parser
 

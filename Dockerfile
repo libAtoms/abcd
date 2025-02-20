@@ -13,5 +13,3 @@ RUN python setup.py develop
 #CMD ["/bin/bash"]
 CMD [ "python", "abcd/server/__init__.py" ]
 #CMD ["gunicorn", "-w 4", "-b 0.0.0.0:8000", "server:app"]
-
-

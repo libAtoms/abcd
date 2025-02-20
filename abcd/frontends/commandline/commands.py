@@ -11,9 +11,7 @@ logger = logging.getLogger(__name__)
 @init_config
 def login(*, config, name, url, **kwargs):
     logger.info(
-        "login args: \nconfig:{}, name:{}, url:{}, kwargs:{}".format(
-            config, name, url, kwargs
-        )
+        f"login args: \nconfig:{config}, name:{name}, url:{url}, kwargs:{kwargs}"
     )
     from abcd import ABCD
 
@@ -36,7 +34,7 @@ def login(*, config, name, url, **kwargs):
 @init_config
 @init_db
 def download(*, db, query, fileformat, filename, **kwargs):
-    logger.info("download\n kwargs: {}".format(kwargs))
+    logger.info(f"download\n kwargs: {kwargs}")
 
     from ase.io import write
 
@@ -51,18 +49,14 @@ def download(*, db, query, fileformat, filename, **kwargs):
 @init_db
 @check_remote
 def delete(*, db, query, yes, **kwargs):
-    logger.info("delete\n kwargs: {}".format(kwargs))
+    logger.info(f"delete\n kwargs: {kwargs}")
 
     if not yes:
-        print(
-            "Please use --yes for deleting {} configurations".format(
-                db.count(query=query)
-            )
-        )
+        print(f"Please use --yes for deleting {db.count(query=query)} configurations")
         exit(1)
 
     count = db.delete(query=query)
-    print("{} configuration has been deleted".format(count))
+    print(f"{count} configuration has been deleted")
 
 
 @init_config
@@ -79,10 +73,10 @@ def upload(*, db, path, extra_infos, ignore_calc_results, **kwargs):
 
     elif path.is_dir():
         for file in path.glob(".xyz"):
-            logger.info("Uploaded file: {}".format(file))
+            logger.info(f"Uploaded file: {file}")
             db.upload(file, extra_infos, store_calc=calculator)
         else:
-            logger.info("No file found: {}".format(path))
+            logger.info(f"No file found: {path}")
             raise FileNotFoundError()
 
     else:
@@ -92,8 +86,8 @@ def upload(*, db, path, extra_infos, ignore_calc_results, **kwargs):
 @init_config
 @init_db
 def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
-    logger.info("summary\n kwargs: {}".format(kwargs))
-    logger.info("query: {}".format(query))
+    logger.info(f"summary\n kwargs: {kwargs}")
+    logger.info(f"query: {query}")
 
     if print_all:
         truncate = None
@@ -111,17 +105,16 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
         if "*" in props_list:
             props_list = "*"
 
-        logging.info("property list: {}".format(props_list))
+        logging.info(f"property list: {props_list}")
 
     total = db.count(query)
-    print("Total number of configurations: {}".format(total))
+    print(f"Total number of configurations: {total}")
 
     if total == 0:
         return
 
     f = Formater()
     if props_list is None:
-
         props = db.count_properties(query=query)
 
         labels, categories, dtypes, counts = [], [], [], []
@@ -158,8 +151,8 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 @init_config
 @init_db
 def show(*, db, query, print_all, props, **kwargs):
-    logger.info("show\n kwargs: {}".format(kwargs))
-    logger.info("query: {}".format(query))
+    logger.info(f"show\n kwargs: {kwargs}")
+    logger.info(f"query: {query}")
 
     if not props:
         print("Please define at least on property by using the -p option!")
@@ -171,7 +164,7 @@ def show(*, db, query, print_all, props, **kwargs):
     for dct in islice(db.get_items(query), 0, limit):
         print(" | ".join(str(dct.get(prop, None)) for prop in props))
 
-    logging.info("property list: {}".format(props))
+    logging.info(f"property list: {props}")
 
 
 @check_remote
@@ -225,9 +218,8 @@ def key_delete(*, db, query, yes, keys, **kwargs):
 
     if not yes:
         print(
-            "Please use --yes for deleting keys from {} configurations".format(
-                db.count(query=query)
-            )
+            f"Please use --yes for deleting keys from {db.count(query=query)} "
+            "configurations"
         )
         exit(1)
 
@@ -241,9 +233,8 @@ def key_delete(*, db, query, yes, keys, **kwargs):
 def execute(*, db, query, yes, python_code, **kwargs):
     if not yes:
         print(
-            "Please use --yes for executing code on {} configurations".format(
-                db.count(query=query)
-            )
+            f"Please use --yes for executing code on {db.count(query=query)} "
+            "configurations"
         )
         exit(1)
 
@@ -253,11 +244,10 @@ def execute(*, db, query, yes, python_code, **kwargs):
 @check_remote
 def server(*, abcd_url, url, api_only, **kwargs):
     from urllib.parse import urlparse
+
     from abcd.server.app import create_app
 
-    logger.info(
-        "SERVER -  abcd: {}, url: {}, api_only:{}".format(abcd_url, url, api_only)
-    )
+    logger.info(f"SERVER -  abcd: {abcd_url}, url: {url}, api_only:{api_only}")
 
     if api_only:
         print("Not implemented yet!")
@@ -269,17 +259,15 @@ def server(*, abcd_url, url, api_only, **kwargs):
     app.run(host=o.hostname, port=o.port)
 
 
-class Formater(object):
-    partialBlocks = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]  # char=pb
-
+class Formater:
     def title(self, title):
         print("", title, "=" * len(title), sep=os.linesep)
 
     def describe(self, data):
         if data["type"] == "hist_float":
             print(
-                "{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} var:{"
-                ":11.4e}".format(
+                "{}  count: {} min: {:11.4e} med: {:11.4e} max: {:11.4e} std: {:11.4e} "
+                "var:{:11.4e}".format(
                     data["name"],
                     sum(data["counts"]),
                     data["min"],
@@ -321,7 +309,6 @@ class Formater(object):
             )
 
     def hist_int(self, bin_edges, counts, width_hist=40):
-
         ratio = width_hist / max(counts)
         width_count = len(str(max(counts)))
 
@@ -373,7 +360,6 @@ class Formater(object):
             )
 
     def hist_labels(self, counts, categories, dtypes, labels, width_hist=40):
-
         width_count = len(str(max(counts)))
         ratio = width_hist / max(counts)
         for label, count, dtype in zip(labels, counts, dtypes):

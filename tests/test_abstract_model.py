@@ -1,16 +1,15 @@
 import datetime
 import io
+from io import StringIO
 
 import ase
+from ase.calculators.lj import LennardJones
+from ase.io import read, write
+import numpy as np
 import pytest
 from pytest import approx
 
-from io import StringIO
-from ase.io import read, write
-import numpy as np
-
 from abcd.model import AbstractModel, Hasher
-from ase.calculators.lj import LennardJones
 
 
 @pytest.fixture
@@ -230,9 +229,9 @@ def test_write_and_read(store_calc):
         "calculator_name",
         "calculator_parameters",
     }:
-        assert (
-            abcd_data[key] == abcd_data_after_read[key]
-        ), f"{key}'s value does not match"
+        assert abcd_data[key] == abcd_data_after_read[key], (
+            f"{key}'s value does not match"
+        )
 
     # date & hashed will differ
     for key in set(abcd_data.derived_keys) - {
@@ -240,9 +239,9 @@ def test_write_and_read(store_calc):
         "modified",
         "uploaded",
     }:
-        assert (
-            abcd_data[key] == abcd_data_after_read[key]
-        ), f"{key}'s value does not match"
+        assert abcd_data[key] == abcd_data_after_read[key], (
+            f"{key}'s value does not match"
+        )
 
     # expected differences - n.b. order of calls above
     assert abcd_data_after_read["modified"] > abcd_data["modified"]
@@ -250,9 +249,9 @@ def test_write_and_read(store_calc):
 
     # expect results to match within fp precision
     for key in set(abcd_data.results_keys):
-        assert abcd_data[key] == approx(
-            np.array(abcd_data_after_read[key])
-        ), f"{key}'s value does not match"
+        assert abcd_data[key] == approx(np.array(abcd_data_after_read[key])), (
+            f"{key}'s value does not match"
+        )
 
 
 def test_hash_update():

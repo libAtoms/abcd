@@ -1,6 +1,6 @@
-import os
 import json
 import logging
+import os
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,6 @@ class Config(dict):
 
     @classmethod
     def load(cls):
-
         if (
             os.environ.get("ABCD_CONFIG")
             and Path(os.environ.get("ABCD_CONFIG")).is_file()
@@ -31,11 +30,9 @@ class Config(dict):
         else:
             return cls()
 
-        logger.info("Using config file: {}".format(file))
+        logger.info(f"Using config file: {file}")
 
-        config = cls.from_json(file)
-
-        return config
+        return cls.from_json(file)
 
     def save(self):
         file = (
@@ -44,10 +41,10 @@ class Config(dict):
             else Path.home() / ".abcd"
         )
 
-        logger.info("The saved config's file: {}".format(file))
+        logger.info(f"The saved config's file: {file}")
 
         with open(str(file), "w") as file:
             json.dump(self, file)
 
     def __repr__(self):
-        return "<{} {}>".format(self.__class__.__name__, dict.__repr__(self))
+        return f"<{self.__class__.__name__} {dict.__repr__(self)}>"

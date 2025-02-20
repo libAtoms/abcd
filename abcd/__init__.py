@@ -1,6 +1,6 @@
+from enum import Enum
 import logging
 from urllib import parse
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +10,7 @@ class ConnectionType(Enum):
     http = 2
 
 
-class ABCD(object):
+class ABCD:
     @classmethod
     def from_config(cls, config):
         # Factory method
@@ -24,7 +24,6 @@ class ABCD(object):
         logger.info(r)
 
         if r.scheme == "mongodb":
-
             conn_settings = {
                 "host": r.hostname,
                 "port": r.port,
@@ -39,20 +38,19 @@ class ABCD(object):
             from abcd.backends.atoms_pymongo import MongoDatabase
 
             return MongoDatabase(db_name=db, **conn_settings, **kwargs)
-        elif r.scheme == "mongodb+srv":
+        if r.scheme == "mongodb+srv":
             db = r.path.split("/")[1] if r.path else None
             db = db if db else "abcd"
             from abcd.backends.atoms_pymongo import MongoDatabase
 
             return MongoDatabase(db_name=db, host=r.geturl(), uri_mode=True, **kwargs)
-        elif r.scheme == "http" or r.scheme == "https":
+        if r.scheme == "http" or r.scheme == "https":
             raise NotImplementedError("http not yet supported! soon...")
-        elif r.scheme == "ssh":
+        if r.scheme == "ssh":
             raise NotImplementedError("ssh not yet supported! soon...")
-        else:
-            raise NotImplementedError(
-                "Unable to recognise the type of connection. (url: {})".format(url)
-            )
+        raise NotImplementedError(
+            f"Unable to recognise the type of connection. (url: {url})"
+        )
 
 
 if __name__ == "__main__":
@@ -62,11 +60,3 @@ if __name__ == "__main__":
     url = "mongodb://mongoadmin:secret@localhost:27017/abcd_new"
     abcd = ABCD.from_url(url)
     abcd.print_info()
-
-    # from ase.io import iread
-    # for atoms in iread('../tutorials/data/bcc_bulk_54_expanded_2_high.xyz', index=slice(1)):
-    #     # Hack to fix the representation of forces
-    #     atoms.calc.results['forces'] = atoms.arrays['force']
-    #
-    #     abcd.push(atoms)
-    #     print(atoms)

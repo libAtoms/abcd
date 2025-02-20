@@ -11,4 +11,3 @@ Local installation
 
 Installation with remote access
 -------------------------------
-

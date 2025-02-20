@@ -1,5 +1,4 @@
-from flask import Blueprint, render_template, request
-from flask import Response
+from flask import Blueprint, Response, render_template, request
 
 bp = Blueprint("database", __name__)
 

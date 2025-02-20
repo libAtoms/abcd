@@ -1,6 +1,5 @@
 from abcd import ABCD
 
-
 # from flask_paginate import Pagination, get_page_args
 
 

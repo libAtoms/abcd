@@ -97,7 +97,7 @@ parser = Lark(
 if __name__ == "__main__":
     test_string = " ".join(
         [
-            " " "flag",  # start with a separator
+            " flag",  # start with a separator
             'quotedd_string="quoteddd value"',
             r'quotedddd_string_escaped="esc\"aped"',
             "false_value = F",

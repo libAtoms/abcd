@@ -1,3 +1,11 @@
+# Copyright (c) 2025.
+# Authors: Ádám Fekete, Elliott Kasoar, Tamás K. Stenczel
+# This program is distributed under the MIT License, see LICENSE.md.
+
+# Copyright (c) 2025.
+# Authors: Ádám Fekete, Elliott Kasoar, Tamás K. Stenczel
+# This program is distributed under the MIT License, see LICENSE.md.
+
 import json
 from pathlib import Path
 

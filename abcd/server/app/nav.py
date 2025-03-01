@@ -1,3 +1,9 @@
+# Copyright (c) 2025.
+# Authors: Ádám Fekete, Elliott Kasoar, Tamás K. Stenczel
+# This program is distributed under the MIT License, see LICENSE.md.
+
+from flask_nav import Nav
+from flask_nav.elements import Navbar, View, Separator, Subgroup, Link
 from hashlib import sha1
 
 from dominate import tags

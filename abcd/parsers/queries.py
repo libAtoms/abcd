@@ -1,5 +1,8 @@
-# ruff: noqa: E731
+# Copyright (c) 2025.
+# Authors: Ádám Fekete, Elliott Kasoar, Tamás K. Stenczel
+# This program is distributed under the MIT License, see LICENSE.md.
 
+# ruff: noqa: E731
 import logging
 
 from lark import Lark, Transformer, v_args

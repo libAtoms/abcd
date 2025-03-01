@@ -1,17 +1,19 @@
-import io
 import uuid
 
-from nglview import register_backend, Structure
-from ipywidgets import Dropdown, FloatSlider, IntSlider, HBox, VBox, Output
-
+from ipywidgets import Dropdown, FloatSlider, Output, VBox
 import matplotlib.pyplot as plt
+from nglview import Structure, register_backend
 import numpy as np
 
 
 @register_backend("ase")
 class MyASEStructure(Structure):
-    def __init__(self, atoms, bfactor=[], occupancy=[]):
+    def __init__(self, atoms, bfactor=None, occupancy=None):
         # super(MyASEStructure, self).__init__()
+        if occupancy is None:
+            occupancy = []
+        if bfactor is None:
+            bfactor = []
         self.ext = "pdb"
         self.params = {}
         self._atoms = atoms
@@ -69,8 +71,10 @@ def ViewStructure(atoms):
     return view
 
 
-class AtomViewer(object):
-    def __init__(self, atoms, data=[], xsize=1000, ysize=500):
+class AtomViewer:
+    def __init__(self, atoms, data=None, xsize=1000, ysize=500):
+        if data is None:
+            data = []
         self.view = self._init_nglview(atoms, data, xsize, ysize)
 
         self.widgets = {
@@ -102,7 +106,7 @@ class AtomViewer(object):
                 [[min(data), max(data)]], aspect="auto", cmap=plt.get_cmap(cmap)
             )
             ax1.remove()
-            cbar = fig.colorbar(img, cax=ax2, orientation="horizontal")
+            fig.colorbar(img, cax=ax2, orientation="horizontal")
 
             plt.show()
 
@@ -114,7 +118,7 @@ class AtomViewer(object):
         view._remote_call(
             "setSize",
             target="Widget",
-            args=["{:d}px".format(xsize), "{:d}px".format(ysize)],
+            args=[f"{xsize:d}px", f"{ysize:d}px"],
         )
 
         data = np.max(data) - data

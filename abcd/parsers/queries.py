@@ -1,7 +1,9 @@
+# ruff: noqa: E731
+
 import logging
+
 from lark import Lark, Transformer, v_args
 from lark.exceptions import LarkError
-from abcd.queryset import Query
 
 logger = logging.getLogger(__name__)
 
@@ -12,13 +14,13 @@ grammar = r"""
     ?statement:                                   -> empty
               | expression                        -> single_statement
               | statement relation_ops expression -> multi_statement
-    
-    ?expression: NAME                      -> single_expression 
-               | NAME comparison_ops value -> operator_expression 
-               | value reversed_ops NAME   -> reversed_expression 
-               | "(" statement ")"         -> grouped_expression 
+
+    ?expression: NAME                      -> single_expression
+               | NAME comparison_ops value -> operator_expression
+               | value reversed_ops NAME   -> reversed_expression
+               | "(" statement ")"         -> grouped_expression
                | NOT statement             -> negation_expression
-        
+
     ?comparison_ops: EQ
               | NEQ
               | RE
@@ -27,21 +29,21 @@ grammar = r"""
               | LT
               | LTE
 
-    ?relation_ops: AND 
-                 | OR 
+    ?relation_ops: AND
+                 | OR
 
     AND: "&&" | "and"
     OR:  "||" | "or"
     NOT: "!" | "not"
 
     ?reversed_ops: IN
-        
-    EQ:   "=" 
-    NEQ:  "!=" 
-    RE:    "~"     
-    GT:   ">" 
-    GTE:  ">=" 
-    LT:   "<" 
+
+    EQ:   "="
+    NEQ:  "!="
+    RE:    "~"
+    GT:   ">"
+    GTE:  ">="
+    LT:   "<"
     LTE:  "<="
     IN:    "in"
 
@@ -54,26 +56,26 @@ grammar = r"""
          | array
 
     array: "[" value ([","] value)* "]"
-    
+
     //function: all | any
-    
-    //all: "all" "(" NAME ")" 
+
+    //all: "all" "(" NAME ")"
     //any: "any" "(" NAME ")"
 
     //NAME : /(?!and\b)/ /(?!or\b)/ /(?!not\b)/ CNAME
 
     // Strings
     _STRING_INNER: /.*?/
-    _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/ 
-    
+    _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
+
     STRING : "\"" _STRING_ESC_INNER "\""
            | "'" _STRING_ESC_INNER "'"
 
-    NAME: ("_"|LETTER|DIGIT) ("_"|"-"|LETTER|DIGIT)*  
+    NAME: ("_"|LETTER|DIGIT) ("_"|"-"|LETTER|DIGIT)*
 
     %import common.LETTER
     %import common.DIGIT
-    
+
     %import common.SIGNED_FLOAT   -> FLOAT
     %import common.SIGNED_INT     -> INT
     %import common.WS_INLINE
@@ -176,7 +178,7 @@ if __name__ == "__main__":
         # print(parser.parse(query).pretty())
         try:
             tree = parser.parse(query)
-            logger.info("=> tree: {}".format(tree))
-            logger.info("==> ast: {}".format(parser(query)))
-        except LarkError:
-            raise NotImplementedError
+            logger.info(f"=> tree: {tree}")
+            logger.info(f"==> ast: {parser(query)}")
+        except LarkError as err:
+            raise NotImplementedError from err

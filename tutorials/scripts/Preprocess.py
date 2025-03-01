@@ -1,17 +1,14 @@
-from pathlib import Path
-from pprint import pprint
 import json
+from pathlib import Path
+
 from ase.io import read, write
-from ase.geometry import crystal_structure_from_cell
-import numpy as np
 
 # import numpy.linalg as la
-
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
+import numpy as np
 
 
-class Calculation(object):
+class Calculation:
     def __init__(self, *args, **kwargs):
         self.filepath = kwargs.pop("filepath", None)
         self.parameters = kwargs
@@ -64,7 +61,6 @@ class Calculation(object):
 
 
 if __name__ == "__main__":
-
     # Read grain boundary database
     dirpath = Path("../GB_alphaFe_001")
 
@@ -88,7 +84,6 @@ if __name__ == "__main__":
 
     angles, energies = [], []
     for calc in sorted(calculations["tilt"], key=lambda item: item.parameters["angle"]):
-
         # E_gb = calc.parameters.get('E_gb', None)
         #
         # if E_gb is None:

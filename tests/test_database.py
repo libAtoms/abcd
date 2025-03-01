@@ -1,10 +1,10 @@
-import pytest
+from io import StringIO
+
+from ase.io import read
 import mongomock
+import pytest
 
 from abcd import ABCD
-
-from io import StringIO
-from ase.io import read
 
 
 @pytest.fixture

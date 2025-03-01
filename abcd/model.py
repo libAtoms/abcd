@@ -1,22 +1,21 @@
+from collections import Counter, UserDict
 import datetime
 import getpass
-import logging
 from hashlib import md5
-from collections import Counter, UserDict
-from ase.calculators.singlepoint import SinglePointCalculator
+import logging
 
-import numpy as np
 from ase import Atoms
+from ase.calculators.singlepoint import SinglePointCalculator
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
-class Hasher(object):
+class Hasher:
     def __init__(self, method=md5):
         self.method = method()
 
     def update(self, value):
-
         if isinstance(value, int):
             self.update(str(value).encode("ascii"))
 
@@ -24,7 +23,7 @@ class Hasher(object):
             self.update(value.encode("utf-8"))
 
         elif isinstance(value, float):
-            self.update("{:.8e}".format(value).encode("ascii"))
+            self.update(f"{value:.8e}".encode("ascii"))
 
         elif isinstance(value, (tuple, list)):
             for e in value:
@@ -80,16 +79,16 @@ class AbstractModel(UserDict):
         }
 
     def __getitem__(self, key):
-
         if key == "derived":
             return self.derived
 
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-
         if key == "derived":
-            # raise KeyError('Please do not use "derived" as key because it is protected!')
+            # raise KeyError(
+            #     'Please do not use "derived" as key because it is protected!'
+            # )
             # Silent return to avoid raising error in pymongo package
             return
 
@@ -99,7 +98,8 @@ class AbstractModel(UserDict):
         super().__setitem__(key, value)
 
     def convert(self, value):
-        # TODO: https://api.mongodb.com/python/current/api/bson/index.html using type_registry
+        # TODO: https://api.mongodb.com/python/current/api/bson/index.html
+        # using type_registry
 
         if isinstance(value, np.int64):
             return int(value)
@@ -107,9 +107,10 @@ class AbstractModel(UserDict):
         return value
 
     def update_key_category(self, key, value):
-
         if key == "_id":
-            # raise KeyError('Please do not use "derived" as key because it is protected!')
+            # raise KeyError(
+            #     'Please do not use "derived" as key because it is protected!'
+            # )
             return
 
         for category in ("arrays_keys", "info_keys", "results_keys", "derived_keys"):
@@ -140,8 +141,7 @@ class AbstractModel(UserDict):
         super().__delitem__(key)
 
     def __iter__(self):
-        for item in super().__iter__():
-            yield item
+        yield from super().__iter__()
         yield "derived"
 
     @classmethod
@@ -295,8 +295,8 @@ class AbstractModel(UserDict):
 
 
 if __name__ == "__main__":
-    import io
     from pprint import pprint
+
     from ase.io import read
 
     logging.basicConfig(level=logging.INFO)
@@ -323,14 +323,3 @@ if __name__ == "__main__":
 
     model = AbstractModel.from_atoms(atoms)
     print(model.to_ase())
-
-    # xyz = io.StringIO(
-    #     """
-    #     2
-    #     Properties=species:S:1:pos:R:3 s="sadf" _vtk_test="t e s t _ s t r" pbc="F F F"
-    #     Si       0.00000000       0.00000000       0.00000000
-    #     Si       0.00000000       0.00000000       0.00000000
-    #
-    #     """)
-    #
-    # atoms = read(xyz, format='extxyz', index=0)

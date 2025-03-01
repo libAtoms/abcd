@@ -1,7 +1,7 @@
 
 % Default to the notebook output style
 
-    
+
 
 
 % Inherit from the specified cell style.
@@ -9,11 +9,11 @@
 
 
 
-    
+
 \documentclass[11pt]{article}
 
-    
-    
+
+
     \usepackage[T1]{fontenc}
     % Nicer default font (+ math font) than Computer Modern for most use cases
     \usepackage{mathpazo}
@@ -38,7 +38,7 @@
     \DeclareCaptionLabelFormat{nolabel}{}
     \captionsetup{labelformat=nolabel}
 
-    \usepackage{adjustbox} % Used to constrain images to a maximum size 
+    \usepackage{adjustbox} % Used to constrain images to a maximum size
     \usepackage{xcolor} % Allow colors to be defined
     \usepackage{enumerate} % Needed for markdown enumerations to work
     \usepackage{geometry} % Used to adjust the document margins
@@ -54,8 +54,8 @@
     \usepackage[mathletters]{ucs} % Extended unicode (utf-8) support
     \usepackage[utf8x]{inputenc} % Allow utf-8 characters in the tex document
     \usepackage{fancyvrb} % verbatim replacement that allows latex
-    \usepackage{grffile} % extends the file name processing of package graphics 
-                         % to support a larger range 
+    \usepackage{grffile} % extends the file name processing of package graphics
+                         % to support a larger range
     % The hyperref package gives us a pdf with properly built
     % internal navigation ('pdf bookmarks' for the table of contents,
     % internal cross-reference links, web links for URLs, etc.)
@@ -65,10 +65,10 @@
     \usepackage[inline]{enumitem} % IRkernel/repr support (it uses the enumerate* environment)
     \usepackage[normalem]{ulem} % ulem is needed to support strikethroughs (\sout)
                                 % normalem makes italics be italics, not underlines
-    
 
-    
-    
+
+
+
     % Colors for the hyperref package
     \definecolor{urlcolor}{rgb}{0,.145,.698}
     \definecolor{linkcolor}{rgb}{.71,0.21,0.01}
@@ -113,7 +113,7 @@
     \newcommand{\RegionMarkerTok}[1]{{#1}}
     \newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
     \newcommand{\NormalTok}[1]{{#1}}
-    
+
     % Additional commands for more recent versions of Pandoc
     \newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{{#1}}}
     \newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
@@ -132,8 +132,8 @@
     \newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{{#1}}}
     \newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
     \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
-    
-    
+
+
     % Define a nice break command that doesn't care if a line doesn't already
     % exist.
     \def\br{\hspace*{\fill} \\* }
@@ -142,12 +142,12 @@
     \def\lt{<}
     % Document parameters
     \title{abcd\_usage}
-    
-    
-    
+
+
+
 
     % Pygments definitions
-    
+
 \makeatletter
 \def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
     \let\PY@ul=\relax \let\PY@tc=\relax%
@@ -255,9 +255,9 @@
 
 
 
-    
+
     % Prevent overflowing lines due to hard-to-break entities
-    \sloppy 
+    \sloppy
     % Setup hyperref package
     \hypersetup{
       breaklinks=true,  % so long urls are correctly broken across lines
@@ -267,19 +267,19 @@
       citecolor=citecolor,
       }
     % Slightly bigger margins than the latex defaults
-    
+
     \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
-    
-    
+
+
 
     \begin{document}
-    
-    
-    \maketitle
-    
-    
 
-    
+
+    \maketitle
+
+
+
+
     \hypertarget{basic-usage-of-abcd-database}{%
 \section{Basic usage of ABCD
 database}\label{basic-usage-of-abcd-database}}
@@ -294,7 +294,7 @@ database}\label{basic-usage-of-abcd-database}}
 {\color{incolor}In [{\color{incolor}2}]:} \PY{k+kn}{import} \PY{n+nn}{matplotlib}\PY{n+nn}{.}\PY{n+nn}{pyplot} \PY{k}{as} \PY{n+nn}{plt}
         \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k}{as} \PY{n+nn}{np}
         \PY{k+kn}{from} \PY{n+nn}{collections} \PY{k}{import} \PY{n}{Counter}
-        
+
         \PY{k+kn}{from} \PY{n+nn}{abcd} \PY{k}{import} \PY{n}{ABCD}
 \end{Verbatim}
 
@@ -379,7 +379,7 @@ number of confs: 59174
          'timestamp': \{'count': 332\},
          'config\_name': \{'count': 14143\}\}
 \end{Verbatim}
-            
+
     \hypertarget{histogram}{%
 \subsubsection{Histogram}\label{histogram}}
 
@@ -424,7 +424,7 @@ number of confs: 59174
                  'dislocation\_quadrupole': 100,
                  'bcc\_monovacancy\_127\_high': 57\})
 \end{Verbatim}
-            
+
     \begin{Verbatim}[commandchars=\\\{\}]
 {\color{incolor}In [{\color{incolor}8}]:} \PY{n}{query} \PY{o}{=} \PY{p}{\PYZob{}}
             \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{info.config\PYZus{}type}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bcc\PYZus{}bulk\PYZus{}54\PYZus{}high}\PY{l+s+s1}{\PYZsq{}}
@@ -436,7 +436,7 @@ number of confs: 59174
 \begin{Verbatim}[commandchars=\\\{\}]
 {\color{outcolor}Out[{\color{outcolor}8}]:} 28
 \end{Verbatim}
-            
+
     \begin{Verbatim}[commandchars=\\\{\}]
 {\color{incolor}In [{\color{incolor}9}]:} \PY{n}{Counter}\PY{p}{(}\PY{n}{abcd}\PY{o}{.}\PY{n}{get\PYZus{}property}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{info.config\PYZus{}name}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{query}\PY{p}{)}\PY{p}{)}
 \end{Verbatim}
@@ -458,7 +458,7 @@ number of confs: 59174
                  'bcc\_bulk\_54\_expanded\_2\_0012': 2,
                  'bcc\_bulk\_54\_expanded\_2\_0013': 2\})
 \end{Verbatim}
-            
+
     \hypertarget{filtering}{%
 \subsubsection{Filtering}\label{filtering}}
 
@@ -467,7 +467,7 @@ number of confs: 59174
              \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{info.config\PYZus{}type}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bcc\PYZus{}bulk\PYZus{}54\PYZus{}high}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
              \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{info.pbc}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{p}{[}\PY{k+kc}{True}\PY{p}{,} \PY{k+kc}{True}\PY{p}{,} \PY{k+kc}{True}\PY{p}{]}
          \PY{p}{\PYZcb{}}
-         
+
          \PY{n}{abcd}\PY{o}{.}\PY{n}{count}\PY{p}{(}\PY{n}{query}\PY{p}{)}
 \end{Verbatim}
 
@@ -475,7 +475,7 @@ number of confs: 59174
 \begin{Verbatim}[commandchars=\\\{\}]
 {\color{outcolor}Out[{\color{outcolor}10}]:} 28
 \end{Verbatim}
-            
+
     \begin{Verbatim}[commandchars=\\\{\}]
 {\color{incolor}In [{\color{incolor}11}]:} \PY{n}{data} \PY{o}{=} \PY{n}{abcd}\PY{o}{.}\PY{n}{get\PYZus{}property}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{info.energy}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{query}\PY{p}{)}
          \PY{n}{hist}\PY{p}{,} \PY{n}{bins}\PY{p}{,} \PY{n}{ax} \PY{o}{=} \PY{n}{plt}\PY{o}{.}\PY{n}{hist}\PY{p}{(}\PY{n}{data}\PY{p}{)}
@@ -488,11 +488,11 @@ number of confs: 59174
     \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_18_0.png}
     \end{center}
     { \hspace*{\fill} \\}
-    
+
 \begin{Verbatim}[commandchars=\\\{\}]
 {\color{outcolor}Out[{\color{outcolor}11}]:} (-186887.19402, -186882.999145)
 \end{Verbatim}
-            
+
     \begin{Verbatim}[commandchars=\\\{\}]
 {\color{incolor}In [{\color{incolor}12}]:} \PY{n}{query} \PY{o}{=} \PY{p}{\PYZob{}}
              \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{info.config\PYZus{}type}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bcc\PYZus{}bulk\PYZus{}54\PYZus{}high}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
@@ -506,7 +506,7 @@ number of confs: 59174
 \begin{Verbatim}[commandchars=\\\{\}]
 {\color{outcolor}Out[{\color{outcolor}12}]:} 14
 \end{Verbatim}
-            
+
     \begin{Verbatim}[commandchars=\\\{\}]
 {\color{incolor}In [{\color{incolor}13}]:} \PY{n}{abcd}\PY{o}{.}\PY{n}{count\PYZus{}properties}\PY{p}{(}\PY{n}{query}\PY{p}{)}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{arrays}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
 \end{Verbatim}
@@ -515,7 +515,7 @@ number of confs: 59174
 \begin{Verbatim}[commandchars=\\\{\}]
 {\color{outcolor}Out[{\color{outcolor}13}]:} \{'positions': \{'count': 14\}, 'numbers': \{'count': 14\}\}
 \end{Verbatim}
-            
+
     \hypertarget{fetching-the-data}{%
 \subsection{Fetching the data}\label{fetching-the-data}}
 
@@ -533,7 +533,7 @@ number of confs: 59174
 \begin{Verbatim}[commandchars=\\\{\}]
 {\color{outcolor}Out[{\color{outcolor}14}]:} 14
 \end{Verbatim}
-            
+
     \begin{Verbatim}[commandchars=\\\{\}]
 {\color{incolor}In [{\color{incolor}15}]:} \PY{n}{traj} \PY{o}{=} \PY{n+nb}{list}\PY{p}{(}\PY{n}{abcd}\PY{o}{.}\PY{n}{get\PYZus{}atoms}\PY{p}{(}\PY{n}{query}\PY{p}{)}\PY{p}{)}
 \end{Verbatim}
@@ -560,7 +560,7 @@ number of confs: 59174
           Atoms(symbols='Fe54', pbc=True, cell=[8.6368128, 8.6368128, 8.6368128], calculator=SinglePointCalculator({\ldots})),
           Atoms(symbols='Fe54', pbc=True, cell=[8.6368128, 8.6368128, 8.6368128], calculator=SinglePointCalculator({\ldots}))]
 \end{Verbatim}
-            
+
     \hypertarget{extra}{%
 \subsection{Extra}\label{extra}}
 
@@ -572,7 +572,7 @@ number of confs: 59174
 \begin{Verbatim}[commandchars=\\\{\}]
 {\color{outcolor}Out[{\color{outcolor}17}]:} 0
 \end{Verbatim}
-            
+
     \begin{Verbatim}[commandchars=\\\{\}]
 {\color{incolor}In [{\color{incolor}18}]:} \PY{n}{abcd}\PY{o}{.}\PY{n}{db}\PY{o}{.}\PY{n}{atoms}\PY{o}{.}\PY{n}{count\PYZus{}documents}\PY{p}{(}\PY{p}{\PYZob{}}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{arrays.numbers}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:}\PY{p}{\PYZob{}}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}in}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{p}{[}\PY{l+m+mi}{26}\PY{p}{,} \PY{l+m+mi}{74}\PY{p}{]}\PY{p}{\PYZcb{}}\PY{p}{\PYZcb{}}\PY{p}{)}
 \end{Verbatim}
@@ -581,10 +581,10 @@ number of confs: 59174
 \begin{Verbatim}[commandchars=\\\{\}]
 {\color{outcolor}Out[{\color{outcolor}18}]:} 59174
 \end{Verbatim}
-            
+
 
     % Add a bibliography block to the postdoc
-    
-    
-    
+
+
+
     \end{document}

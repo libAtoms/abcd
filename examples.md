@@ -10,7 +10,7 @@ abcd upload -e cas VelocityVerlet_flexible_step0.5.xyz
 abcd upload -e cas silicon_database_gp_iter6_sparse9k.xml.xyz
 # get around the silly calculator/atoms object storage nightmare of ASE:
 # the -i option tells ABCD to ignore the fake ASE calculator that gets created when xyz files are imported
-abcd upload -i -e cas Ti_N54_database.xyz 
+abcd upload -i -e cas Ti_N54_database.xyz
 ```
 The most often used command is `summary`, it tells you how many configurations match a query. Together with the `-p` option, it gives histograms of those properties.
 ```
@@ -24,7 +24,7 @@ abcd summary -q 'formula="H250O125"' -q cas -p formula
 # regular expressions! the `~` operator does RegExp matching
 abcd summary -q 'formula~"H.*O.*"' -q cas -p formula
 ```
-Note how all strings need to be quoted, and those quotes protected from the shell. 
+Note how all strings need to be quoted, and those quotes protected from the shell.
 
 ```
 abcd rename-key --help

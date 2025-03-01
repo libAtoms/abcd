@@ -2,13 +2,6 @@
 # Authors: Ádám Fekete, Elliott Kasoar, Tamás K. Stenczel, Gábor Csányi
 # This program is distributed under the MIT License, see LICENSE.md.
 
-import types
-import logging
-import numpy as np
-
-from typing import Union, Iterable
-from os import linesep
-from operator import itemgetter
 from collections import Counter
 from collections.abc import Iterable
 from datetime import datetime

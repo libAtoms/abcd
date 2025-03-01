@@ -2,7 +2,6 @@
 # Authors: Ádám Fekete, Elliott Kasoar
 # This program is distributed under the MIT License, see LICENSE.md.
 
-import os
 import json
 import logging
 import os

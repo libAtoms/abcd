@@ -2,7 +2,6 @@
 # Authors: Ádám Fekete, Elliott Kasoar, Elena Gelzinyte
 # This program is distributed under the MIT License, see LICENSE.md.
 
-import logging
 from argparse import ArgumentParser
 import logging
 

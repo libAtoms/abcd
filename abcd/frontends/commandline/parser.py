@@ -1,5 +1,5 @@
 # Copyright (c) 2025.
-# Authors: Ádám Fekete, Elliott Kasoar, Elena Gelzinyte
+# Authors: Ádám Fekete, Elliott Kasoar, Tamás K. Stenczel, Elena Gelzinyte
 # This program is distributed under the MIT License, see LICENSE.md.
 
 from argparse import ArgumentParser

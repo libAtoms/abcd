@@ -1,5 +1,5 @@
 # Copyright (c) 2025.
-# Authors: Ádám Fekete
+# Authors: Ádám Fekete, Elliott Kasoar, Tamás K. Stenczel
 # This program is distributed under the MIT License, see LICENSE.md.
 
 from abcd import ABCD

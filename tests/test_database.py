@@ -2,13 +2,13 @@
 # Authors: Elliott Kasoar, Tamás K. Stenczel
 # This program is distributed under the MIT License, see LICENSE.md.
 
-import pytest
+from io import StringIO
+
+from ase.io import read
 import mongomock
+import pytest
 
 from abcd import ABCD
-
-from io import StringIO
-from ase.io import read
 
 
 @pytest.fixture

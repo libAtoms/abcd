@@ -2,9 +2,6 @@
 # Authors: Ádám Fekete, Elliott Kasoar
 # This program is distributed under the MIT License, see LICENSE.md.
 
-import numpy as np
-from collections import Counter
-
 from abcd import ABCD
 
 if __name__ == "__main__":

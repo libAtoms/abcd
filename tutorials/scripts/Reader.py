@@ -2,20 +2,17 @@
 # Authors: Ádám Fekete, Elliott Kasoar
 # This program is distributed under the MIT License, see LICENSE.md.
 
-from pathlib import Path
-from pprint import pprint
 import json
-from ase.io import read, write
-from ase.geometry import crystal_structure_from_cell
-import numpy as np
+from pathlib import Path
+
+from ase.io import read
 
 # import numpy.linalg as la
-
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
+import numpy as np
 
 
-class Calculation(object):
+class Calculation:
     def __init__(self, *args, **kwargs):
         self.filepath = kwargs.pop("filepath", None)
         self.parameters = kwargs
@@ -68,7 +65,6 @@ class Calculation(object):
 
 
 if __name__ == "__main__":
-
     # Read grain boundary database
     dirpath = Path("../GB_alphaFe_001")
 

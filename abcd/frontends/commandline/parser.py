@@ -4,8 +4,10 @@
 
 import logging
 from argparse import ArgumentParser
+import logging
+
+from abcd.errors import AuthenticationError, TimeoutError, URLError
 from abcd.frontends.commandline import commands
-from abcd.errors import URLError, AuthenticationError, TimeoutError
 
 logger = logging.getLogger(__name__)
 
@@ -237,20 +239,4 @@ def main(args=None):
 if __name__ == "__main__":
     main(["summary"])
     main("delete-key -q pbc pbc".split())
-    # main('upload -e cas -i ../../../tutorials/GB_alphaFe_001/tilt/00110391110_v6bxv2_tv0.4bxv0.2_d1.6z_traj.xyz'.split())
-    # main('summary -q formula~"Si2"'.split())
-    # main('upload -e cas -i ../../../tutorials/GB_alphaFe_001/tilt/00110391110_v6bxv2_tv0.4bxv0.2_d1.6z_traj.xyz'.split())
-    # main('-v login mongodb://mongoadmin:secret@localhost:27017/abcd'.split())
-    # main('-v summary'.split())
-    # main('-v summary -p energy'.split())
-    # main('-v summary -p *'.split())
-    # main('add-key -q cas selected user="cas"'.split())
     main("delete-key user".split())
-    # main(['summary', '-p', '*'])
-    # main(['summary', '-p', 'info.config_name, info.energy'])
-    # main(['summary', '-p', 'info.config_name, info.energy,info.energy;info.energy info.energy'])
-    # main(['-s', 'fancy', 'summary', '-p', '*'])
-    # main(['summary', '-p', '*'])
-    # main(['-s', 'fancy', 'summary'])
-    # main(['-v', 'summary', '-p', 'config_type', '-p', 'haha', '-p' 'sdgsdg, dsgsdg,asd fgg', '-q', 'config_type~bcc',
-    #      '-q', 'config_type~bcc'])

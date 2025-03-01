@@ -4,17 +4,17 @@
 [![Doc](https://img.shields.io/badge/docs-master-green.svg)](https://libatoms.github.io/abcd/)
 [![Build Status](https://travis-ci.org/libAtoms/abcd.svg?branch=master)](https://travis-ci.org/libAtoms/abcd)
 
-Database storage and discovery of atomistic data. 
+Database storage and discovery of atomistic data.
 
 Take a look at the `examples.md` file for.. examples!
 
 Main features:
 
-- Configurations that consist of atom positions, elements, forces, and various metadata are stored as a dictionary by a MongoDB backend. 
-- There is no predefined schema, any combination of keys are allowed for all configurations. 
-- Two modes: "discovery" and "download". Both use filter-type queries, but in "discovery" mode, summary statistics of the configurations that pass the filter are reported. In "download" mode, the matching configurations are downloaded and exported to a file. 
-- The "discovery" mode can be used to learn what keys exist in the set of configurations that have passed the current quiery filter. The user can use this to refine the query. 
-- Complex queries on dictionary key-value pairs are allowed, and their logical combinations. 
+- Configurations that consist of atom positions, elements, forces, and various metadata are stored as a dictionary by a MongoDB backend.
+- There is no predefined schema, any combination of keys are allowed for all configurations.
+- Two modes: "discovery" and "download". Both use filter-type queries, but in "discovery" mode, summary statistics of the configurations that pass the filter are reported. In "download" mode, the matching configurations are downloaded and exported to a file.
+- The "discovery" mode can be used to learn what keys exist in the set of configurations that have passed the current quiery filter. The user can use this to refine the query.
+- Complex queries on dictionary key-value pairs are allowed, and their logical combinations.
 
 ## Installation
 
@@ -25,13 +25,13 @@ $ pip install git+https://github.com/libAtoms/abcd.git
 
 ## Setup
 
-If you have an already running mongo server, or install your own, they you are ready to go. Alternatively, 
+If you have an already running mongo server, or install your own, they you are ready to go. Alternatively,
 
 ```
 docker run -d --rm --name abcd-mongodb -v <path-on-your-machine-to-store-database>:/data/db -p 27017:27017 mongo
 ```
 
-will download and install a docker and run a database in it. 
+will download and install a docker and run a database in it.
 
 To connect to a mongodb that is already running, use
 ```
@@ -57,7 +57,7 @@ You can set up an `abcd` user on your machine where the database is running, and
 command="/path/to/abcd --remote  ${SSH_ORIGINAL_COMMAND}",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-rsa <public-key> your@email
 ```
 
-Then you'll be able to access the database remotely using, e.g. 
+Then you'll be able to access the database remotely using, e.g.
 ```
 ssh abcd@your.machine summary
 ```
@@ -75,7 +75,7 @@ To access it:
     docker pull stenczelt/projection-abcd:latest
     ```
 
-2. create a docker network, which enables the containers to communicate with each other and the outside world as well 
+2. create a docker network, which enables the containers to communicate with each other and the outside world as well
     ```
     docker network create --driver bridge abcd-network
     ```
@@ -83,10 +83,10 @@ To access it:
 3. run the mongo (ABCD) and the visualiser as well
     ```
     docker run -d --rm --name abcd-mongodb-net -v <path-on-your-machine-to-store-database>:/data/db -p 27017:27017 --network abcd-network mongo
-    
+
     docker run -it --rm --name visualiser-dev -p 9999:9999 --network abcd-network stenczelt/projection-abcd
     ```
-    NB: You need a a directory where the database files are kept locally and you need to connect this to the mongo 
+    NB: You need a a directory where the database files are kept locally and you need to connect this to the mongo
     container. More info about this can be found in the original ABCD repo
 
 This will start the visualiser with ABCD integration! Have fun!

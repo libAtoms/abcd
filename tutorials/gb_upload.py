@@ -4,14 +4,15 @@
 
 import sys
 from pathlib import Path
+import sys
 
 sys.path.append("..")
 
-from abcd import ABCD
 from utils.ext_xyz import XYZReader
 
-if __name__ == "__main__":
+from abcd import ABCD
 
+if __name__ == "__main__":
     url = "mongodb://localhost:27017"
     abcd = ABCD(url)
 

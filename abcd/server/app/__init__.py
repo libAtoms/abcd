@@ -4,8 +4,8 @@ from flask import Flask, render_template
 from flask_nav import register_renderer
 
 from abcd.server.app.db import db
-from abcd.server.app.nav import nav, BootstrapRenderer, DatabaseNav
-from abcd.server.app.views import index, database, api
+from abcd.server.app.nav import BootstrapRenderer, DatabaseNav, nav
+from abcd.server.app.views import api, database, index
 
 
 def create_app(abcd_url=None):

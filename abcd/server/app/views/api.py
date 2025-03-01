@@ -2,7 +2,7 @@
 # Authors: Ádám Fekete, Elliott Kasoar
 # This program is distributed under the MIT License, see LICENSE.md.
 
-from flask import Blueprint, Response, make_response, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 bp = Blueprint("api", __name__)
 

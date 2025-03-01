@@ -2,18 +2,18 @@
 # Authors: Elliott Kasoar
 # This program is distributed under the MIT License, see LICENSE.md.
 
+import datetime
 import io
+from io import StringIO
 
 import ase
+from ase.calculators.lj import LennardJones
+from ase.io import read, write
+import numpy as np
 import pytest
 from pytest import approx
 
-from io import StringIO
-from ase.io import read, write
-import numpy as np
-
-from abcd.model import AbstractModel
-from ase.calculators.lj import LennardJones
+from abcd.model import AbstractModel, Hasher
 
 
 @pytest.fixture
@@ -233,28 +233,92 @@ def test_write_and_read(store_calc):
         "calculator_name",
         "calculator_parameters",
     }:
-        assert (
-            abcd_data[key] == abcd_data_after_read[key]
-        ), f"{key}'s value does not match"
+        assert abcd_data[key] == abcd_data_after_read[key], (
+            f"{key}'s value does not match"
+        )
 
     # date & hashed will differ
     for key in set(abcd_data.derived_keys) - {
         "hash",
         "modified",
         "uploaded",
-        "hash_structure",  # see issue #118
     }:
-        assert (
-            abcd_data[key] == abcd_data_after_read[key]
-        ), f"{key}'s value does not match"
+        assert abcd_data[key] == abcd_data_after_read[key], (
+            f"{key}'s value does not match"
+        )
 
     # expected differences - n.b. order of calls above
     assert abcd_data_after_read["modified"] > abcd_data["modified"]
     assert abcd_data_after_read["uploaded"] > abcd_data["uploaded"]
-    assert abcd_data_after_read["hash"] != abcd_data["hash"]
 
     # expect results to match within fp precision
     for key in set(abcd_data.results_keys):
-        assert abcd_data[key] == approx(
-            np.array(abcd_data_after_read[key])
-        ), f"{key}'s value does not match"
+        assert abcd_data[key] == approx(np.array(abcd_data_after_read[key])), (
+            f"{key}'s value does not match"
+        )
+
+
+def test_hash_update():
+    """Test hash can be updated after initialisation."""
+    hasher_1 = Hasher()
+
+    init_hash = hasher_1()
+    hasher_1.update("Test value")
+    assert hasher_1() != init_hash
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        1296,
+        3.14,
+        [1, 2, 3],
+        (4, 5, 6),
+        {"a": "value"},
+        datetime.datetime.now(datetime.timezone.utc),
+        b"test",
+    ],
+)
+def test_hash_data_types(data):
+    """Test updating hash for different data types."""
+    hasher_1 = Hasher()
+    hasher_1.update("Test value")
+    updated_hash = hasher_1()
+
+    hasher_1.update(data)
+    assert updated_hash != hasher_1()
+
+
+def test_second_hash_init():
+    """Test second hash is initialised correctly."""
+    hasher_1 = Hasher()
+
+    init_hash = hasher_1()
+    hasher_1.update("Test value")
+
+    hasher_2 = Hasher()
+    assert hasher_2() == init_hash
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        1296,
+        3.14,
+        [1, 2, 3],
+        (4, 5, 6),
+        {"a": "value"},
+        datetime.datetime.now(datetime.timezone.utc),
+        b"test",
+    ],
+)
+def test_consistent_hash(data):
+    """Test two hashers agree with same data."""
+    hasher_1 = Hasher()
+    hasher_1.update("Test value")
+    hasher_1.update(data)
+
+    hasher_2 = Hasher()
+    hasher_2.update("Test value")
+    hasher_2.update(data)
+    assert hasher_1() == hasher_2()

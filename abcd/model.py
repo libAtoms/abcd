@@ -6,6 +6,7 @@ import logging
 
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
+from ase.spacegroup.spacegroup import Spacegroup
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ class Hasher:
 
         else:
             raise ValueError(
-                "The {} type cannot be hashed! (Value: {})", format(type(value), value)
+                f"The {type(value)} type cannot be hashed! (Value: {value})"
             )
 
     def __call__(self):
@@ -194,6 +195,8 @@ class AbstractModel(UserDict):
         for key, value in atoms.info.items():
             if isinstance(value, np.ndarray):
                 data[key] = value.tolist()
+            elif isinstance(value, Spacegroup):
+                data[key] = value.todict()
             else:
                 data[key] = value
 

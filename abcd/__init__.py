@@ -1,13 +1,7 @@
-from enum import Enum
 import logging
 from urllib import parse
 
 logger = logging.getLogger(__name__)
-
-
-class ConnectionType(Enum):
-    mongodb = 1
-    http = 2
 
 
 class ABCD:
@@ -23,7 +17,11 @@ class ABCD:
         r = parse.urlparse(url)
         logger.info(r)
 
-        if r.scheme == "mongodb":
+        db = r.path.split("/")[1] if r.path else None
+        db = db if db else "abcd"
+        scheme = r.scheme
+
+        if scheme == "mongodb":
             conn_settings = {
                 "host": r.hostname,
                 "port": r.port,
@@ -32,21 +30,30 @@ class ABCD:
                 "authSource": "admin",
             }
 
-            db = r.path.split("/")[1] if r.path else None
-            db = db if db else "abcd"
-
             from abcd.backends.atoms_pymongo import MongoDatabase
 
             return MongoDatabase(db_name=db, **conn_settings, **kwargs)
-        if r.scheme == "mongodb+srv":
+        if scheme == "mongodb+srv":
             db = r.path.split("/")[1] if r.path else None
             db = db if db else "abcd"
             from abcd.backends.atoms_pymongo import MongoDatabase
 
             return MongoDatabase(db_name=db, host=r.geturl(), uri_mode=True, **kwargs)
-        if r.scheme == "http" or r.scheme == "https":
+
+        if scheme == "opensearch":
+            conn_settings = {
+                "host": r.hostname,
+                "port": r.port,
+                "username": r.username,
+                "password": r.password,
+            }
+
+            from abcd.backends.atoms_opensearch import OpenSearchDatabase
+
+            return OpenSearchDatabase(db=db, **conn_settings, **kwargs)
+        if scheme in ("http", "https"):
             raise NotImplementedError("http not yet supported! soon...")
-        if r.scheme == "ssh":
+        if scheme == "ssh":
             raise NotImplementedError("ssh not yet supported! soon...")
         raise NotImplementedError(
             f"Unable to recognise the type of connection. (url: {url})"

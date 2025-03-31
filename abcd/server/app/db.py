@@ -4,7 +4,7 @@ from abcd import ABCD
 
 
 class Database(ABCD):
-    """Wrapper for the ABCD factory method for registering a the database for the Flask application."""
+    """Wrapper for factory method for registering database for a Flask application."""
 
     def __init__(self):
         super().__init__()

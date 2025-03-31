@@ -1,8 +1,6 @@
-from collections import Counter
 from collections.abc import Iterable
 from datetime import datetime
 import logging
-from operator import itemgetter
 from os import linesep
 from pathlib import Path
 import types
@@ -11,10 +9,10 @@ from typing import Union
 from ase import Atoms
 from ase.io import iread
 from bson import ObjectId
-import numpy as np
 from pymongo import MongoClient
 import pymongo.errors
 
+from abcd.backends import utils
 from abcd.database import AbstractABCD
 import abcd.errors
 from abcd.model import AbstractModel
@@ -133,6 +131,14 @@ class MongoQuery(AbstractQuerySet):
             p = parser(ast)
             return self.visit(p)
 
+        if isinstance(ast, list):
+            from abcd.parsers.queries import parser
+
+            if len(ast) == 0:
+                return {}
+            ast = ("AND", *[parser(q) for q in ast])
+            return self.visit(ast)
+
         return self.visit(ast) if ast else {}
 
 
@@ -235,9 +241,13 @@ class MongoDatabase(AbstractABCD):
             # self.collection.insert_one(data)
 
         elif isinstance(atoms, types.GeneratorType) or isinstance(atoms, list):
-            for item in atoms:
+            for i, item in enumerate(atoms):
+                if isinstance(extra_info, list):
+                    info = extra_info[i]
+                else:
+                    info = extra_info
                 data = AtomsModel.from_atoms(
-                    self.collection, item, extra_info=extra_info, store_calc=store_calc
+                    self.collection, item, extra_info=info, store_calc=store_calc
                 )
                 data.save()
 
@@ -420,7 +430,7 @@ class MongoDatabase(AbstractABCD):
 
     def hist(self, name, query=None, **kwargs):
         data = self.property(name, query)
-        return histogram(name, data, **kwargs)
+        return utils.histogram(name, data, **kwargs)
 
     def exec(self, code, query=None):
         # TODO: Separate python environment with its own packages loaded
@@ -461,129 +471,6 @@ class MongoDatabase(AbstractABCD):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
-
-
-def histogram(name, data, **kwargs):
-    if not data:
-        return None
-
-    if data and isinstance(data, list):
-        ptype = type(data[0])
-
-        if not all(isinstance(x, ptype) for x in data):
-            print(f"Mixed type error of the {name} property!")
-            return None
-
-        if isinstance(data[0], float):
-            bins = kwargs.get("bins", 10)
-            return _hist_float(name, data, bins)
-
-        if isinstance(data[0], int):
-            bins = kwargs.get("bins", 10)
-            return _hist_int(name, data, bins)
-
-        if isinstance(data[0], str):
-            return _hist_str(name, data, **kwargs)
-
-        if isinstance(data[0], datetime):
-            bins = kwargs.get("bins", 10)
-            return _hist_date(name, data, bins)
-
-        print(f"{name}: Histogram for list of {type(data[0])} types are not supported!")
-        logger.info(
-            f"{name}: Histogram for list of {type(data[0])} types are not supported!"
-        )
-        return None
-
-    logger.info(f"{name}: Histogram for {type(data)} types are not supported!")
-    return None
-
-
-def _hist_float(name, data, bins=10):
-    data = np.array(data)
-    hist, bin_edges = np.histogram(data, bins=bins)
-
-    return {
-        "type": "hist_float",
-        "name": name,
-        "bins": bins,
-        "edges": bin_edges,
-        "counts": hist,
-        "min": data.min(),
-        "max": data.max(),
-        "median": data.mean(),
-        "std": data.std(),
-        "var": data.var(),
-    }
-
-
-def _hist_date(name, data, bins=10):
-    hist_data = np.array([t.timestamp() for t in data])
-    hist, bin_edges = np.histogram(hist_data, bins=bins)
-
-    fromtimestamp = datetime.fromtimestamp
-
-    return {
-        "type": "hist_date",
-        "name": name,
-        "bins": bins,
-        "edges": [fromtimestamp(d) for d in bin_edges],
-        "counts": hist,
-        "min": fromtimestamp(hist_data.min()),
-        "max": fromtimestamp(hist_data.max()),
-        "median": fromtimestamp(hist_data.mean()),
-        "std": fromtimestamp(hist_data.std()),
-        "var": fromtimestamp(hist_data.var()),
-    }
-
-
-def _hist_int(name, data, bins=10):
-    data = np.array(data)
-    delta = max(data) - min(data) + 1
-
-    if bins > delta:
-        bins = delta
-
-    hist, bin_edges = np.histogram(data, bins=bins)
-
-    return {
-        "type": "hist_int",
-        "name": name,
-        "bins": bins,
-        "edges": bin_edges,
-        "counts": hist,
-        "min": data.min(),
-        "max": data.max(),
-        "median": data.mean(),
-        "std": data.std(),
-        "var": data.var(),
-    }
-
-
-def _hist_str(name, data, bins=10, truncate=20):
-    n_unique = len(set(data))
-
-    if truncate:
-        # data = (item[:truncate] for item in data)
-        data = (
-            item[:truncate] + "..." if len(item) > truncate else item for item in data
-        )
-
-    data = Counter(data)
-
-    if bins:
-        labels, counts = zip(*sorted(data.items(), key=itemgetter(1, 0), reverse=True))
-    else:
-        labels, counts = zip(*data.items())
-
-    return {
-        "type": "hist_str",
-        "name": name,
-        "total": sum(data.values()),
-        "unique": n_unique,
-        "labels": labels[:bins],
-        "counts": counts[:bins],
-    }
 
 
 if __name__ == "__main__":

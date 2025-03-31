@@ -3,22 +3,23 @@ import os
 
 import numpy as np
 
+from abcd.backends.atoms_opensearch import OpenSearchDatabase
 from abcd.frontends.commandline.decorators import check_remote, init_config, init_db
 
 logger = logging.getLogger(__name__)
 
 
 @init_config
-def login(*, config, name, url, **kwargs):
+def login(*, config, name, url, disable_ssl=False, **kwargs):
     logger.info(
-        f"login args: \nconfig:{config}, name:{name}, url:{url}, kwargs:{kwargs}"
+        "login args: \nconfig:%s, name:%s, url:%s, kwargs:%s", config, name, url, kwargs
     )
     from abcd import ABCD
 
-    db = ABCD.from_url(url=url)
+    db = ABCD.from_url(url=url, use_ssl=(not disable_ssl))
     info = db.info()
 
-    config["url"] = url
+    config.update(url=url, use_ssl=not disable_ssl)
     config.save()
 
     print("Successfully connected to the database!")
@@ -34,7 +35,7 @@ def login(*, config, name, url, **kwargs):
 @init_config
 @init_db
 def download(*, db, query, fileformat, filename, **kwargs):
-    logger.info(f"download\n kwargs: {kwargs}")
+    logger.info("download\n kwargs: %s", kwargs)
 
     from ase.io import write
 
@@ -49,7 +50,7 @@ def download(*, db, query, fileformat, filename, **kwargs):
 @init_db
 @check_remote
 def delete(*, db, query, yes, **kwargs):
-    logger.info(f"delete\n kwargs: {kwargs}")
+    logger.info("delete\n kwargs: %s", kwargs)
 
     if not yes:
         print(f"Please use --yes for deleting {db.count(query=query)} configurations")
@@ -73,10 +74,10 @@ def upload(*, db, path, extra_infos, ignore_calc_results, **kwargs):
 
     elif path.is_dir():
         for file in path.glob(".xyz"):
-            logger.info(f"Uploaded file: {file}")
+            logger.info("Uploaded file: %s", file)
             db.upload(file, extra_infos, store_calc=calculator)
         else:
-            logger.info(f"No file found: {path}")
+            logger.info("No file found: %s", path)
             raise FileNotFoundError()
 
     else:
@@ -86,8 +87,8 @@ def upload(*, db, path, extra_infos, ignore_calc_results, **kwargs):
 @init_config
 @init_db
 def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
-    logger.info(f"summary\n kwargs: {kwargs}")
-    logger.info(f"query: {query}")
+    logger.info("summary\n kwargs: %s", kwargs)
+    logger.info("query: %s", query)
 
     if print_all:
         truncate = None
@@ -151,8 +152,8 @@ def summary(*, db, query, print_all, bins, truncate, props, **kwargs):
 @init_config
 @init_db
 def show(*, db, query, print_all, props, **kwargs):
-    logger.info(f"show\n kwargs: {kwargs}")
-    logger.info(f"query: {query}")
+    logger.info("show\n kwargs: %s", kwargs)
+    logger.info("query: %s", query)
 
     if not props:
         print("Please define at least on property by using the -p option!")
@@ -177,14 +178,22 @@ def key_add(*, db, query, keys, **kwargs):
     data = parser.parse(keys)
 
     if query:
-        test = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
+        if isinstance(db, OpenSearchDatabase):
+            test = [
+                f"{query} AND ({' OR '.join(f'{key}:*' for key in data)})"
+                for query in query
+            ]
+        else:
+            test = ("AND", query, ("OR", *(("NAME", key) for key in data)))
+    elif isinstance(db, OpenSearchDatabase):
+        test = " OR ".join(f"{key}:*" for key in data)
     else:
-        test = ("OR", *(("NAME", key) for key in data.keys()))
+        test = ("OR", *(("NAME", key) for key in data))
 
     if db.count(query=test):
         print(
-            "The new key already exist for the given query! "
-            "Please make sure that the target key name don't exist"
+            "The new key already exists for the given query! "
+            "Please make sure that the target key name doesn't exist"
         )
         exit(1)
 
@@ -214,7 +223,13 @@ def key_delete(*, db, query, yes, keys, **kwargs):
     keys = " ".join(keys)
     data = parser.parse(keys)
 
-    query = ("AND", query, ("OR", *(("NAME", key) for key in data.keys())))
+    if isinstance(db, OpenSearchDatabase):
+        query = [
+            f"{query} AND ({' OR '.join(f'{key}:*' for key in data)})"
+            for query in query
+        ]
+    else:
+        query = ("AND", query, ("OR", *(("NAME", key) for key in data)))
 
     if not yes:
         print(
@@ -223,7 +238,7 @@ def key_delete(*, db, query, yes, keys, **kwargs):
         )
         exit(1)
 
-    for k in keys:
+    for k in data:
         db.delete_property(k, query=query)
 
 
@@ -247,7 +262,7 @@ def server(*, abcd_url, url, api_only, **kwargs):
 
     from abcd.server.app import create_app
 
-    logger.info(f"SERVER -  abcd: {abcd_url}, url: {url}, api_only:{api_only}")
+    logger.info("SERVER -  abcd: %s, url: %s, api_only: %s", abcd_url, url, api_only)
 
     if api_only:
         print("Not implemented yet!")
@@ -257,6 +272,12 @@ def server(*, abcd_url, url, api_only, **kwargs):
 
     app = create_app(abcd_url)
     app.run(host=o.hostname, port=o.port)
+
+
+@init_config
+@init_db
+def refresh(*, db, **kwargs):
+    db.refresh()
 
 
 class Formater:

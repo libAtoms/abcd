@@ -20,7 +20,10 @@ def database(database_name):
 
     info = {
         "name": database_name,
-        "description": "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus.",
+        "description": (
+            "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor."
+            " Duis mollis, est non commodo luctus."
+        ),
         "columns": [
             {"slug": "formula", "name": "Formula"},
             {"slug": "energy", "name": "Energy"},
@@ -42,7 +45,10 @@ def database(database_name):
 def settings(database_name):
     info = {
         "name": database_name,
-        "description": "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus.",
+        "description": (
+            "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor."
+            " Duis mollis, est non commodo luctus."
+        ),
         "columns": [
             {"slug": "formula", "name": "Formula"},
             {"slug": "energy", "name": "Energy"},

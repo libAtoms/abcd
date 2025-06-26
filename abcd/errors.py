@@ -1,3 +1,8 @@
+# Copyright (c) 2025.
+# Authors: Ádám Fekete, Tamás K. Stenczel
+# This program is distributed under the MIT License, see LICENSE.md.
+
+
 class ABCDError(Exception):
     pass
 

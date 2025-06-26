@@ -1,3 +1,7 @@
+# Copyright (c) 2025.
+# Authors: Tamás K. Stenczel
+# This program is distributed under the MIT License, see LICENSE.md.
+
 """Tests for supporting `mongodb+srv://` URIs"""
 
 from pytest import fixture

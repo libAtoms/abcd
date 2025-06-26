@@ -1,3 +1,7 @@
+# Copyright (c) 2025.
+# Authors: Ádám Fekete, Elliott Kasoar, Tamás K. Stenczel
+# This program is distributed under the MIT License, see LICENSE.md.
+
 from flask import Blueprint, Response, render_template, request
 
 bp = Blueprint("database", __name__)

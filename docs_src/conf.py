@@ -1,3 +1,7 @@
+# Copyright (c) 2025.
+# Authors: Elliott Kasoar, Tamás K. Stenczel, Gábor Csányi
+# This program is distributed under the MIT License, see LICENSE.md.
+
 #
 # Configuration file for the Sphinx documentation builder.
 #
